@@ -8,3 +8,9 @@
 /var/
 /vendor/
 ###< symfony/framework-bundle ###
+
+###> app/encryption ###
+# Never commit encryption keys
+*.key
+encryption.key
+###< app/encryption ###

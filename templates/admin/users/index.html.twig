@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Administration - Utilisateurs{% endblock %}
+
+{% block body %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>Gestion des Utilisateurs</h1>
+        <a href="{{ path('app_admin_users_new') }}" class="btn btn-primary">Ajouter un utilisateur</a>
+    </div>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-error">{{ message }}</div>
+    {% endfor %}
+
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Email</th>
+                <th>ID CRISTAL</th>
+                <th>Rôles</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.surname }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.cristalId ?? '-' }}</td>
+                <td>
+                    {% for role in user.roles %}
+                        <span class="badge badge-{{ role|lower|replace({'role_': ''}) }}">
+                            {{ role|replace({'ROLE_': ''}) }}
+                        </span>
+                    {% endfor %}
+                </td>
+                <td class="actions">
+                    <a href="{{ path('app_admin_users_edit', {id: user.id}) }}" class="btn btn-small btn-secondary">Modifier</a>
+                    <form action="{{ path('app_admin_users_delete', {id: user.id}) }}" method="post" class="delete-form" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+                        <button type="submit" class="btn btn-small btn-danger">Supprimer</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="empty-table">Aucun utilisateur trouvé</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
