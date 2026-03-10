@@ -1,0 +1,96 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier Patient - {{ patient.fullName }} - Gestion des Greffes Rénales{% endblock %}
+
+{% block body %}
+<div class="patient-page">
+    <div class="page-header">
+        <h1>Modifier Patient</h1>
+        <span class="patient-identifier">{{ patient.fileNumber }}</span>
+    </div>
+
+    <div class="form-container">
+        {{ form_start(form, {attr: {class: 'patient-form'}}) }}
+        
+        <fieldset>
+            <legend>Identification</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_label(form.fileNumber) }}
+                    {{ form_widget(form.fileNumber) }}
+                    {{ form_help(form.fileNumber) }}
+                    {{ form_errors(form.fileNumber) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.lastName) }}
+                    {{ form_widget(form.lastName) }}
+                    {{ form_errors(form.lastName) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.firstName) }}
+                    {{ form_widget(form.firstName) }}
+                    {{ form_errors(form.firstName) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.city) }}
+                    {{ form_widget(form.city) }}
+                    {{ form_errors(form.city) }}
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Informations médicales</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_label(form.birthDate) }}
+                    {{ form_widget(form.birthDate) }}
+                    {{ form_errors(form.birthDate) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.sex) }}
+                    {{ form_widget(form.sex) }}
+                    {{ form_errors(form.sex) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.bloodGroup) }}
+                    {{ form_widget(form.bloodGroup) }}
+                    {{ form_errors(form.bloodGroup) }}
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Contact</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_label(form.phone) }}
+                    {{ form_widget(form.phone) }}
+                    {{ form_errors(form.phone) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.email) }}
+                    {{ form_widget(form.email) }}
+                    {{ form_errors(form.email) }}
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Notes</legend>
+            <div class="form-group full-width">
+                {{ form_label(form.comment) }}
+                {{ form_widget(form.comment) }}
+                {{ form_errors(form.comment) }}
+            </div>
+        </fieldset>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+            <a href="{{ path('app_patient_show', {id: patient.id}) }}" class="btn btn-secondary">Annuler</a>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

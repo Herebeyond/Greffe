@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Page introuvable - Greffes Rénales{% endblock %}
+
+{% block body %}
+<div class="error-page">
+    <div class="error-card error-404">
+        <div class="error-icon">🔍</div>
+        <h1 class="error-code">404</h1>
+        <h2 class="error-title">Page introuvable</h2>
+        <p class="error-message">
+            La page que vous recherchez n'existe pas ou a été déplacée.
+        </p>
+        <div class="error-details">
+            <p>Vérifiez que :</p>
+            <ul>
+                <li>L'adresse saisie est correcte</li>
+                <li>Le lien que vous avez suivi est toujours valide</li>
+                <li>Le dossier ou la ressource n'a pas été supprimé(e)</li>
+            </ul>
+        </div>
+        <div class="error-actions">
+            <a href="{{ path('app_home') }}" class="error-btn error-btn-primary">Retour à l'accueil</a>
+            {% if app.user and is_granted('ROLE_USER') %}
+                <a href="{{ path('app_patient_index') }}" class="error-btn error-btn-secondary">Rechercher un patient</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

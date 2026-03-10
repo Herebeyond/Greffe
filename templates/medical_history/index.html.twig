@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Antécédents - {{ patient.fullName }}{% endblock %}
+
+{% block body %}
+<div class="patient-page">
+    {% include 'patient/_medical_nav.html.twig' %}
+
+    <div class="section-header">
+        <h2>Antécédents</h2>
+        {% if is_granted('CAN_WRITE') %}
+        <a href="{{ path('app_medical_history_new', {patientId: patient.id}) }}" class="btn btn-primary">Ajouter un antécédent</a>
+        {% endif %}
+    </div>
+
+    {% if histories is empty %}
+        <div class="empty-state">
+            <p>Aucun antécédent enregistré pour ce patient.</p>
+        </div>
+    {% else %}
+        <div class="data-table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Date de diagnostic</th>
+                        <th>Commentaire</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for history in histories %}
+                    <tr>
+                        <td><span class="badge badge-{{ history.type|lower }}">{{ history.type }}</span></td>
+                        <td>{{ history.description|length > 80 ? history.description|slice(0, 80) ~ '...' : history.description }}</td>
+                        <td>{{ history.diagnosisDate ? history.diagnosisDate|date('d/m/Y') : '—' }}</td>
+                        <td>{{ history.comment ? (history.comment|length > 50 ? history.comment|slice(0, 50) ~ '...' : history.comment) : '—' }}</td>
+                        <td class="actions-cell">
+                            {% if is_granted('CAN_WRITE') %}
+                            <a href="{{ path('app_medical_history_edit', {patientId: patient.id, id: history.id}) }}" class="btn-small">Modifier</a>
+                            {% endif %}
+                            {% if is_granted('CAN_DELETE') %}
+                            <form action="{{ path('app_medical_history_delete', {patientId: patient.id, id: history.id}) }}" method="post" class="inline-form"
+                                  onsubmit="return confirm('Supprimer cet antécédent ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ history.id) }}">
+                                <button type="submit" class="btn-small btn-small-danger">Supprimer</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

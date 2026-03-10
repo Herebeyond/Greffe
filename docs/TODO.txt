@@ -1,0 +1,149 @@
+################################################################################
+#                                                                              #
+#                         FEATURES TO IMPLEMENT                                #
+#                                                                              #
+################################################################################
+#                                                                              #
+#  This file is split into two sections:                                       #
+#                                                                              #
+#  1. FROM SPECIFICATIONS (specifications.txt)                                 #
+#     Required features from the BTS SIO project brief.                        #
+#                                                                              #
+#  2. OPTIONAL ENHANCEMENTS                                                    #
+#     Nice-to-have features not in the specification, added by the developer.  #
+#                                                                              #
+#  ⚠️ NOTE: This is a BTS SIO student exercise project. Some features cannot  #
+#  be fully implemented (no access to CRISTAL or CPS). These are marked        #
+#  [SIMULATED] and use mock/fictional data.                                    #
+#                                                                              #
+################################################################################
+
+
+================================================================================
+1. FROM SPECIFICATIONS (specifications.txt)
+================================================================================
+
+## AUTHENTICATION & ACCESS (spec §2.1)
+- [x] [SIMULATED] CPS authentication → Use standard form login instead
+- [x] Fallback authentication (standard username/password)
+- [x] Activity logging: track user identity, login time, logout time
+- [x] User profiles with different access levels (full access vs read-only)
+- [x] Hybrid patient access control (Art. L1110-4, L1110-12 CSP):
+    - CHU practitioners (isChuPractitioner): access to all patient files
+    - External city nephrologists: access only to assigned patients
+    - Technical admins (ROLE_TECH_ADMIN): NO patient data access
+    - Medical admins (ROLE_MEDICAL_ADMIN): patient access via normal rules
+    - PatientAccessVoter (VIEW_PATIENT) enforces per-patient access
+- [x] Split admin role: ROLE_TECH_ADMIN (system) vs ROLE_MEDICAL_ADMIN (clinical)
+- [ ] "Bris de glace" (break-the-glass) emergency access (see docs/PATIENT_ACCESS_LEGAL.md §5)
+
+## PATIENT MANAGEMENT (spec §2.2, §2.3)
+- [x] Patient entity (nom, prénom, numéro de dossier, ville de résidence)
+- [x] Patient search with multiple criteria (at least one required)
+- [x] Search results: alphabetical sort, pagination
+- [x] Confirmation dialog when >200 results
+
+## PATIENT FILE ACCESS (spec §2.4)
+- [x] Medical history (antécédents) management
+- [x] Consultations management
+- [ ] Transplants (greffes) management
+- [x] Therapeutic Patient Education (ETP) management
+- [x] Biological results consultation
+
+## TRANSPLANT (GREFFE) ENTITY (spec §2.5.1)
+- [ ] Transplant list per patient (oldest to newest)
+- [ ] Create/view/edit transplant
+- [ ] Delete transplant (admin only)
+- [ ] Essential fields: date, rank, donor type
+- [ ] Graft functional status with conditional fields (end date/cause)
+- [ ] Transplant type enum (Rein, Rein donneur vivant, Rein-pancréas, etc.)
+- [ ] Surgical details (surgeon, declamping date/time, sides, ischemia, etc.)
+- [ ] JJ probe indicator
+- [ ] Comments field
+- [ ] Operative report file attachment (upload/view/delete)
+- [ ] Virological status (CMV, EBV, toxoplasmosis)
+- [ ] HLA incompatibility fields (A, B, Cw, DR, DQ, DP)
+- [ ] Immunological risk with COLOR CODING:
+    - Green: "Non immunisé"
+    - Orange: "Immunisé sans DSA"
+    - Red: "Immunisé DSA" or "ABO incompatible"
+- [ ] Immunosuppressive conditioning (multi-select from list)
+- [ ] Dialysis status with conditional last dialysis date
+- [ ] Protocol with file attachment
+
+## DONOR ENTITY (spec §2.5.2)
+# NOTE: Donor data is stored as a single JSON column on the Transplant entity
+# rather than as separate database columns. This simplifies the schema for this
+# educational project while still capturing all spec fields in the form/UI.
+- [ ] Donor JSON structure with common fields:
+    - CRISTAL number [SIMULATED], blood group, sex, age, height, weight
+    - HLA grouping (A, B, Cw, DR, DQ, DP) — admin-only edit after first save
+    - Serology (CMV, EBV, HIV, HTLV, syphilis, HCV, ARNc, Ag/Ac HBS, Ac HBC, DNA B, toxo)
+    - Surgical details (surgeon, clamping, harvest side, arteries, veins)
+    - Perfusion machine & liquid
+    - Patient comment
+- [ ] Living donor specific JSON fields:
+    - Name & first name (stored encrypted in JSON)
+    - Relationship type & comment
+    - BMI (auto-calculated), creatinine, clearance (MDRD), isotopic clearance, proteinuria
+    - Approach (Lombotomie/Cœlioscopie), robot
+- [ ] Deceased donor specific JSON fields:
+    - Origin city, death cause & comment
+    - Extended criteria donor (DCE) with definition display
+    - Cardiac arrest status/duration, mean arterial pressure, amines
+    - Transfusion with conditional fields (CGR, CPA, PFC)
+    - Creatinine arrival/sample, DFG (auto-calculated GFR)
+    - Atheroma & calcified plaques fields
+    - Ureter, digestive wound, conservation liquid & infection
+
+## CALCULATED FIELDS (spec §2.5.2.2, §2.5.2.3)
+# These are computed client-side (JS) or server-side and stored in the donor JSON.
+- [ ] BMI: weight / height²
+- [ ] Clearance (MDRD): 186 × (créatinine_µmol × 0.0113)^(-1.154) × âge^(-0.203) × 0.742 (if female)
+- [ ] DFG/GFR:
+    - Male: 175 × (créatinine / 88.4)^(-1.154) × âge^(-0.203)
+    - Female: × 0.742
+
+## FILE ATTACHMENTS (spec §2.5.1)
+- [ ] Operative report upload/view/delete
+- [ ] Protocol file upload/view/delete
+
+## BUSINESS RULES (spec §2.3, §2.5)
+- [ ] Transplant deletion: medical admin only (ROLE_MEDICAL_ADMIN)
+- [ ] HLA grouping: medical admin-only edit after first validation
+- [ ] Search limit: confirm before displaying >200 results
+- [ ] Conditional field visibility based on dependencies
+- [ ] Color-coded immunological risk display
+
+## CRISTAL INTEGRATION [SIMULATED] (spec §2.5.2.1)
+⚠️ Real CRISTAL connection not possible - using mock system with fictional data
+- [ ] [SIMULATED] Mock CRISTAL number generation/validation
+- [ ] [SIMULATED] Donor identification with fictional CRISTAL codes
+- [ ] Local graft traceability (no national reporting)
+
+## UI/UX (spec §1.4)
+- [x] Responsive design (ordinateur, tablette, téléphone)
+- [ ] Mobile phone access with restricted functions (mostly read-only: consultation only, can create/edit/delete the comments)
+- [x] French language UI
+- [x] Paginated lists
+- [x] Form validation with French error messages
+
+
+================================================================================
+2. OPTIONAL ENHANCEMENTS (not in specifications.txt)
+================================================================================
+
+## DATA SECURITY
+- [ ] Encrypt sensitive data fields (most patient/donor data are sensitive)
+
+## USER MANAGEMENT
+- [ ] Email confirmation when user changes their own email
+- [ ] Email confirmation when admin changes a user's email
+- [ ] Email confirmation when changing passwords
+- [ ] Restrict actions an admin can perform on another admin account
+
+## ADMIN TOOLS
+- [ ] Admin page to view login/activity logs
+
+## CLEANUP / POLISH
+- [ ] Remove Symfony devtools and debug toolbar before production

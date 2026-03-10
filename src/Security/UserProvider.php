@@ -4,12 +4,14 @@ namespace App\Security;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAccountStatusException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 /**
  * Custom user provider that allows login with email or CRISTAL ID.
+ * Also checks if the user account is active.
  *
  * @implements UserProviderInterface<User>
  */
@@ -30,6 +32,13 @@ class UserProvider implements UserProviderInterface
             throw $exception;
         }
 
+        // Check if account is active
+        if (!$user->isActive()) {
+            throw new CustomUserMessageAccountStatusException(
+                'Votre compte a été désactivé. Veuillez contacter un administrateur.'
+            );
+        }
+
         return $user;
     }
 
@@ -45,6 +54,13 @@ class UserProvider implements UserProviderInterface
             $exception = new UserNotFoundException('User not found.');
             $exception->setUserIdentifier($user->getUserIdentifier());
             throw $exception;
+        }
+
+        // Check if account is still active during session
+        if (!$refreshedUser->isActive()) {
+            throw new CustomUserMessageAccountStatusException(
+                'Votre compte a été désactivé.'
+            );
         }
 
         return $refreshedUser;

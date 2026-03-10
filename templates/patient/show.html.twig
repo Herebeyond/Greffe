@@ -1,0 +1,161 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ patient.fullName }} - Gestion des Greffes Rénales{% endblock %}
+
+{% block body %}
+<div class="patient-page">
+    <div class="page-header">
+        <div class="page-header-content">
+            <h1>{{ patient.fullName }}</h1>
+            <span class="patient-identifier">Dossier n° {{ patient.fileNumber }}</span>
+        </div>
+        <div class="page-header-actions">
+            {% if is_granted('CAN_WRITE') %}
+            <a href="{{ path('app_patient_edit', {id: patient.id}) }}" class="btn btn-primary">Modifier</a>
+            {% endif %}
+            <a href="{{ path('app_patient_index') }}" class="btn btn-secondary">Retour à la liste</a>
+        </div>
+    </div>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-error">{{ message }}</div>
+    {% endfor %}
+
+        {# Medical section navigation tabs #}
+    <div class="patient-medical-sections">
+        <nav class="medical-nav">
+            <a href="{{ path('app_medical_history_index', {patientId: patient.id}) }}" class="medical-nav-item">Antécédents</a>
+            <a href="{{ path('app_consultation_index', {patientId: patient.id}) }}" class="medical-nav-item">Consultations</a>
+            <span class="medical-nav-item disabled" title="À venir">Greffes</span>
+            <a href="{{ path('app_therapeutic_education_index', {patientId: patient.id}) }}" class="medical-nav-item">ETP</a>
+            <a href="{{ path('app_biological_result_index', {patientId: patient.id}) }}" class="medical-nav-item">Résultats biologiques</a>
+        </nav>
+    </div>
+
+    <div class="patient-details">
+        <section class="detail-section">
+            <h2>Identification</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Nom</span>
+                    <span class="detail-value">{{ patient.lastName }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Prénom</span>
+                    <span class="detail-value">{{ patient.firstName }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Numéro de dossier</span>
+                    <span class="detail-value">{{ patient.fileNumber }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Ville de résidence</span>
+                    <span class="detail-value">{{ patient.city }}</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="detail-section">
+            <h2>Informations médicales</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Date de naissance</span>
+                    <span class="detail-value">
+                        {% if patient.birthDate %}
+                            {{ patient.birthDate|date('d/m/Y') }}
+                            <span class="detail-secondary">({{ patient.age }} ans)</span>
+                        {% else %}
+                            <span class="detail-empty">Non renseigné</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Sexe</span>
+                    <span class="detail-value">
+                        {% if patient.sexLabel %}
+                            {{ patient.sexLabel }}
+                        {% else %}
+                            <span class="detail-empty">Non renseigné</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Groupe sanguin</span>
+                    <span class="detail-value">
+                        {% if patient.bloodGroup %}
+                            <span class="blood-group blood-group-{{ patient.bloodGroup }}">{{ patient.bloodGroup }}</span>
+                        {% else %}
+                            <span class="detail-empty">Non renseigné</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <section class="detail-section">
+            <h2>Contact</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Téléphone</span>
+                    <span class="detail-value">
+                        {% if patient.phone %}
+                            <a href="tel:{{ patient.phone }}">{{ patient.phone }}</a>
+                        {% else %}
+                            <span class="detail-empty">Non renseigné</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value">
+                        {% if patient.email %}
+                            <a href="mailto:{{ patient.email }}">{{ patient.email }}</a>
+                        {% else %}
+                            <span class="detail-empty">Non renseigné</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        {% if patient.comment %}
+        <section class="detail-section">
+            <h2>Commentaires</h2>
+            <div class="detail-comment">
+                {{ patient.comment|nl2br }}
+            </div>
+        </section>
+        {% endif %}
+
+        <section class="detail-section">
+            <h2>Informations système</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Créé le</span>
+                    <span class="detail-value">{{ patient.createdAt|date('d/m/Y à H:i') }}</span>
+                </div>
+                {% if patient.updatedAt %}
+                <div class="detail-item">
+                    <span class="detail-label">Dernière modification</span>
+                    <span class="detail-value">{{ patient.updatedAt|date('d/m/Y à H:i') }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    {% if is_granted('CAN_DELETE') %}
+    <div class="danger-zone">
+        <h2>Zone de danger</h2>
+        <form action="{{ path('app_patient_delete', {id: patient.id}) }}" method="post" 
+              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce patient ? Cette action est irréversible.');">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ patient.id) }}">
+            <button type="submit" class="btn btn-danger">Supprimer ce patient</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+Connexion au VPN du pare-feu Stormshield du rectorat
+Pour les SIO2-SLAM (v2.02.6)
+Last fucking one !
+Prérequis
+• Un compte nominatif (histoire de savoir qui fait quoi) sur l’AD de Beaup (i.e. votre
+compte sur les machines des salles de cours)
+• Un client VPN
+• Un client SSH
+Téléchargement du client VPN (Depuis Internet uniquement)
+URL : https://195.83.236.181:4443/auth/
+• On se logue avec son compte de Beaupeyrat
+• On télécharge le Client VPN Stormshield → VPN SSL Client
+• On l’installe et on le lance
+• Il est lancé en fond et une icône apparaît
+dans la partie droite de la barre des tâches
+windows.
+On cliquant sur l’icône une fenêtre
+d’authentification s’ouvre.
+Adresse du firewall : 195.83.236.181:4443
++
+Login/pass de Beaupeyrat
+Une fois connecté, vous avez accès1
+ aux machines du réseau :
+- VLAN SRV : 10.187.22.0/25
+NB : Le but du VPN est de pouvoir avoir accès à ses machines
+virtuelles depuis l’extérieur de Beaupeyrat. Ne pas l’utiliser depuis
+le réseau de Beaup (wifi ou filaire)
+Liste des VMs SLAM 2026
+User Hostname VM1 @IP VM1 Hostname VM2 @IP VM2
+baillard baillard-27 10.187.22.27 baillard-28 10.187.22.28
+bongo bongo-29 10.187.22.29 bongo-30 10.187.22.30
+brullon brullon-31 10.187.22.31 brullon-32 10.187.22.32
+caillault caillault-33 10.187.22.33 caillault-34 10.187.22.34
+kechaba kechaba-35 10.187.22.35 kechaba-36 10.187.22.36
+lemeu lemeu-37 10.187.22.37 lemeu-38 10.187.22.38
+perrier perrier-39 10.187.22.39 perrier-40 10.187.22.40
+pichon pichon-41 10.187.22.41 pichon-42 10.187.22.42
+salim salim-43 10.187.22.43 salim-44 10.187.22.44
+sallembien sallembien-45 10.187.22.45 sallembien-46 10.187.22.46
+Les mots de passe (compte et root identique) vous seront donnés par votre cher M.
+Tharaud.
+1 SSH / SFTP / HTTP / HTTPS
+Connexion SSH
+Une fois connecté en VPN, il suffit de vous connecter en ssh dans la VM souhaitée
+Exemple pour la VM baillard-27
+fls@phoenix:~$ ssh baillard@10.187.22.27
+The authenticity of host '10.187.22.27 (10.187.22.27)' can't be established.
+ED25519 key fingerprint is SHA256:f4n1LLVGAEuk5zc/2/b7qMaMZDdRSWdgjFUxQBlboWI.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '10.187.22.27' (ED25519) to the list of known hosts.
+Linux baillard-27 6.12.48+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.48-1 (2025-09-20) x86_64
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Tue Mar 3 23:18:57 2026 from 10.187.22.2
+baillard@baillard-27:~$
+bechade@bechade-22:~$ git -v
+git version 2.39.2
+bechade@bechade-22:~$ docker --version
+Docker version 26.1.0, build 9714adc
+pour passer root (si besoin) :
+bechade@bechade-22:~$ sudo -i
+[sudo] Mot de passe de bechade :
+root@bechade-22:~#
+ON MET SA MACHINE À JOUR !!!
+baillard@baillard-27:~$ sudo apt update
+[sudo] Mot de passe de baillard :
+Réception de : 1 http://security.debian.org/debian-security trixie-security InRelease [43,4 kB]
+Réception de : 2 http://deb.debian.org/debian trixie InRelease [140 kB]
+Réception de : 3 http://deb.debian.org/debian trixie-updates InRelease [47,3 kB]
+Réception de : 4 https://download.docker.com/linux/debian bookworm InRelease [46,6 kB]
+Réception de : 5 http://security.debian.org/debian-security trixie-security/main Sources [137 kB]
+Réception de : 6 http://security.debian.org/debian-security trixie-security/main amd64 Packages
+[108 kB]
+Réception de : 7 http://deb.debian.org/debian trixie/main Sources [10,5 MB]
+Réception de : 8 http://security.debian.org/debian-security trixie-security/main Translation-en
+[70,0 kB]
+Réception de : 9 https://download.docker.com/linux/debian bookworm/stable amd64 Packages [63,1
+kB]
+Réception de : 10 http://deb.debian.org/debian trixie/non-free-firmware Sources [6 552 B]
+Réception de : 11 http://deb.debian.org/debian trixie/main amd64 Packages [9 670 kB]
+Réception de : 12 http://deb.debian.org/debian trixie/main Translation-en [6 484 kB]
+Réception de : 13 http://deb.debian.org/debian trixie/non-free-firmware amd64 Packages [6 884 B]
+27,4 Mo réceptionnés en 6s (4 253 ko/s)
+68 paquets peuvent être mis à jour. Exécutez « apt list --upgradable » pour les voir.
+Notification : Le dépôt « http://deb.debian.org/debian trixie InRelease » a modifié sa valeur
+« Version » de « 13.1 » à « 13.3 »
+baillard@baillard-27:~$ sudo apt upgrade -y
+…
+Sommaire :
+ Mise à niveau de : 68. Installation de : 1Supprimé : 0. Non mis à jour : 0
+Taille du téléchargement : 261 MB
+ Espace nécessaire : 122 MB / 46,6 GB disponible
+Réception de : 1 http://deb.debian.org/debian trixie/main amd64 libc6 amd64 2.41-12+deb13u1
+[2 851 kB]
+Réception de : 2 http://security.debian.org/debian-security trixie-security/main amd64 opensslprovider-legacy amd64 3.5.4-1~deb13u2 [308 kB]
+Réception de : 3 http://security.debian.org/debian-security trixie-security/main amd64 libssl3t64
+amd64 3.5.4-1~deb13u2 [2 442 kB]
+Réception de : 4 https://download.docker.com/linux/debian bookworm/stable amd64 docker-ce-cli
+amd64 5:29.2.1-1~debian.12~bookworm [16,3 MB]
+Réception de : 5 http://deb.debian.org/debian trixie/main amd64 base-files amd64 13.8+deb13u3
+[73,3 kB]
+Réception de : 6 http://deb.debian.org/debian trixie/main amd64 bash amd64 5.2.37-2+b7 [1 501 kB]
+Réception de : 7 http://deb.debian.org/debian trixie/main amd64 libc-bin amd64 2.41-12+deb13u1
+[637 kB]
+…
+On a quoi sur les Vms ?
+Ça
+baillard@baillard-27:~$ git -v
+git version 2.47.3
+Et ça
+baillard@baillard-27:~$ docker --version
+Docker version 29.2.1, build a5c7197
+Les Vms sont accessibles :
+• Depuis Internet via VPN
+• Depuis le Wifi-SIO à Beaupeyrat
+Il n’est techniquement pas possible d’avoir accès à la fois en VPN et de

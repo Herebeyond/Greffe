@@ -1,0 +1,32 @@
+{# Shared patient header with medical navigation tabs #}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1>{{ patient.fullName }}</h1>
+        <span class="patient-identifier">Dossier n° {{ patient.fileNumber }}</span>
+    </div>
+    <div class="page-header-actions">
+        <a href="{{ path('app_patient_show', {id: patient.id}) }}" class="btn btn-secondary">Fiche patient</a>
+        <a href="{{ path('app_patient_index') }}" class="btn btn-secondary">Retour à la liste</a>
+    </div>
+</div>
+
+{% for message in app.flashes('success') %}
+    <div class="alert alert-success">{{ message }}</div>
+{% endfor %}
+{% for message in app.flashes('error') %}
+    <div class="alert alert-error">{{ message }}</div>
+{% endfor %}
+
+<div class="patient-medical-sections">
+    <nav class="medical-nav">
+        <a href="{{ path('app_medical_history_index', {patientId: patient.id}) }}"
+           class="medical-nav-item{{ activeTab|default('') == 'antecedents' ? ' active' : '' }}">Antécédents</a>
+        <a href="{{ path('app_consultation_index', {patientId: patient.id}) }}"
+           class="medical-nav-item{{ activeTab|default('') == 'consultations' ? ' active' : '' }}">Consultations</a>
+        <span class="medical-nav-item disabled" title="À venir">Greffes</span>
+        <a href="{{ path('app_therapeutic_education_index', {patientId: patient.id}) }}"
+           class="medical-nav-item{{ activeTab|default('') == 'etp' ? ' active' : '' }}">ETP</a>
+        <a href="{{ path('app_biological_result_index', {patientId: patient.id}) }}"
+           class="medical-nav-item{{ activeTab|default('') == 'resultats' ? ' active' : '' }}">Résultats biologiques</a>
+    </nav>
+</div>

@@ -3,6 +3,9 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -23,6 +26,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 180)]
     private ?string $email = null;
+
+    /**
+     * @var bool Whether the user account is active
+     */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
+    private bool $isActive = true;
+
+    /**
+     * @var \DateTimeImmutable|null The last successful login time
+     */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $lastLoginAt = null;
+
+    /**
+     * @var \DateTimeImmutable|null When the account was created
+     */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $createdAt;
 
     /**
      * @var list<string> The user roles
@@ -53,6 +74,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column(type: 'encrypted_string', nullable: true)]
     private ?string $cristalId = null;
+
+    /**
+     * Whether this user belongs to the CHU transplant service care team.
+     * CHU practitioners can access all patients in the service (Art. L1110-4, II).
+     * External practitioners (city nephrologists) can only access assigned patients.
+     */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isChuPractitioner = false;
+
+    /**
+     * Patients assigned to this practitioner (for external city nephrologists).
+     */
+    #[ORM\ManyToMany(targetEntity: \App\Entity\Patient::class, mappedBy: 'authorizedPractitioners')]
+    private Collection $assignedPatients;
+
+    public function __construct()
+    {
+        $this->createdAt = new \DateTimeImmutable();
+        $this->assignedPatients = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -163,6 +204,62 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->cristalId = $cristalId;
 
         return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): static
+    {
+        $this->isActive = $isActive;
+
+        return $this;
+    }
+
+    public function getLastLoginAt(): ?\DateTimeImmutable
+    {
+        return $this->lastLoginAt;
+    }
+
+    public function setLastLoginAt(?\DateTimeImmutable $lastLoginAt): static
+    {
+        $this->lastLoginAt = $lastLoginAt;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function isChuPractitioner(): bool
+    {
+        return $this->isChuPractitioner;
+    }
+
+    public function setIsChuPractitioner(bool $isChuPractitioner): static
+    {
+        $this->isChuPractitioner = $isChuPractitioner;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, \App\Entity\Patient>
+     */
+    public function getAssignedPatients(): Collection
+    {
+        return $this->assignedPatients;
     }
 
     /**

@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Résultats biologiques - {{ patient.fullName }}{% endblock %}
+
+{% block body %}
+<div class="patient-page">
+    {% include 'patient/_medical_nav.html.twig' %}
+
+    <div class="section-header">
+        <h2>Résultats biologiques</h2>
+        {% if is_granted('CAN_WRITE') %}
+        <a href="{{ path('app_biological_result_new', {patientId: patient.id}) }}" class="btn btn-primary">Ajouter un résultat</a>
+        {% endif %}
+    </div>
+
+    {% if results is empty %}
+        <div class="empty-state">
+            <p>Aucun résultat biologique enregistré pour ce patient.</p>
+        </div>
+    {% else %}
+        <div class="data-table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Créatinine<br><small>(µmol/L)</small></th>
+                        <th>Clairance<br><small>(mL/min)</small></th>
+                        <th>Protéinurie<br><small>(g/24h)</small></th>
+                        <th>Hb<br><small>(g/dL)</small></th>
+                        <th>Tacro<br><small>(ng/mL)</small></th>
+                        <th>CMV</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result.date|date('d/m/Y') }}</td>
+                        <td>{{ result.creatinine ?? '—' }}</td>
+                        <td>{{ result.creatinineClearance ?? '—' }}</td>
+                        <td>{{ result.proteinuria ?? '—' }}</td>
+                        <td>{{ result.hemoglobin ?? '—' }}</td>
+                        <td>{{ result.tacrolimusLevel ?? '—' }}</td>
+                        <td>
+                            {% if result.cmvPcr %}
+                                <span class="pcr-badge pcr-{{ result.cmvPcr|lower|replace({' ': '-'}) }}">{{ result.cmvPcr }}</span>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td class="actions-cell">
+                            {% if is_granted('CAN_WRITE') %}
+                            <a href="{{ path('app_biological_result_edit', {patientId: patient.id, id: result.id}) }}" class="btn-small">Modifier</a>
+                            {% endif %}
+                            {% if is_granted('CAN_DELETE') %}
+                            <form action="{{ path('app_biological_result_delete', {patientId: patient.id, id: result.id}) }}" method="post" class="inline-form"
+                                  onsubmit="return confirm('Supprimer ce résultat biologique ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ result.id) }}">
+                                <button type="submit" class="btn-small btn-small-danger">Supprimer</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

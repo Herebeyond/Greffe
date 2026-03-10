@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Erreur - Greffes Rénales{% endblock %}
+
+{% block body %}
+<div class="error-page">
+    <div class="error-card">
+        <div class="error-icon">❌</div>
+        <h1 class="error-code">{{ status_code }}</h1>
+        <h2 class="error-title">Une erreur est survenue</h2>
+        <p class="error-message">
+            Le serveur a rencontré un problème inattendu lors du traitement de votre demande.
+        </p>
+        <div class="error-details">
+            <p>Que faire :</p>
+            <ul>
+                <li>Réessayez dans quelques instants</li>
+                <li>Retournez à la page d'accueil</li>
+                <li>Si le problème persiste, contactez le support technique</li>
+            </ul>
+        </div>
+        <div class="error-actions">
+            <a href="{{ path('app_home') }}" class="error-btn error-btn-primary">Retour à l'accueil</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

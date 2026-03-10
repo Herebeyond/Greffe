@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}ETP - {{ patient.fullName }}{% endblock %}
+
+{% block body %}
+<div class="patient-page">
+    {% include 'patient/_medical_nav.html.twig' %}
+
+    <div class="section-header">
+        <h2>Éducation Thérapeutique du Patient (ETP)</h2>
+        {% if is_granted('CAN_WRITE') %}
+        <a href="{{ path('app_therapeutic_education_new', {patientId: patient.id}) }}" class="btn btn-primary">Ajouter une séance</a>
+        {% endif %}
+    </div>
+
+    {% if sessions is empty %}
+        <div class="empty-state">
+            <p>Aucune séance ETP enregistrée pour ce patient.</p>
+        </div>
+    {% else %}
+        <div class="data-table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Thème</th>
+                        <th>Éducateur</th>
+                        <th>Progression</th>
+                        <th>Prochaine séance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in sessions %}
+                    <tr>
+                        <td>{{ session.sessionDate|date('d/m/Y') }}</td>
+                        <td><span class="badge">{{ session.topic }}</span></td>
+                        <td>{{ session.educator }}</td>
+                        <td>
+                            {% if session.patientProgress %}
+                                <span class="progress-badge progress-{{ session.patientProgress|lower|replace({' ': '-'}) }}">{{ session.patientProgress }}</span>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>{{ session.nextSessionDate ? session.nextSessionDate|date('d/m/Y') : '—' }}</td>
+                        <td class="actions-cell">
+                            {% if is_granted('CAN_WRITE') %}
+                            <a href="{{ path('app_therapeutic_education_edit', {patientId: patient.id, id: session.id}) }}" class="btn-small">Modifier</a>
+                            {% endif %}
+                            {% if is_granted('CAN_DELETE') %}
+                            <form action="{{ path('app_therapeutic_education_delete', {patientId: patient.id, id: session.id}) }}" method="post" class="inline-form"
+                                  onsubmit="return confirm('Supprimer cette séance ETP ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ session.id) }}">
+                                <button type="submit" class="btn-small btn-small-danger">Supprimer</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

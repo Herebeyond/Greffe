@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accès refusé - Greffes Rénales{% endblock %}
+
+{% block body %}
+<div class="error-page">
+    <div class="error-card error-403">
+        <div class="error-icon">🚫</div>
+        <h1 class="error-code">403</h1>
+        <h2 class="error-title">Accès non autorisé</h2>
+        <p class="error-message">
+            Vous n'avez pas les droits nécessaires pour accéder à cette ressource.
+        </p>
+        <div class="error-details">
+            <p>Cela peut se produire si :</p>
+            <ul>
+                <li>Votre profil ne dispose pas des habilitations requises pour cette section</li>
+                <li>Vous tentez d'accéder au dossier d'un patient hors de votre périmètre de soins</li>
+                <li>Votre session a expiré et vous devez vous reconnecter</li>
+            </ul>
+        </div>
+        <div class="error-notice">
+            <strong>Rappel réglementaire :</strong> L'accès aux données médicales est strictement réservé
+            aux professionnels de santé de l'équipe de soins du patient (Art. L1110-4 du Code de la Santé Publique).
+            Toute tentative d'accès non autorisé est journalisée.
+        </div>
+        <div class="error-actions">
+            <a href="{{ path('app_home') }}" class="error-btn error-btn-primary">Retour à l'accueil</a>
+            {% if not app.user %}
+                <a href="{{ path('app_login') }}" class="error-btn error-btn-secondary">Se connecter</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle séance ETP - {{ patient.fullName }}{% endblock %}
+
+{% block body %}
+<div class="patient-page">
+    {% include 'patient/_medical_nav.html.twig' %}
+
+    <div class="section-header">
+        <h2>Ajouter une séance ETP</h2>
+    </div>
+
+    <div class="form-container">
+        {{ form_start(form) }}
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.sessionDate) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.topic) }}
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_row(form.educator) }}
+            </div>
+            <div class="form-group">
+                {{ form_row(form.objectives) }}
+            </div>
+            <div class="form-group">
+                {{ form_row(form.observations) }}
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.patientProgress) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.nextSessionDate) }}
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                <a href="{{ path('app_therapeutic_education_index', {patientId: patient.id}) }}" class="btn btn-secondary">Annuler</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

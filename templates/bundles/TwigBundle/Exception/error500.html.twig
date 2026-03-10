@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Erreur serveur - Greffes Rénales{% endblock %}
+
+{% block body %}
+<div class="error-page">
+    <div class="error-card error-500">
+        <div class="error-icon">⚠️</div>
+        <h1 class="error-code">500</h1>
+        <h2 class="error-title">Erreur interne du serveur</h2>
+        <p class="error-message">
+            Une erreur technique est survenue. L'équipe informatique a été notifiée.
+        </p>
+        <div class="error-details">
+            <p>Que faire :</p>
+            <ul>
+                <li>Réessayez dans quelques instants</li>
+                <li>Si le problème persiste, contactez le support technique</li>
+                <li>Ne tentez pas de soumettre à nouveau un formulaire en cours</li>
+            </ul>
+        </div>
+        <div class="error-notice">
+            <strong>Note :</strong> Vos données médicales sont en sécurité.
+            Cette erreur n'affecte pas l'intégrité de la base de données.
+        </div>
+        <div class="error-actions">
+            <a href="{{ path('app_home') }}" class="error-btn error-btn-primary">Retour à l'accueil</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

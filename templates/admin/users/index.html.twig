@@ -24,6 +24,7 @@
                 <th>Prénom</th>
                 <th>Email</th>
                 <th>ID CRISTAL</th>
+                <th>CHU</th>
                 <th>Rôles</th>
                 <th>Actions</th>
             </tr>
@@ -36,6 +37,7 @@
                 <td>{{ user.name }}</td>
                 <td>{{ user.email }}</td>
                 <td>{{ user.cristalId ?? '-' }}</td>
+                <td>{{ user.isChuPractitioner ? 'Oui' : 'Non' }}</td>
                 <td>
                     {% for role in user.roles %}
                         <span class="badge badge-{{ role|lower|replace({'role_': ''}) }}">
@@ -53,7 +55,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="7" class="empty-table">Aucun utilisateur trouvé</td>
+                <td colspan="8" class="empty-table">Aucun utilisateur trouvé</td>
             </tr>
             {% endfor %}
         </tbody>

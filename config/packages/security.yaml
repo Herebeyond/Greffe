@@ -24,6 +24,7 @@ security:
             logout:
                 path: app_logout
                 target: app_home
+            access_denied_handler: App\Security\AccessDeniedHandler
 
             # https://symfony.com/doc/current/security/impersonating_user.html
             # switch_user: true
@@ -34,10 +35,18 @@ security:
         - { path: ^/, roles: ROLE_USER }
 
     role_hierarchy:
-        ROLE_DOCTOR: ROLE_USER
+        # Medical staff roles
+        # Nurses have read-only access (can view but not modify medical records)
         ROLE_NURSE: ROLE_USER
+        # Doctors have full medical access
+        ROLE_DOCTOR: ROLE_USER
+        # Patient role
         ROLE_PATIENT: ROLE_USER
-        ROLE_ADMIN: [ROLE_DOCTOR, ROLE_NURSE]
+        # Technical admin: manages users and system config, NO patient data access
+        ROLE_TECH_ADMIN: ROLE_USER
+        # Medical admin: senior doctor with admin privileges (delete records, edit HLA, etc.)
+        # Must be a healthcare professional — patient access follows normal rules (CHU/assigned)
+        ROLE_MEDICAL_ADMIN: [ROLE_DOCTOR, ROLE_TECH_ADMIN]
 
 when@test:
     security:

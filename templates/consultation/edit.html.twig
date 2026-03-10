@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier consultation - {{ patient.fullName }}{% endblock %}
+
+{% block body %}
+<div class="patient-page">
+    {% include 'patient/_medical_nav.html.twig' %}
+
+    <div class="section-header">
+        <h2>Modifier la consultation</h2>
+    </div>
+
+    <div class="form-container">
+        {{ form_start(form) }}
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.date) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.type) }}
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_row(form.practitionerName) }}
+            </div>
+            <div class="form-group">
+                {{ form_row(form.observations) }}
+            </div>
+            <div class="form-group">
+                {{ form_row(form.treatmentNotes) }}
+            </div>
+            <div class="form-group">
+                {{ form_row(form.nextAppointmentDate) }}
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                <a href="{{ path('app_consultation_index', {patientId: patient.id}) }}" class="btn btn-secondary">Annuler</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
