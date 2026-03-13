@@ -1,0 +1,261 @@
+{# Donor data sub-form - rendered when donor type is selected #}
+{% if donorForm is not null %}
+<fieldset class="form-fieldset donor-fieldset">
+    <legend>Données du donneur</legend>
+
+    {{ form_start(donorForm) }}
+
+    {# Common fields #}
+    <h3>Identification</h3>
+    <div class="form-grid">
+        <div class="form-group">
+            {{ form_row(donorForm.cristalNumber) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.bloodGroup) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.rhesus) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.sex) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.age) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.height) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.weight) }}
+        </div>
+    </div>
+
+    {# Living donor specific #}
+    {% if donorType == 'living' %}
+    <h3>Donneur vivant</h3>
+    <div class="form-grid">
+        <div class="form-group">
+            {{ form_row(donorForm.lastName) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.firstName) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.relationshipType) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.relationshipComment) }}
+        </div>
+    </div>
+    <div class="form-grid">
+        <div class="form-group">
+            {{ form_row(donorForm.creatinine) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.isotopicClearance) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.proteinuria) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.approach) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.robot) }}
+        </div>
+    </div>
+    {% endif %}
+
+    {# Deceased donor specific #}
+    {% if donorType == 'deceased_encephalic' or donorType == 'deceased_cardiac_arrest' %}
+    <h3>Donneur décédé</h3>
+    <div class="form-grid">
+        <div class="form-group">
+            {{ form_row(donorForm.originCity) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.deathCause) }}
+        </div>
+    </div>
+    <div class="form-group">
+        {{ form_row(donorForm.deathCauseComment) }}
+    </div>
+    <div class="form-grid">
+        <div class="form-group">
+            {{ form_row(donorForm.extendedCriteriaDonor) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.cardiacArrest) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.cardiacArrestDuration) }}
+        </div>
+    </div>
+    <div class="form-grid">
+        <div class="form-group">
+            {{ form_row(donorForm.meanArterialPressure) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.amines) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.transfusion) }}
+        </div>
+    </div>
+    <div class="form-grid" id="transfusion-fields">
+        <div class="form-group">
+            {{ form_row(donorForm.cgr) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.cpa) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.pfc) }}
+        </div>
+    </div>
+    <div class="form-grid">
+        <div class="form-group">
+            {{ form_row(donorForm.creatinineArrival) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.creatinineSample) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.ureter) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.conservationLiquid) }}
+        </div>
+    </div>
+
+    <h3>Athérome</h3>
+    <div class="checkbox-group">
+        {{ form_row(donorForm.aortaAtheroma) }}
+        {{ form_row(donorForm.calcifiedAortaPlaques) }}
+        {{ form_row(donorForm.ostiumArterAtheroma) }}
+        {{ form_row(donorForm.calcifiedOstiumPlaques) }}
+        {{ form_row(donorForm.renalArteryAtheroma) }}
+        {{ form_row(donorForm.calcifiedRenalPlaques) }}
+        {{ form_row(donorForm.digestiveWound) }}
+        {{ form_row(donorForm.conservationLiquidInfection) }}
+    </div>
+    {% endif %}
+
+    {# HLA Grouping #}
+    <h3>Groupage HLA du donneur</h3>
+    <div class="form-grid">
+        <div class="form-group">
+            {{ form_row(donorForm.hlaA) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.hlaB) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.hlaCw) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.hlaDR) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.hlaDQ) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.hlaDP) }}
+        </div>
+    </div>
+
+    {# Serology #}
+    <h3>Sérologie</h3>
+    <div class="form-grid">
+        <div class="form-group">
+            {{ form_row(donorForm.cmv) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.ebv) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.hiv) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.htlv) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.syphilis) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.hcv) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.agHbs) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.acHbs) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.acHbc) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.toxoplasmosis) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.arnc) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.dnaB) }}
+        </div>
+    </div>
+
+    {# Surgical details #}
+    <h3>Détails chirurgicaux (donneur)</h3>
+    <div class="form-grid">
+        <div class="form-group">
+            {{ form_row(donorForm.donorSurgeonName) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.clampingDate) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.clampingTime) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.donorHarvestSide) }}
+        </div>
+    </div>
+    <div class="form-grid">
+        <div class="form-group">
+            {{ form_row(donorForm.mainArtery) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.upperPolarArtery) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.lowerPolarArtery) }}
+        </div>
+    </div>
+    <div class="form-grid">
+        <div class="form-group">
+            {{ form_row(donorForm.vein) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.veinComment) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.perfusionMachine) }}
+        </div>
+        <div class="form-group">
+            {{ form_row(donorForm.perfusionLiquid) }}
+        </div>
+    </div>
+
+    <div class="form-group">
+        {{ form_row(donorForm.patientComment) }}
+    </div>
+
+    {{ form_end(donorForm) }}
+</fieldset>
+{% else %}
+    <div class="alert alert-info">
+        Sélectionnez un type de donneur pour afficher le formulaire donneur.
+    </div>
+{% endif %}

@@ -14,6 +14,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Regex;
 
 class UserType extends AbstractType
 {
@@ -70,7 +71,11 @@ class UserType extends AbstractType
                 ],
                 'constraints' => [
                     new NotBlank(message: 'Veuillez entrer un mot de passe'),
-                    new Length(min: 6, max: 4096, minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères'),
+                    new Length(min: 8, max: 4096, minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères'),
+                    new Regex(pattern: '/[A-Z]/', message: 'Le mot de passe doit contenir au moins une lettre majuscule'),
+                    new Regex(pattern: '/[a-z]/', message: 'Le mot de passe doit contenir au moins une lettre minuscule'),
+                    new Regex(pattern: '/[0-9]/', message: 'Le mot de passe doit contenir au moins un chiffre'),
+                    new Regex(pattern: '/[^a-zA-Z0-9]/', message: 'Le mot de passe doit contenir au moins un caractère spécial'),
                 ],
             ]);
         } else {
@@ -87,7 +92,11 @@ class UserType extends AbstractType
                     'attr' => ['placeholder' => 'Confirmer le nouveau mot de passe'],
                 ],
                 'constraints' => [
-                    new Length(min: 6, max: 4096, minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères'),
+                    new Length(min: 8, max: 4096, minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères'),
+                    new Regex(pattern: '/[A-Z]/', message: 'Le mot de passe doit contenir au moins une lettre majuscule'),
+                    new Regex(pattern: '/[a-z]/', message: 'Le mot de passe doit contenir au moins une lettre minuscule'),
+                    new Regex(pattern: '/[0-9]/', message: 'Le mot de passe doit contenir au moins un chiffre'),
+                    new Regex(pattern: '/[^a-zA-Z0-9]/', message: 'Le mot de passe doit contenir au moins un caractère spécial'),
                 ],
             ]);
         }

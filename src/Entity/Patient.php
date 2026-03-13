@@ -69,6 +69,13 @@ class Patient
     private ?string $bloodGroup = null;
 
     /**
+     * Rhesus factor (+, -).
+     */
+    #[ORM\Column(length: 1, nullable: true)]
+    #[Assert\Choice(choices: ['+', '-'], message: 'Rhésus invalide')]
+    private ?string $rhesus = null;
+
+    /**
      * Sex (M, F).
      */
     #[ORM\Column(length: 1, nullable: true)]
@@ -195,6 +202,30 @@ class Patient
         $this->bloodGroup = $bloodGroup;
 
         return $this;
+    }
+
+    public function getRhesus(): ?string
+    {
+        return $this->rhesus;
+    }
+
+    public function setRhesus(?string $rhesus): static
+    {
+        $this->rhesus = $rhesus;
+
+        return $this;
+    }
+
+    /**
+     * Full blood group with rhesus (e.g. "A+", "O-").
+     */
+    public function getFullBloodGroup(): ?string
+    {
+        if ($this->bloodGroup === null) {
+            return null;
+        }
+
+        return $this->bloodGroup . ($this->rhesus ?? '');
     }
 
     public function getSex(): ?string

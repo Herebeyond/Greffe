@@ -44,6 +44,26 @@
                     <label for="city">Ville de résidence</label>
                     <input type="text" id="city" name="city" value="{{ criteria.city }}" placeholder="Ex: Paris">
                 </div>
+
+                <div class="form-group">
+                    <label for="bloodGroup">Groupe sanguin</label>
+                    <select id="bloodGroup" name="bloodGroup">
+                        <option value="">Tous</option>
+                        <option value="A" {{ criteria.bloodGroup == 'A' ? 'selected' }}>A</option>
+                        <option value="B" {{ criteria.bloodGroup == 'B' ? 'selected' }}>B</option>
+                        <option value="AB" {{ criteria.bloodGroup == 'AB' ? 'selected' }}>AB</option>
+                        <option value="O" {{ criteria.bloodGroup == 'O' ? 'selected' }}>O</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="rhesus">Rhésus</label>
+                    <select id="rhesus" name="rhesus">
+                        <option value="">Tous</option>
+                        <option value="+" {{ criteria.rhesus == '+' ? 'selected' }}>+</option>
+                        <option value="-" {{ criteria.rhesus == '-' ? 'selected' }}>−</option>
+                    </select>
+                </div>
             </div>
             
             <div class="search-actions">
@@ -66,6 +86,8 @@
                         <input type="hidden" name="firstName" value="{{ criteria.firstName }}">
                         <input type="hidden" name="fileNumber" value="{{ criteria.fileNumber }}">
                         <input type="hidden" name="city" value="{{ criteria.city }}">
+                        <input type="hidden" name="bloodGroup" value="{{ criteria.bloodGroup }}">
+                        <input type="hidden" name="rhesus" value="{{ criteria.rhesus }}">
                         <input type="hidden" name="confirmed" value="1">
                         <button type="submit" class="btn btn-primary">Oui, afficher</button>
                     </form>
@@ -101,7 +123,7 @@
                             <td>{{ patient.fileNumber }}</td>
                             <td>{{ patient.city }}</td>
                             <td>{{ patient.sexLabel ?? '-' }}</td>
-                            <td>{{ patient.bloodGroup ?? '-' }}</td>
+                            <td>{{ patient.fullBloodGroup ?? '-' }}</td>
                             <td class="actions-cell">
                                 {% if is_granted('VIEW_PATIENT', patient) %}
                                 <a href="{{ path('app_patient_show', {id: patient.id}) }}" class="btn btn-small">Voir</a>

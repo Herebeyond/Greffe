@@ -38,6 +38,8 @@ class PatientController extends AbstractController
             'firstName' => $bag->get('firstName', ''),
             'fileNumber' => $bag->get('fileNumber', ''),
             'city' => $bag->get('city', ''),
+            'bloodGroup' => $bag->get('bloodGroup', ''),
+            'rhesus' => $bag->get('rhesus', ''),
         ];
 
         // Validate CSRF token on POST requests
@@ -51,7 +53,9 @@ class PatientController extends AbstractController
         $hasSearchCriteria = !empty($criteria['lastName']) 
             || !empty($criteria['firstName']) 
             || !empty($criteria['fileNumber']) 
-            || !empty($criteria['city']);
+            || !empty($criteria['city'])
+            || !empty($criteria['bloodGroup'])
+            || !empty($criteria['rhesus']);
 
         $patients = [];
         $total = 0;

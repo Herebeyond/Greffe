@@ -29,7 +29,7 @@
         <nav class="medical-nav">
             <a href="{{ path('app_medical_history_index', {patientId: patient.id}) }}" class="medical-nav-item">Antécédents</a>
             <a href="{{ path('app_consultation_index', {patientId: patient.id}) }}" class="medical-nav-item">Consultations</a>
-            <span class="medical-nav-item disabled" title="À venir">Greffes</span>
+            <a href="{{ path('app_transplant_index', {patientId: patient.id}) }}" class="medical-nav-item">Greffes</a>
             <a href="{{ path('app_therapeutic_education_index', {patientId: patient.id}) }}" class="medical-nav-item">ETP</a>
             <a href="{{ path('app_biological_result_index', {patientId: patient.id}) }}" class="medical-nav-item">Résultats biologiques</a>
         </nav>
@@ -86,7 +86,7 @@
                     <span class="detail-label">Groupe sanguin</span>
                     <span class="detail-value">
                         {% if patient.bloodGroup %}
-                            <span class="blood-group blood-group-{{ patient.bloodGroup }}">{{ patient.bloodGroup }}</span>
+                            <span class="blood-group blood-group-{{ patient.bloodGroup }}">{{ patient.fullBloodGroup }}</span>
                         {% else %}
                             <span class="detail-empty">Non renseigné</span>
                         {% endif %}

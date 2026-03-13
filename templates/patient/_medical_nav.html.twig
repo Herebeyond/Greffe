@@ -23,7 +23,8 @@
            class="medical-nav-item{{ activeTab|default('') == 'antecedents' ? ' active' : '' }}">Antécédents</a>
         <a href="{{ path('app_consultation_index', {patientId: patient.id}) }}"
            class="medical-nav-item{{ activeTab|default('') == 'consultations' ? ' active' : '' }}">Consultations</a>
-        <span class="medical-nav-item disabled" title="À venir">Greffes</span>
+        <a href="{{ path('app_transplant_index', {patientId: patient.id}) }}"
+           class="medical-nav-item{{ activeTab|default('') == 'greffes' ? ' active' : '' }}">Greffes</a>
         <a href="{{ path('app_therapeutic_education_index', {patientId: patient.id}) }}"
            class="medical-nav-item{{ activeTab|default('') == 'etp' ? ' active' : '' }}">ETP</a>
         <a href="{{ path('app_biological_result_index', {patientId: patient.id}) }}"

@@ -45,4 +45,31 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    /**
+     * Find active tech admin emails for the "forgot password" contact list.
+     *
+     * @return array<array{name: string, email: string}>
+     */
+    public function findTechAdminEmails(): array
+    {
+        $users = $this->createQueryBuilder('u')
+            ->andWhere('u.isActive = true')
+            ->orderBy('u.surname', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        $admins = [];
+        foreach ($users as $user) {
+            if (in_array('ROLE_TECH_ADMIN', $user->getRoles(), true)
+                || in_array('ROLE_MEDICAL_ADMIN', $user->getRoles(), true)) {
+                $admins[] = [
+                    'name' => $user->getName() . ' ' . $user->getSurname(),
+                    'email' => $user->getEmail(),
+                ];
+            }
+        }
+
+        return $admins;
+    }
 }

@@ -40,8 +40,27 @@ The platform will integrate with the French national organ allocation system (CR
 ├── frankenphp/             # FrankenPHP configuration
 ├── public/                 # Web root
 ├── src/                    # Application source code
-│   ├── Controller/         # Controllers (empty)
+│   ├── Command/            # Console commands (encryption key generation)
+│   ├── Controller/         # Controllers (Home, Login, Patient, Consultation,
+│   │                       #   BiologicalResult, MedicalHistory, TherapeuticEducation,
+│   │                       #   Transplant, Donor, Admin, Password, Profile)
+│   ├── DataFixtures/       # Doctrine fixtures for test data
+│   ├── Doctrine/           # Custom Doctrine types (encrypted_string)
+│   ├── Entity/             # Doctrine entities (User, Patient, Consultation,
+│   │                       #   BiologicalResult, MedicalHistory, TherapeuticEducation,
+│   │                       #   Transplant, Donor, AuditLog, LoginActivity, PasswordHistory)
+│   ├── EventSubscriber/    # AuditLogSubscriber (route-based audit logging)
+│   ├── Form/               # Form types (Patient, Consultation, BiologicalResult,
+│   │                       #   MedicalHistory, TherapeuticEducation, Transplant,
+│   │                       #   DonorData, Donor, User, Password, etc.)
+│   ├── Repository/         # Doctrine repositories
+│   ├── Security/           # Voters (PatientAccessVoter, WriteAccessVoter),
+│   │                       #   LoginActivityListener
+│   ├── Service/            # EncryptionService
 │   └── Kernel.php          # Application kernel
+├── templates/              # Twig templates organized by feature
+├── translations/           # Translation files
+├── migrations/             # Doctrine migrations
 ├── var/                    # Cache and logs
 ├── vendor/                 # Dependencies
 ├── compose.yaml            # Docker Compose configuration
@@ -128,6 +147,55 @@ This ensures Copilot always has accurate context about the project's current sta
 
 ---
 
+## Password Management
+
+### Password History
+
+The `password_history` table stores previous password hashes to prevent reuse. When a password is changed (by admin action or self-change), the old hashed password is recorded with a timestamp and reason.
+
+- **Reuse prevention**: Checks current password + last 5 passwords in history
+- **Change tracking**: Records who initiated the change (`admin_change`, `self_change`)
+- **Change date**: `passwordChangedAt` on User entity tracks the last change date (for future forced-change policy)
+
+### Forgot Password
+
+There is **no self-service password reset flow**. If a user forgets their password, the login page displays contact information for tech administrators. Admins can reset passwords via the admin panel.
+
+---
+
+## Audit Logging
+
+The application implements a comprehensive audit trail system that logs all user actions.
+
+### How It Works
+
+- An `AuditLogSubscriber` listens to Symfony kernel controller events
+- Every significant action (view, create, edit, delete, search, password change) is logged to the `audit_log` table
+- Login/logout events are tracked separately via the existing `LoginActivity` entity
+
+### Logged Information
+
+| Field | Description |
+|-------|-------------|
+| `user` / `userIdentifier` | Who performed the action |
+| `action` | Type: view, create, edit, delete, search, password_change |
+| `entityType` | Which entity: Patient, Consultation, BiologicalResult, etc. |
+| `entityId` | ID of the affected record |
+| `routeName` | Symfony route name |
+| `httpMethod` | GET or POST |
+| `uri` | Request path |
+| `ipAddress` | Client IP |
+| `details` | Additional context (search criteria, patient ID) |
+| `createdAt` | Timestamp |
+
+### Admin Viewer
+
+- **Route**: `/admin/logs` (ROLE_TECH_ADMIN only)
+- **Filters**: by user, action type, entity type, date range
+- **Navigation**: "Journal d'audit" link in header (red admin button)
+
+---
+
 ## Docker Commands
 
 The application runs in Docker containers. Common commands:
@@ -154,6 +222,12 @@ docker compose exec php sh
 # Generate encryption key (required before first use)
 docker compose exec php bin/console app:generate-encryption-key
 ```
+
+> **⚠️ IMPORTANT**: After every code change (controller, entity, template, config, etc.), **always clear the Symfony cache**:
+> ```bash
+> docker compose exec php php bin/console cache:clear
+> ```
+> This ensures the application reflects the latest changes immediately. Failing to clear the cache can lead to stale behavior or misleading errors.
 
 ---
 
@@ -393,6 +467,7 @@ Patient identification and search criteria:
 - First name (prénom)  
 - Patient file number (numéro de dossier)
 - City of residence (ville de résidence)
+- Blood group with Rhesus factor (groupe sanguin + rhésus, e.g. "A+", "O-")
 
 **Search behavior:**
 - At least one criteria required
@@ -473,7 +548,9 @@ Values: "Advagraf", "Prograf", "Neoral", "Rapamune", "Certican", "Cellcept", "My
 
 ### Donor Entity
 
-> **Architecture Decision**: Donor data is stored as a **single JSON column** (`donorData`) on the Transplant entity rather than as separate relational columns. This simplifies the database schema for this educational project while still capturing all specification fields in the form and UI. The JSON structure follows the field definitions below.
+### Donor Entity
+
+> **Architecture Decision**: Donor data is stored as a **standalone relational entity** (`donor` table) with all specification fields as proper database columns. The Transplant entity has an optional `ManyToOne` relationship to Donor, plus a legacy `donorData` JSON column for backward compatibility. Donor pages are standalone at `/donors` (not nested under patient). Living donor names are encrypted using the `encrypted_string` Doctrine type.
 
 #### Common Fields (Living & Deceased)
 
@@ -481,6 +558,7 @@ Values: "Advagraf", "Prograf", "Neoral", "Rapamune", "Certican", "Cellcept", "My
 |-------|------|----------|-------|
 | `cristalNumber` | string | Yes | National CRISTAL reference ID |
 | `bloodGroup` | enum | Yes | "A", "B", "AB", "O" |
+| `rhesus` | enum | Yes | "+", "-" |
 | `sex` | enum | Yes | "M", "F" |
 | `age` | integer | Yes | |
 | `height` | integer | No | |

@@ -7,20 +7,29 @@
     <h1>Gestion des Greffes Rénales</h1>
 
     <nav class="home-navigation">
+        {% if not is_granted('ROLE_TECH_ADMIN') or is_granted('ROLE_MEDICAL_ADMIN') %}
         <a href="{{ path('app_patient_index') }}" class="nav-card">
             <h2>Patients</h2>
-            <p>Gérer les patients en attente ou ayant reçu une greffe</p>
+            <p>Rechercher et gérer les patients en attente ou ayant reçu une greffe rénale</p>
         </a>
 
-        <a href="#" class="nav-card">
+        <a href="{{ path('app_donor_index') }}" class="nav-card">
             <h2>Donneurs</h2>
-            <p>Gérer les donneurs vivants et décédés</p>
+            <p>Consulter les donneurs vivants et décédés</p>
+        </a>
+        {% endif %}
+
+        {% if is_granted('ROLE_TECH_ADMIN') %}
+        <a href="{{ path('app_admin_users') }}" class="nav-card nav-card-admin">
+            <h2>Gestion des utilisateurs</h2>
+            <p>Créer, modifier et gérer les comptes utilisateurs</p>
         </a>
 
-        <a href="#" class="nav-card">
-            <h2>Greffes</h2>
-            <p>Gérer les interventions de transplantation</p>
+        <a href="{{ path('app_admin_audit_logs') }}" class="nav-card nav-card-admin">
+            <h2>Journal d'audit</h2>
+            <p>Consulter l'historique des actions effectuées sur la plateforme</p>
         </a>
+        {% endif %}
     </nav>
 </div>
 {% endblock %}

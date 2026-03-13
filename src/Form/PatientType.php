@@ -71,6 +71,15 @@ class PatientType extends AbstractType
                     'O' => 'O',
                 ],
             ])
+            ->add('rhesus', ChoiceType::class, [
+                'label' => 'Rhésus',
+                'required' => false,
+                'placeholder' => 'Sélectionner...',
+                'choices' => [
+                    '+' => '+',
+                    '−' => '-',
+                ],
+            ])
             ->add('phone', TelType::class, [
                 'label' => 'Téléphone',
                 'required' => false,

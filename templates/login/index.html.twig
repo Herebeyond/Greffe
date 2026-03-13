@@ -28,6 +28,19 @@
 
             <button type="submit" class="btn btn-primary">Se connecter</button>
         </form>
+
+        <div class="form-footer">
+            <p class="forgot-password-notice">Mot de passe oublié ? Contactez un administrateur :</p>
+            {% if techAdminEmails is not empty %}
+                <ul class="admin-email-list">
+                    {% for admin in techAdminEmails %}
+                        <li><a href="mailto:{{ admin.email }}">{{ admin.name }} ({{ admin.email }})</a></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="admin-email-fallback">Aucun administrateur disponible. Veuillez contacter le service informatique.</p>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}

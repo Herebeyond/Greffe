@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Greffes - {{ patient.fullName }}{% endblock %}
+
+{% block body %}
+<div class="patient-page">
+    {% include 'patient/_medical_nav.html.twig' %}
+
+    <div class="section-header">
+        <h2>Greffes</h2>
+        {% if is_granted('CAN_WRITE') %}
+        <a href="{{ path('app_transplant_new', {patientId: patient.id}) }}" class="btn btn-primary">Ajouter une greffe</a>
+        {% endif %}
+    </div>
+
+    {% if transplants is empty %}
+        <div class="empty-state">
+            <p>Aucune greffe enregistrée pour ce patient.</p>
+        </div>
+    {% else %}
+        <div class="data-table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Rang</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Type de donneur</th>
+                        <th>Greffon</th>
+                        <th>Risque immunologique</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transplant in transplants %}
+                    <tr>
+                        <td>{{ transplant.rank }}</td>
+                        <td>{{ transplant.transplantDate|date('d/m/Y') }}</td>
+                        <td><span class="badge">{{ transplant.transplantType }}</span></td>
+                        <td>{{ transplant.donorTypeLabel }}</td>
+                        <td>
+                            {% if transplant.isGraftFunctional %}
+                                <span class="graft-status graft-functional">Fonctionnel</span>
+                            {% else %}
+                                <span class="graft-status graft-non-functional">Non fonctionnel</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="risk-badge {{ transplant.immunologicalRiskClass }}">{{ transplant.immunologicalRisk }}</span>
+                        </td>
+                        <td class="actions-cell">
+                            <a href="{{ path('app_transplant_show', {patientId: patient.id, id: transplant.id}) }}" class="btn-small">Voir</a>
+                            {% if is_granted('CAN_WRITE') %}
+                            <a href="{{ path('app_transplant_edit', {patientId: patient.id, id: transplant.id}) }}" class="btn-small">Modifier</a>
+                            {% endif %}
+                            {% if is_granted('CAN_DELETE') %}
+                            <form action="{{ path('app_transplant_delete', {patientId: patient.id, id: transplant.id}) }}" method="post" class="inline-form"
+                                  onsubmit="return confirm('Supprimer cette greffe ? Cette action est irréversible.');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ transplant.id) }}">
+                                <button type="submit" class="btn-small btn-small-danger">Supprimer</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

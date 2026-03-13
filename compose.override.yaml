@@ -11,7 +11,10 @@ services:
       - ./frankenphp/conf.d/20-app.dev.ini:/usr/local/etc/php/app.conf.d/20-app.dev.ini:ro
       # If you develop on Mac or Windows you can remove the vendor/ directory
       #  from the bind-mount for better performance by enabling the next line:
-      #- /app/vendor
+      - /app/vendor
+      # Persist encryption key across container rebuilds (VOLUME /app/var/ in Dockerfile
+      # creates an anonymous volume that is lost on rebuild)
+      - encryption-key:/app/var/encryption
     environment:
       FRANKENPHP_WORKER_CONFIG: watch
       MERCURE_EXTRA_DIRECTIVES: demo
@@ -30,3 +33,7 @@ services:
     ports:
       - "5432"
 ###< doctrine/doctrine-bundle ###
+
+volumes:
+  encryption-key:
+

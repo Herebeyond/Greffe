@@ -76,6 +76,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $cristalId = null;
 
     /**
+     * @var \DateTimeImmutable|null When the password was last changed
+     */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $passwordChangedAt = null;
+
+
+
+    /**
      * Whether this user belongs to the CHU transplant service care team.
      * CHU practitioners can access all patients in the service (Art. L1110-4, II).
      * External practitioners (city nephrologists) can only access assigned patients.
@@ -269,4 +277,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->name . ' ' . $this->surname;
     }
+
+    public function getPasswordChangedAt(): ?\DateTimeImmutable
+    {
+        return $this->passwordChangedAt;
+    }
+
+    public function setPasswordChangedAt(?\DateTimeImmutable $passwordChangedAt): static
+    {
+        $this->passwordChangedAt = $passwordChangedAt;
+
+        return $this;
+    }
+
 }

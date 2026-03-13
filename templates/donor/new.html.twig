@@ -1,0 +1,317 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau donneur{% endblock %}
+
+{% block body %}
+<div class="page-container">
+    <div class="section-header">
+        <h2>Ajouter un donneur</h2>
+    </div>
+
+    <div class="form-container transplant-form">
+        {{ form_start(form, {'attr': {'id': 'donor-form', 'novalidate': 'novalidate'}}) }}
+
+        {# Donor type #}
+        <fieldset class="form-fieldset">
+            <legend>Type de donneur</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.donorType) }}
+                </div>
+            </div>
+        </fieldset>
+
+        {# Common identification #}
+        <fieldset class="form-fieldset">
+            <legend>Identification</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.cristalNumber) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.bloodGroup) }}
+            {{ form_row(form.rhesus) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.sex) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.age) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.height) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.weight) }}
+                </div>
+            </div>
+        </fieldset>
+
+        {# Living donor specific #}
+        <fieldset class="form-fieldset" id="living-donor-fields">
+            <legend>Informations donneur vivant</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.lastName) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.firstName) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.relationshipType) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.relationshipComment) }}
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.creatinine) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.isotopicClearance) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.proteinuria) }}
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.approach) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.robot) }}
+                </div>
+            </div>
+        </fieldset>
+
+        {# Deceased donor specific #}
+        <fieldset class="form-fieldset" id="deceased-donor-fields">
+            <legend>Informations donneur décédé</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.originCity) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.deathCause) }}
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_row(form.deathCauseComment) }}
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.extendedCriteriaDonor) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.cardiacArrest) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.cardiacArrestDuration) }}
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.meanArterialPressure) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.amines) }}
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.transfusion) }}
+                </div>
+            </div>
+            <div class="form-grid" id="transfusion-fields">
+                <div class="form-group">
+                    {{ form_row(form.cgr) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.cpa) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.pfc) }}
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.creatinineArrival) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.creatinineSample) }}
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.ureter) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.conservationLiquid) }}
+                </div>
+            </div>
+
+            {# Atheroma #}
+            <h3>Athérome</h3>
+            <div class="form-grid checkbox-group">
+                <div class="form-group">
+                    {{ form_row(form.aortaAtheroma) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.calcifiedAortaPlaques) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.ostiumArteryAtheroma) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.calcifiedOstiumPlaques) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.renalArteryAtheroma) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.calcifiedRenalPlaques) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.digestiveWound) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.conservationLiquidInfection) }}
+                </div>
+            </div>
+        </fieldset>
+
+        {# HLA Grouping #}
+        <fieldset class="form-fieldset">
+            <legend>Groupage HLA</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.hlaA) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.hlaB) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.hlaCw) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.hlaDR) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.hlaDQ) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.hlaDP) }}
+                </div>
+            </div>
+        </fieldset>
+
+        {# Serology #}
+        <fieldset class="form-fieldset">
+            <legend>Sérologie</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.cmv) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.ebv) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.hiv) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.htlv) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.syphilis) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.hcv) }}
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.agHbs) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.acHbs) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.acHbc) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.toxoplasmosis) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.arnc) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.dnaB) }}
+                </div>
+            </div>
+        </fieldset>
+
+        {# Surgical details #}
+        <fieldset class="form-fieldset">
+            <legend>Détails chirurgicaux</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.donorSurgeonName) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.clampingDate) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.clampingTime) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.donorHarvestSide) }}
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.mainArtery) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.upperPolarArtery) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.lowerPolarArtery) }}
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.vein) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.veinComment) }}
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.perfusionMachine) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.perfusionLiquid) }}
+                </div>
+            </div>
+        </fieldset>
+
+        {# Comment #}
+        <div class="form-group">
+            {{ form_row(form.patientComment) }}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+            <a href="{{ path('app_donor_index') }}" class="btn btn-secondary">Annuler</a>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="/js/donor-form.js"></script>
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier greffe - {{ patient.fullName }}{% endblock %}
+
+{% block body %}
+<div class="patient-page">
+    {% include 'patient/_medical_nav.html.twig' %}
+
+    <div class="section-header">
+        <h2>Modifier la greffe n°{{ transplant.rank }}</h2>
+    </div>
+
+    <div class="form-container transplant-form">
+        {{ form_start(form) }}
+
+        {# Essential information #}
+        <fieldset class="form-fieldset">
+            <legend>Informations essentielles</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.transplantDate) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.rank) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.donorType) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.transplantType) }}
+                </div>
+            </div>
+        </fieldset>
+
+        {# Graft details #}
+        <fieldset class="form-fieldset">
+            <legend>Détails du greffon</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.isGraftFunctional) }}
+                </div>
+            </div>
+            <div class="form-grid" id="graft-end-fields">
+                <div class="form-group">
+                    {{ form_row(form.graftEndDate) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.graftEndCause) }}
+                </div>
+            </div>
+        </fieldset>
+
+        {# Surgical details #}
+        <fieldset class="form-fieldset">
+            <legend>Détails chirurgicaux</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.surgeonName) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.declampingDate) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.declampingTime) }}
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.harvestSide) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.transplantSide) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.peritonealPosition) }}
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.totalIschemiaMinutes) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.anastomosisDuration) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.jjProbe) }}
+                </div>
+            </div>
+        </fieldset>
+
+        {# Virological status #}
+        <fieldset class="form-fieldset">
+            <legend>Statut virologique</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.cmvStatus) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.ebvStatus) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.toxoplasmosisStatus) }}
+                </div>
+            </div>
+        </fieldset>
+
+        {# HLA Incompatibility #}
+        <fieldset class="form-fieldset">
+            <legend>Incompatibilité HLA</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.hlaA) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.hlaB) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.hlaCw) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.hlaDR) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.hlaDQ) }}
+                </div>
+                <div class="form-group">
+                    {{ form_row(form.hlaDP) }}
+                </div>
+            </div>
+        </fieldset>
+
+        {# Immunological risk #}
+        <fieldset class="form-fieldset">
+            <legend>Risque immunologique</legend>
+            <div class="form-group">
+                {{ form_row(form.immunologicalRisk) }}
+            </div>
+        </fieldset>
+
+        {# Immunosuppressive conditioning #}
+        <fieldset class="form-fieldset">
+            <legend>Conditionnement immunosuppresseur</legend>
+            <div class="checkbox-group">
+                {{ form_row(form.immunosuppressiveConditioning) }}
+            </div>
+        </fieldset>
+
+        {# Dialysis #}
+        <fieldset class="form-fieldset">
+            <legend>Dialyse</legend>
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_row(form.dialysis) }}
+                </div>
+                <div class="form-group" id="dialysis-date-field">
+                    {{ form_row(form.lastDialysisDate) }}
+                </div>
+            </div>
+        </fieldset>
+
+        {# Protocol #}
+        <fieldset class="form-fieldset">
+            <legend>Protocole</legend>
+            <div class="form-group">
+                {{ form_row(form.hasProtocol) }}
+            </div>
+        </fieldset>
+
+        {# Comment #}
+        <div class="form-group">
+            {{ form_row(form.comment) }}
+        </div>
+
+        {{ form_end(form) }}
+
+        {# Donor data sub-form #}
+        {% include 'transplant/_donor_form.html.twig' %}
+
+        <div class="form-actions">
+            <button type="submit" form="transplant" class="btn btn-primary">Enregistrer</button>
+            <a href="{{ path('app_transplant_index', {patientId: patient.id}) }}" class="btn btn-secondary">Annuler</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="/js/transplant-form.js"></script>
+{% endblock %}

@@ -14,6 +14,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private Environment $twig,
+        private string $kernelEnvironment,
     ) {
     }
 
@@ -26,6 +27,11 @@ class ExceptionSubscriber implements EventSubscriberInterface
 
     public function onKernelException(ExceptionEvent $event): void
     {
+        // In dev mode, let Symfony's debug error handler show the full exception
+        if ($this->kernelEnvironment === 'dev') {
+            return;
+        }
+
         if (!$event->isMainRequest()) {
             return;
         }

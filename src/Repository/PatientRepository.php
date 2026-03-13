@@ -72,6 +72,18 @@ class PatientRepository extends ServiceEntityRepository
                ->setParameter('city', '%' . $criteria['city'] . '%');
         }
 
+        // Filter by blood group (not encrypted)
+        if (!empty($criteria['bloodGroup'])) {
+            $qb->andWhere('p.bloodGroup = :bloodGroup')
+               ->setParameter('bloodGroup', $criteria['bloodGroup']);
+        }
+
+        // Filter by rhesus (not encrypted)
+        if (!empty($criteria['rhesus'])) {
+            $qb->andWhere('p.rhesus = :rhesus')
+               ->setParameter('rhesus', $criteria['rhesus']);
+        }
+
         // Get all matching patients (we need to filter encrypted fields in PHP)
         $patients = $qb->orderBy('p.lastName', 'ASC')
                        ->addOrderBy('p.firstName', 'ASC')

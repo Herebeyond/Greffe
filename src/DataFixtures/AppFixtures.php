@@ -4,6 +4,7 @@ namespace App\DataFixtures;
 
 use App\Entity\BiologicalResult;
 use App\Entity\Consultation;
+use App\Entity\Donor;
 use App\Entity\MedicalHistory;
 use App\Entity\Patient;
 use App\Entity\TherapeuticEducation;
@@ -28,6 +29,7 @@ class AppFixtures extends Fixture
 
         // Load medical data after flush so patient IDs are available
         $this->loadMedicalData($manager);
+        $this->loadDonors($manager);
 
         $manager->flush();
     }
@@ -108,6 +110,16 @@ class AppFixtures extends Fixture
         $disabled->setPassword($this->passwordHasher->hashPassword($disabled, 'password'));
         $disabled->setIsActive(false);
         $manager->persist($disabled);
+
+        // Test user: Benjamin Baillard (for testing password reset)
+        $benjamin = new User();
+        $benjamin->setName('Benjamin');
+        $benjamin->setSurname('Baillard');
+        $benjamin->setEmail('baillard.bjm2@orange.fr');
+        $benjamin->setRoles(['ROLE_DOCTOR']);
+        $benjamin->setPassword($this->passwordHasher->hashPassword($benjamin, 'password'));
+        $benjamin->setIsChuPractitioner(true);
+        $manager->persist($benjamin);
     }
 
     private function loadPatients(ObjectManager $manager): void
@@ -117,35 +129,35 @@ class AppFixtures extends Fixture
 
         $patientsData = [
             // Paris region
-            ['fileNumber' => '2024-001', 'lastName' => 'Martin', 'firstName' => 'Pierre', 'city' => 'Paris', 'birthDate' => '1965-03-15', 'sex' => 'M', 'bloodGroup' => 'A', 'phone' => '06 12 34 56 78', 'email' => 'pierre.martin@email.fr'],
-            ['fileNumber' => '2024-002', 'lastName' => 'Dupont', 'firstName' => 'Marie', 'city' => 'Paris', 'birthDate' => '1978-07-22', 'sex' => 'F', 'bloodGroup' => 'O', 'phone' => '06 23 45 67 89', 'email' => 'marie.dupont@email.fr'],
-            ['fileNumber' => '2024-010', 'lastName' => 'Fournier', 'firstName' => 'Isabelle', 'city' => 'Paris', 'birthDate' => '1982-01-28', 'sex' => 'F', 'bloodGroup' => 'AB'],
-            ['fileNumber' => '2024-011', 'lastName' => 'Leroy', 'firstName' => 'Antoine', 'city' => 'Paris', 'birthDate' => '1970-05-10', 'sex' => 'M', 'bloodGroup' => 'A'],
-            ['fileNumber' => '2024-012', 'lastName' => 'Dubois', 'firstName' => 'Nathalie', 'city' => 'Versailles', 'birthDate' => '1983-09-14', 'sex' => 'F', 'bloodGroup' => 'B'],
-            ['fileNumber' => '2024-013', 'lastName' => 'Lambert', 'firstName' => 'Christophe', 'city' => 'Boulogne-Billancourt', 'birthDate' => '1958-12-03', 'sex' => 'M', 'bloodGroup' => 'O'],
-            ['fileNumber' => '2024-014', 'lastName' => 'Girard', 'firstName' => 'Sylvie', 'city' => 'Saint-Denis', 'birthDate' => '1975-04-28', 'sex' => 'F', 'bloodGroup' => 'A'],
-            ['fileNumber' => '2024-015', 'lastName' => 'Bonnet', 'firstName' => 'Alain', 'city' => 'Argenteuil', 'birthDate' => '1962-08-19', 'sex' => 'M', 'bloodGroup' => 'AB', 'comment' => 'Antécédent HTA'],
+            ['fileNumber' => '2024-001', 'lastName' => 'Martin', 'firstName' => 'Pierre', 'city' => 'Paris', 'birthDate' => '1965-03-15', 'sex' => 'M', 'bloodGroup' => 'A', 'rhesus' => '+', 'phone' => '06 12 34 56 78', 'email' => 'pierre.martin@email.fr'],
+            ['fileNumber' => '2024-002', 'lastName' => 'Dupont', 'firstName' => 'Marie', 'city' => 'Paris', 'birthDate' => '1978-07-22', 'sex' => 'F', 'bloodGroup' => 'O', 'rhesus' => '+', 'phone' => '06 23 45 67 89', 'email' => 'marie.dupont@email.fr'],
+            ['fileNumber' => '2024-010', 'lastName' => 'Fournier', 'firstName' => 'Isabelle', 'city' => 'Paris', 'birthDate' => '1982-01-28', 'sex' => 'F', 'bloodGroup' => 'AB', 'rhesus' => '-'],
+            ['fileNumber' => '2024-011', 'lastName' => 'Leroy', 'firstName' => 'Antoine', 'city' => 'Paris', 'birthDate' => '1970-05-10', 'sex' => 'M', 'bloodGroup' => 'A', 'rhesus' => '-'],
+            ['fileNumber' => '2024-012', 'lastName' => 'Dubois', 'firstName' => 'Nathalie', 'city' => 'Versailles', 'birthDate' => '1983-09-14', 'sex' => 'F', 'bloodGroup' => 'B', 'rhesus' => '+'],
+            ['fileNumber' => '2024-013', 'lastName' => 'Lambert', 'firstName' => 'Christophe', 'city' => 'Boulogne-Billancourt', 'birthDate' => '1958-12-03', 'sex' => 'M', 'bloodGroup' => 'O', 'rhesus' => '-'],
+            ['fileNumber' => '2024-014', 'lastName' => 'Girard', 'firstName' => 'Sylvie', 'city' => 'Saint-Denis', 'birthDate' => '1975-04-28', 'sex' => 'F', 'bloodGroup' => 'A', 'rhesus' => '+'],
+            ['fileNumber' => '2024-015', 'lastName' => 'Bonnet', 'firstName' => 'Alain', 'city' => 'Argenteuil', 'birthDate' => '1962-08-19', 'sex' => 'M', 'bloodGroup' => 'AB', 'rhesus' => '+', 'comment' => 'Antécédent HTA'],
 
             // Lyon region
-            ['fileNumber' => '2024-003', 'lastName' => 'Bernard', 'firstName' => 'Jean', 'city' => 'Lyon', 'birthDate' => '1952-11-08', 'sex' => 'M', 'bloodGroup' => 'B', 'phone' => '06 34 56 78 90'],
-            ['fileNumber' => '2024-016', 'lastName' => 'Rousseau', 'firstName' => 'Émilie', 'city' => 'Lyon', 'birthDate' => '1990-02-07', 'sex' => 'F', 'bloodGroup' => 'O'],
-            ['fileNumber' => '2024-017', 'lastName' => 'Vincent', 'firstName' => 'Mathieu', 'city' => 'Villeurbanne', 'birthDate' => '1967-06-30', 'sex' => 'M', 'bloodGroup' => 'A'],
-            ['fileNumber' => '2024-018', 'lastName' => 'Muller', 'firstName' => 'Catherine', 'city' => 'Vénissieux', 'birthDate' => '1979-11-22', 'sex' => 'F', 'bloodGroup' => 'B'],
+            ['fileNumber' => '2024-003', 'lastName' => 'Bernard', 'firstName' => 'Jean', 'city' => 'Lyon', 'birthDate' => '1952-11-08', 'sex' => 'M', 'bloodGroup' => 'B', 'rhesus' => '+', 'phone' => '06 34 56 78 90'],
+            ['fileNumber' => '2024-016', 'lastName' => 'Rousseau', 'firstName' => 'Émilie', 'city' => 'Lyon', 'birthDate' => '1990-02-07', 'sex' => 'F', 'bloodGroup' => 'O', 'rhesus' => '-'],
+            ['fileNumber' => '2024-017', 'lastName' => 'Vincent', 'firstName' => 'Mathieu', 'city' => 'Villeurbanne', 'birthDate' => '1967-06-30', 'sex' => 'M', 'bloodGroup' => 'A', 'rhesus' => '+'],
+            ['fileNumber' => '2024-018', 'lastName' => 'Muller', 'firstName' => 'Catherine', 'city' => 'Vénissieux', 'birthDate' => '1979-11-22', 'sex' => 'F', 'bloodGroup' => 'B', 'rhesus' => '-'],
 
             // Marseille region
-            ['fileNumber' => '2024-004', 'lastName' => 'Petit', 'firstName' => 'Claire', 'city' => 'Marseille', 'birthDate' => '1989-02-14', 'sex' => 'F', 'bloodGroup' => 'AB'],
-            ['fileNumber' => '2024-019', 'lastName' => 'Guerin', 'firstName' => 'Patrick', 'city' => 'Marseille', 'birthDate' => '1955-03-25', 'sex' => 'M', 'bloodGroup' => 'O', 'comment' => 'Deuxième greffe rénale'],
-            ['fileNumber' => '2024-020', 'lastName' => 'Mercier', 'firstName' => 'Sandrine', 'city' => 'Aix-en-Provence', 'birthDate' => '1984-07-16', 'sex' => 'F', 'bloodGroup' => 'A'],
-            ['fileNumber' => '2024-021', 'lastName' => 'Blanc', 'firstName' => 'Didier', 'city' => 'Aubagne', 'birthDate' => '1969-10-02', 'sex' => 'M', 'bloodGroup' => 'B'],
+            ['fileNumber' => '2024-004', 'lastName' => 'Petit', 'firstName' => 'Claire', 'city' => 'Marseille', 'birthDate' => '1989-02-14', 'sex' => 'F', 'bloodGroup' => 'AB', 'rhesus' => '+'],
+            ['fileNumber' => '2024-019', 'lastName' => 'Guerin', 'firstName' => 'Patrick', 'city' => 'Marseille', 'birthDate' => '1955-03-25', 'sex' => 'M', 'bloodGroup' => 'O', 'rhesus' => '+', 'comment' => 'Deuxième greffe rénale'],
+            ['fileNumber' => '2024-020', 'lastName' => 'Mercier', 'firstName' => 'Sandrine', 'city' => 'Aix-en-Provence', 'birthDate' => '1984-07-16', 'sex' => 'F', 'bloodGroup' => 'A', 'rhesus' => '-'],
+            ['fileNumber' => '2024-021', 'lastName' => 'Blanc', 'firstName' => 'Didier', 'city' => 'Aubagne', 'birthDate' => '1969-10-02', 'sex' => 'M', 'bloodGroup' => 'B', 'rhesus' => '+'],
 
             // Toulouse region
-            ['fileNumber' => '2024-005', 'lastName' => 'Robert', 'firstName' => 'Michel', 'city' => 'Toulouse', 'birthDate' => '1971-09-30', 'sex' => 'M', 'bloodGroup' => 'A', 'comment' => 'Patient diabétique, suivi particulier nécessaire'],
-            ['fileNumber' => '2024-022', 'lastName' => 'Fabre', 'firstName' => 'Véronique', 'city' => 'Toulouse', 'birthDate' => '1976-01-12', 'sex' => 'F', 'bloodGroup' => 'O'],
-            ['fileNumber' => '2024-023', 'lastName' => 'Andre', 'firstName' => 'Olivier', 'city' => 'Blagnac', 'birthDate' => '1964-08-05', 'sex' => 'M', 'bloodGroup' => 'AB'],
+            ['fileNumber' => '2024-005', 'lastName' => 'Robert', 'firstName' => 'Michel', 'city' => 'Toulouse', 'birthDate' => '1971-09-30', 'sex' => 'M', 'bloodGroup' => 'A', 'rhesus' => '+', 'comment' => 'Patient diabétique, suivi particulier nécessaire'],
+            ['fileNumber' => '2024-022', 'lastName' => 'Fabre', 'firstName' => 'Véronique', 'city' => 'Toulouse', 'birthDate' => '1976-01-12', 'sex' => 'F', 'bloodGroup' => 'O', 'rhesus' => '-'],
+            ['fileNumber' => '2024-023', 'lastName' => 'Andre', 'firstName' => 'Olivier', 'city' => 'Blagnac', 'birthDate' => '1964-08-05', 'sex' => 'M', 'bloodGroup' => 'AB', 'rhesus' => '+'],
 
             // Nice region
-            ['fileNumber' => '2024-006', 'lastName' => 'Lefebvre', 'firstName' => 'Sophie', 'city' => 'Nice', 'birthDate' => '1985-06-18', 'sex' => 'F', 'bloodGroup' => 'O'],
-            ['fileNumber' => '2024-024', 'lastName' => 'Picard', 'firstName' => 'Laurent', 'city' => 'Nice', 'birthDate' => '1957-04-08', 'sex' => 'M', 'bloodGroup' => 'A'],
+            ['fileNumber' => '2024-006', 'lastName' => 'Lefebvre', 'firstName' => 'Sophie', 'city' => 'Nice', 'birthDate' => '1985-06-18', 'sex' => 'F', 'bloodGroup' => 'O', 'rhesus' => '+'],
+            ['fileNumber' => '2024-024', 'lastName' => 'Picard', 'firstName' => 'Laurent', 'city' => 'Nice', 'birthDate' => '1957-04-08', 'sex' => 'M', 'bloodGroup' => 'A', 'rhesus' => '-'],
             ['fileNumber' => '2024-025', 'lastName' => 'Simon', 'firstName' => 'Martine', 'city' => 'Cannes', 'birthDate' => '1972-12-20', 'sex' => 'F', 'bloodGroup' => 'B'],
             ['fileNumber' => '2024-026', 'lastName' => 'Michel', 'firstName' => 'Éric', 'city' => 'Antibes', 'birthDate' => '1980-09-03', 'sex' => 'M', 'bloodGroup' => 'O'],
 
@@ -207,6 +219,9 @@ class AppFixtures extends Fixture
             if (isset($data['bloodGroup'])) {
                 $patient->setBloodGroup($data['bloodGroup']);
             }
+            if (isset($data['rhesus'])) {
+                $patient->setRhesus($data['rhesus']);
+            }
             if (isset($data['phone'])) {
                 $patient->setPhone($data['phone']);
             }
@@ -233,12 +248,14 @@ class AppFixtures extends Fixture
         $parisFirstNames = ['Adrien', 'Alexandre', 'Alice', 'Amélie', 'Antoine', 'Arnaud', 'Arthur', 'Aurélie', 'Baptiste', 'Bastien', 'Béatrice', 'Benjamin', 'Camille', 'Cédric', 'Charlotte', 'Clara', 'Clément', 'Damien', 'Diane', 'Élise', 'Émile', 'Emma', 'Fabien', 'Florian', 'Gabriel', 'Guillaume', 'Hugo', 'Inès', 'Jade', 'Jules', 'Julie', 'Karine', 'Léa', 'Léo', 'Louis', 'Lucas', 'Lucie', 'Manon', 'Margaux', 'Mathilde', 'Maxime', 'Nathan', 'Nina', 'Noah', 'Noémie', 'Océane', 'Paul', 'Raphaël', 'Romain', 'Sarah', 'Simon', 'Théo', 'Thomas', 'Valentin', 'Valentine', 'Victor', 'Zoé', 'Yann', 'Xavier', 'Quentin'];
         $parisLastNames = ['Adam', 'Aubry', 'Barbier', 'Baron', 'Berger', 'Bertrand', 'Blanchard', 'Boucher', 'Brun', 'Carpentier', 'Chartier', 'Collet', 'Cordier', 'Coulon', 'David', 'Delorme', 'Denis', 'Descamps', 'Dufour', 'Dupuis', 'Etienne', 'Ferry', 'Fleury', 'Garnier', 'Gérard', 'Giraud', 'Grondin', 'Guillot', 'Hardy', 'Hubert', 'Jacob', 'Joly', 'Klein', 'Lacroix', 'Laurent', 'Leclerc', 'Lemoine', 'Leroux', 'Loiseau', 'Louis', 'Marchand', 'Marie', 'Martel', 'Mathieu', 'Menard', 'Monnier', 'Moulin', 'Noel', 'Olivier', 'Paris', 'Pascal', 'Pelletier', 'Pichon', 'Poirier', 'Raymond', 'Regnier', 'Rey', 'Rolland', 'Roussel', 'Roy'];
         $bloodGroups = ['A', 'B', 'AB', 'O'];
+        $rhesusValues = ['+', '-'];
 
         for ($i = 1; $i <= 300; $i++) {
             $sex = $i % 2 === 0 ? 'F' : 'M';
             $firstName = $parisFirstNames[$i % count($parisFirstNames)];
             $lastName = $parisLastNames[$i % count($parisLastNames)];
             $bloodGroup = $bloodGroups[$i % count($bloodGroups)];
+            $rhesus = $rhesusValues[$i % count($rhesusValues)];
             $year = 1950 + ($i % 45);
             $month = ($i % 12) + 1;
             $day = ($i % 28) + 1;
@@ -251,6 +268,7 @@ class AppFixtures extends Fixture
             $patient->setBirthDate(new \DateTime(sprintf('%d-%02d-%02d', $year, $month, $day)));
             $patient->setSex($sex);
             $patient->setBloodGroup($bloodGroup);
+            $patient->setRhesus($rhesus);
 
             $manager->persist($patient);
         }
@@ -377,6 +395,366 @@ class AppFixtures extends Fixture
             if (isset($data['ebvPcr'])) { $result->setEbvPcr($data['ebvPcr']); }
             if (isset($data['comment'])) { $result->setComment($data['comment']); }
             $manager->persist($result);
+        }
+    }
+
+    private function loadDonors(ObjectManager $manager): void
+    {
+        $donorsData = [
+            // Living donors
+            [
+                'donorType' => Donor::TYPE_LIVING,
+                'cristalNumber' => 'CRI-2025-V001',
+                'bloodGroup' => 'A',
+                'rhesus' => '+',
+                'sex' => 'F',
+                'age' => 42,
+                'height' => 165,
+                'weight' => 62,
+                'lastName' => 'Martin',
+                'firstName' => 'Claire',
+                'relationshipType' => 'Conjoint',
+                'creatinine' => '72.00',
+                'isotopicClearance' => '95.50',
+                'proteinuria' => '0.08',
+                'approach' => 'Cœlioscopie',
+                'robot' => true,
+                'hlaA' => 2, 'hlaB' => 7, 'hlaCw' => 4, 'hlaDR' => 11, 'hlaDQ' => 3, 'hlaDP' => 1,
+                'cmv' => '+', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
+                'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '-', 'toxoplasmosis' => '+',
+                'donorSurgeonName' => 'Dr. Legrand',
+                'clampingDate' => '2025-03-10',
+                'donorHarvestSide' => 'gauche',
+                'perfusionMachine' => 'Non',
+                'perfusionLiquid' => 'Celsior',
+            ],
+            [
+                'donorType' => Donor::TYPE_LIVING,
+                'cristalNumber' => 'CRI-2025-V002',
+                'bloodGroup' => 'O',
+                'rhesus' => '-',
+                'sex' => 'M',
+                'age' => 38,
+                'height' => 178,
+                'weight' => 80,
+                'lastName' => 'Dupont',
+                'firstName' => 'Michel',
+                'relationshipType' => 'Parent',
+                'creatinine' => '85.00',
+                'isotopicClearance' => '102.30',
+                'proteinuria' => '0.05',
+                'approach' => 'Lombotomie',
+                'robot' => false,
+                'hlaA' => 1, 'hlaB' => 8, 'hlaDR' => 15, 'hlaDQ' => 6, 'hlaDP' => null,
+                'hlaCw' => null,
+                'cmv' => '-', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
+                'agHbs' => '-', 'acHbs' => '-', 'acHbc' => '-', 'toxoplasmosis' => '-',
+                'donorSurgeonName' => 'Dr. Moreau',
+                'clampingDate' => '2025-02-20',
+                'donorHarvestSide' => 'droit',
+                'perfusionMachine' => 'Non',
+                'perfusionLiquid' => 'Viaspan',
+            ],
+            [
+                'donorType' => Donor::TYPE_LIVING,
+                'cristalNumber' => 'CRI-2025-V003',
+                'bloodGroup' => 'B',
+                'rhesus' => '+',
+                'sex' => 'F',
+                'age' => 55,
+                'height' => 160,
+                'weight' => 68,
+                'lastName' => 'Rousseau',
+                'firstName' => 'Anne',
+                'relationshipType' => '2ème degré',
+                'creatinine' => '90.00',
+                'isotopicClearance' => '88.00',
+                'proteinuria' => '0.12',
+                'approach' => 'Cœlioscopie',
+                'robot' => true,
+                'hlaA' => 3, 'hlaB' => 44, 'hlaCw' => 5, 'hlaDR' => 4, 'hlaDQ' => 8, 'hlaDP' => 2,
+                'cmv' => '+', 'ebv' => '-', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
+                'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '+', 'toxoplasmosis' => 'ND',
+                'donorSurgeonName' => 'Dr. Petit',
+                'clampingDate' => '2025-01-15',
+                'donorHarvestSide' => 'gauche',
+                'perfusionMachine' => 'Oui',
+                'perfusionLiquid' => 'IGL',
+            ],
+
+            // Deceased donors - encephalic
+            [
+                'donorType' => Donor::TYPE_DECEASED_ENCEPHALIC,
+                'cristalNumber' => 'CRI-2025-D001',
+                'bloodGroup' => 'A',
+                'rhesus' => '+',
+                'sex' => 'M',
+                'age' => 52,
+                'height' => 175,
+                'weight' => 78,
+                'originCity' => 'Lyon',
+                'deathCause' => 'AVC hémorragique',
+                'deathCauseComment' => 'Hémorragie cérébrale massive, coma profond',
+                'extendedCriteriaDonor' => true,
+                'cardiacArrest' => false,
+                'cardiacArrestDuration' => 0,
+                'meanArterialPressure' => '75.0',
+                'amines' => true,
+                'transfusion' => true,
+                'cgr' => 4,
+                'cpa' => 1,
+                'pfc' => 2,
+                'creatinineArrival' => '98.00',
+                'creatinineSample' => '112.00',
+                'ureter' => '1',
+                'conservationLiquid' => 'Celsior',
+                'hlaA' => 2, 'hlaB' => 35, 'hlaCw' => 7, 'hlaDR' => 1, 'hlaDQ' => 5, 'hlaDP' => null,
+                'cmv' => '+', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
+                'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '-', 'toxoplasmosis' => '+',
+                'donorSurgeonName' => 'Dr. Bernard',
+                'clampingDate' => '2025-03-05',
+                'donorHarvestSide' => 'droit',
+                'mainArtery' => '1 artère principale',
+                'vein' => '1 veine rénale',
+                'perfusionMachine' => 'Oui',
+                'perfusionLiquid' => 'Celsior',
+                'aortaAtheroma' => true,
+                'calcifiedAortaPlaques' => false,
+                'renalArteryAtheroma' => false,
+            ],
+            [
+                'donorType' => Donor::TYPE_DECEASED_ENCEPHALIC,
+                'cristalNumber' => 'CRI-2025-D002',
+                'bloodGroup' => 'O',
+                'rhesus' => '-',
+                'sex' => 'F',
+                'age' => 45,
+                'height' => 162,
+                'weight' => 58,
+                'originCity' => 'Marseille',
+                'deathCause' => 'Anoxie',
+                'deathCauseComment' => 'Arrêt cardiaque récupéré puis mort encéphalique',
+                'extendedCriteriaDonor' => false,
+                'cardiacArrest' => true,
+                'cardiacArrestDuration' => 15,
+                'meanArterialPressure' => '82.0',
+                'amines' => false,
+                'transfusion' => false,
+                'creatinineArrival' => '75.00',
+                'creatinineSample' => '88.00',
+                'ureter' => '1',
+                'conservationLiquid' => 'Viaspan',
+                'hlaA' => 11, 'hlaB' => 27, 'hlaCw' => null, 'hlaDR' => 7, 'hlaDQ' => 2, 'hlaDP' => null,
+                'cmv' => '-', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
+                'agHbs' => '-', 'acHbs' => '-', 'acHbc' => '-', 'toxoplasmosis' => '-',
+                'donorSurgeonName' => 'Dr. Girard',
+                'clampingDate' => '2025-02-28',
+                'donorHarvestSide' => 'gauche',
+                'mainArtery' => '1 artère principale',
+                'upperPolarArtery' => '1 polaire supérieure',
+                'vein' => '1 veine rénale',
+                'perfusionMachine' => 'Oui',
+                'perfusionLiquid' => 'Viaspan',
+            ],
+            [
+                'donorType' => Donor::TYPE_DECEASED_ENCEPHALIC,
+                'cristalNumber' => 'CRI-2025-D003',
+                'bloodGroup' => 'AB',
+                'rhesus' => '+',
+                'sex' => 'M',
+                'age' => 63,
+                'height' => 180,
+                'weight' => 92,
+                'originCity' => 'Bordeaux',
+                'deathCause' => 'AVC ischémique',
+                'deathCauseComment' => 'AVC ischémique massif hémisphère droit',
+                'extendedCriteriaDonor' => true,
+                'cardiacArrest' => false,
+                'cardiacArrestDuration' => 0,
+                'meanArterialPressure' => '68.0',
+                'amines' => true,
+                'transfusion' => true,
+                'cgr' => 6,
+                'cpa' => 2,
+                'pfc' => 3,
+                'creatinineArrival' => '140.00',
+                'creatinineSample' => '155.00',
+                'ureter' => '2',
+                'conservationLiquid' => 'IGL',
+                'hlaA' => 24, 'hlaB' => 51, 'hlaCw' => 1, 'hlaDR' => 13, 'hlaDQ' => 6, 'hlaDP' => 4,
+                'cmv' => '+', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
+                'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '+', 'toxoplasmosis' => '+',
+                'donorSurgeonName' => 'Dr. Duval',
+                'clampingDate' => '2025-01-22',
+                'donorHarvestSide' => 'droit',
+                'mainArtery' => '2 artères',
+                'vein' => '1 veine rénale',
+                'perfusionMachine' => 'Oui',
+                'perfusionLiquid' => 'IGL',
+                'aortaAtheroma' => true,
+                'calcifiedAortaPlaques' => true,
+                'ostiumArteryAtheroma' => true,
+                'renalArteryAtheroma' => false,
+            ],
+
+            // Deceased donor - cardiac arrest
+            [
+                'donorType' => Donor::TYPE_DECEASED_CARDIAC_ARREST,
+                'cristalNumber' => 'CRI-2025-C001',
+                'bloodGroup' => 'B',
+                'rhesus' => '-',
+                'sex' => 'M',
+                'age' => 48,
+                'height' => 172,
+                'weight' => 75,
+                'originCity' => 'Toulouse',
+                'deathCause' => 'AVP',
+                'deathCauseComment' => 'Accident de la voie publique, traumatisme thoracique sévère',
+                'extendedCriteriaDonor' => false,
+                'cardiacArrest' => true,
+                'cardiacArrestDuration' => 8,
+                'meanArterialPressure' => '90.0',
+                'amines' => true,
+                'transfusion' => true,
+                'cgr' => 8,
+                'cpa' => 2,
+                'pfc' => 4,
+                'creatinineArrival' => '110.00',
+                'creatinineSample' => '130.00',
+                'ureter' => '1',
+                'conservationLiquid' => 'Scott',
+                'hlaA' => 29, 'hlaB' => 13, 'hlaCw' => 6, 'hlaDR' => 17, 'hlaDQ' => 9, 'hlaDP' => null,
+                'cmv' => '-', 'ebv' => '-', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
+                'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '-',
+                'donorSurgeonName' => 'Dr. Lambert',
+                'clampingDate' => '2025-03-01',
+                'donorHarvestSide' => 'gauche',
+                'mainArtery' => '1 artère rénale',
+                'vein' => '1 veine rénale',
+                'veinComment' => 'Veine courte, anastomose sur VCI',
+                'perfusionMachine' => 'Oui',
+                'perfusionLiquid' => 'Scott',
+                'digestiveWound' => true,
+            ],
+            [
+                'donorType' => Donor::TYPE_DECEASED_CARDIAC_ARREST,
+                'cristalNumber' => 'CRI-2025-C002',
+                'bloodGroup' => 'O',
+                'rhesus' => '+',
+                'sex' => 'F',
+                'age' => 35,
+                'height' => 168,
+                'weight' => 65,
+                'originCity' => 'Nantes',
+                'deathCause' => 'TC non AVP',
+                'deathCauseComment' => 'Traumatisme crânien suite à une chute domestique',
+                'extendedCriteriaDonor' => false,
+                'cardiacArrest' => true,
+                'cardiacArrestDuration' => 5,
+                'meanArterialPressure' => '95.0',
+                'amines' => false,
+                'transfusion' => false,
+                'creatinineArrival' => '65.00',
+                'creatinineSample' => '72.00',
+                'ureter' => '1',
+                'conservationLiquid' => 'Celsior',
+                'hlaA' => 32, 'hlaB' => 44, 'hlaCw' => 5, 'hlaDR' => 11, 'hlaDQ' => 7, 'hlaDP' => 2,
+                'cmv' => '+', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
+                'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '-', 'toxoplasmosis' => '+',
+                'donorSurgeonName' => 'Dr. Faure',
+                'clampingDate' => '2025-02-14',
+                'donorHarvestSide' => 'droit',
+                'mainArtery' => '1 artère rénale',
+                'vein' => '1 veine rénale',
+                'perfusionMachine' => 'Non',
+                'perfusionLiquid' => 'Celsior',
+            ],
+        ];
+
+        foreach ($donorsData as $data) {
+            $donor = new Donor();
+            $donor->setDonorType($data['donorType']);
+            $donor->setCristalNumber($data['cristalNumber']);
+            $donor->setBloodGroup($data['bloodGroup']);
+            $donor->setRhesus($data['rhesus']);
+            $donor->setSex($data['sex']);
+            $donor->setAge($data['age']);
+            if (isset($data['height'])) { $donor->setHeight($data['height']); }
+            if (isset($data['weight'])) { $donor->setWeight($data['weight']); }
+
+            // HLA
+            $donor->setHlaA($data['hlaA']);
+            $donor->setHlaB($data['hlaB']);
+            if (isset($data['hlaCw'])) { $donor->setHlaCw($data['hlaCw']); }
+            $donor->setHlaDR($data['hlaDR']);
+            $donor->setHlaDQ($data['hlaDQ']);
+            if (isset($data['hlaDP'])) { $donor->setHlaDP($data['hlaDP']); }
+
+            // Serology
+            $donor->setCmv($data['cmv']);
+            $donor->setEbv($data['ebv']);
+            $donor->setHiv($data['hiv']);
+            $donor->setHtlv($data['htlv']);
+            $donor->setSyphilis($data['syphilis']);
+            $donor->setHcv($data['hcv']);
+            $donor->setAgHbs($data['agHbs']);
+            $donor->setAcHbs($data['acHbs']);
+            $donor->setAcHbc($data['acHbc']);
+            if (isset($data['toxoplasmosis'])) { $donor->setToxoplasmosis($data['toxoplasmosis']); }
+
+            // Surgical
+            if (isset($data['donorSurgeonName'])) { $donor->setDonorSurgeonName($data['donorSurgeonName']); }
+            if (isset($data['clampingDate'])) { $donor->setClampingDate(new \DateTime($data['clampingDate'])); }
+            if (isset($data['donorHarvestSide'])) { $donor->setDonorHarvestSide($data['donorHarvestSide']); }
+            if (isset($data['mainArtery'])) { $donor->setMainArtery($data['mainArtery']); }
+            if (isset($data['upperPolarArtery'])) { $donor->setUpperPolarArtery($data['upperPolarArtery']); }
+            if (isset($data['lowerPolarArtery'])) { $donor->setLowerPolarArtery($data['lowerPolarArtery']); }
+            if (isset($data['vein'])) { $donor->setVein($data['vein']); }
+            if (isset($data['veinComment'])) { $donor->setVeinComment($data['veinComment']); }
+            if (isset($data['perfusionMachine'])) { $donor->setPerfusionMachine($data['perfusionMachine']); }
+            if (isset($data['perfusionLiquid'])) { $donor->setPerfusionLiquid($data['perfusionLiquid']); }
+
+            // Living donor specific
+            if (isset($data['lastName'])) { $donor->setLastName($data['lastName']); }
+            if (isset($data['firstName'])) { $donor->setFirstName($data['firstName']); }
+            if (isset($data['relationshipType'])) { $donor->setRelationshipType($data['relationshipType']); }
+            if (isset($data['creatinine'])) { $donor->setCreatinine($data['creatinine']); }
+            if (isset($data['isotopicClearance'])) { $donor->setIsotopicClearance($data['isotopicClearance']); }
+            if (isset($data['proteinuria'])) { $donor->setProteinuria($data['proteinuria']); }
+            if (isset($data['approach'])) { $donor->setApproach($data['approach']); }
+            if (isset($data['robot'])) { $donor->setRobot($data['robot']); }
+
+            // Deceased donor specific
+            if (isset($data['originCity'])) { $donor->setOriginCity($data['originCity']); }
+            if (isset($data['deathCause'])) { $donor->setDeathCause($data['deathCause']); }
+            if (isset($data['deathCauseComment'])) { $donor->setDeathCauseComment($data['deathCauseComment']); }
+            if (isset($data['extendedCriteriaDonor'])) { $donor->setExtendedCriteriaDonor($data['extendedCriteriaDonor']); }
+            if (isset($data['cardiacArrest'])) { $donor->setCardiacArrest($data['cardiacArrest']); }
+            if (isset($data['cardiacArrestDuration'])) { $donor->setCardiacArrestDuration($data['cardiacArrestDuration']); }
+            if (isset($data['meanArterialPressure'])) { $donor->setMeanArterialPressure($data['meanArterialPressure']); }
+            if (isset($data['amines'])) { $donor->setAmines($data['amines']); }
+            if (isset($data['transfusion'])) { $donor->setTransfusion($data['transfusion']); }
+            if (isset($data['cgr'])) { $donor->setCgr($data['cgr']); }
+            if (isset($data['cpa'])) { $donor->setCpa($data['cpa']); }
+            if (isset($data['pfc'])) { $donor->setPfc($data['pfc']); }
+            if (isset($data['creatinineArrival'])) { $donor->setCreatinineArrival($data['creatinineArrival']); }
+            if (isset($data['creatinineSample'])) { $donor->setCreatinineSample($data['creatinineSample']); }
+            if (isset($data['ureter'])) { $donor->setUreter($data['ureter']); }
+            if (isset($data['conservationLiquid'])) { $donor->setConservationLiquid($data['conservationLiquid']); }
+
+            // Atheroma
+            if (isset($data['aortaAtheroma'])) { $donor->setAortaAtheroma($data['aortaAtheroma']); }
+            if (isset($data['calcifiedAortaPlaques'])) { $donor->setCalcifiedAortaPlaques($data['calcifiedAortaPlaques']); }
+            if (isset($data['ostiumArteryAtheroma'])) { $donor->setOstiumArteryAtheroma($data['ostiumArteryAtheroma']); }
+            if (isset($data['calcifiedOstiumPlaques'])) { $donor->setCalcifiedOstiumPlaques($data['calcifiedOstiumPlaques']); }
+            if (isset($data['renalArteryAtheroma'])) { $donor->setRenalArteryAtheroma($data['renalArteryAtheroma']); }
+            if (isset($data['calcifiedRenalPlaques'])) { $donor->setCalcifiedRenalPlaques($data['calcifiedRenalPlaques']); }
+            if (isset($data['digestiveWound'])) { $donor->setDigestiveWound($data['digestiveWound']); }
+            if (isset($data['conservationLiquidInfection'])) { $donor->setConservationLiquidInfection($data['conservationLiquidInfection']); }
+
+            if (isset($data['patientComment'])) { $donor->setPatientComment($data['patientComment']); }
+
+            $manager->persist($donor);
         }
     }
 }

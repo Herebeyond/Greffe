@@ -2,9 +2,11 @@
 
 namespace App\Controller\Admin;
 
+use App\Entity\PasswordHistory;
 use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\UserRepository;
+use App\Service\PasswordHistoryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -40,6 +42,7 @@ class UserAdminController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $plainPassword = $form->get('plainPassword')->getData();
             $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
+            $user->setPasswordChangedAt(new \DateTimeImmutable());
 
             $entityManager->persist($user);
             $entityManager->flush();
@@ -60,6 +63,7 @@ class UserAdminController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher,
+        PasswordHistoryService $passwordHistoryService,
     ): Response {
         $form = $this->createForm(UserType::class, $user, ['require_password' => false]);
         $form->handleRequest($request);
@@ -67,7 +71,11 @@ class UserAdminController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $plainPassword = $form->get('plainPassword')->getData();
             if ($plainPassword) {
+                // Record old password in history
+                $passwordHistoryService->recordPasswordChange($user, PasswordHistory::REASON_ADMIN_CHANGE);
+
                 $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
+                $user->setPasswordChangedAt(new \DateTimeImmutable());
             }
 
             $entityManager->flush();

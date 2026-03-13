@@ -8,7 +8,8 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     encryption_key_path: '%env(default:default_encryption_key_path:ENCRYPTION_KEY_PATH)%'
-    default_encryption_key_path: '%kernel.project_dir%/var/encryption.key'
+    default_encryption_key_path: '%kernel.project_dir%/var/encryption/encryption.key'
+
 
 services:
     # default configuration for services in *this* file
@@ -30,6 +31,10 @@ services:
     App\Command\GenerateEncryptionKeyCommand:
         arguments:
             $projectDir: '%kernel.project_dir%'
+
+    App\EventSubscriber\ExceptionSubscriber:
+        arguments:
+            $kernelEnvironment: '%kernel.environment%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

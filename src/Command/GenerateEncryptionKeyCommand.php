@@ -32,7 +32,8 @@ class GenerateEncryptionKeyCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         
-        $keyPath = $this->projectDir . '/var/encryption.key';
+        $keyDir = $this->projectDir . '/var/encryption';
+        $keyPath = $keyDir . '/encryption.key';
         
         if (file_exists($keyPath) && !$input->getOption('force')) {
             $io->error('Encryption key already exists at: ' . $keyPath);
@@ -44,6 +45,11 @@ class GenerateEncryptionKeyCommand extends Command
         // Generate a new encryption key
         $encryptionKey = KeyFactory::generateEncryptionKey();
         
+        // Ensure directory exists
+        if (!is_dir($keyDir)) {
+            mkdir($keyDir, 0700, true);
+        }
+
         // Save the key to file
         KeyFactory::save($encryptionKey, $keyPath);
         

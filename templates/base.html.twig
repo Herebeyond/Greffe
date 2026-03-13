@@ -21,10 +21,15 @@
 
                 {% if app.user %}
                 <nav class="header-nav">
+                    {% if not is_granted('ROLE_TECH_ADMIN') or is_granted('ROLE_MEDICAL_ADMIN') %}
+                    <a href="{{ path('app_patient_index') }}" class="header-link">Patients</a>
+                    <a href="{{ path('app_donor_index') }}" class="header-link">Donneurs</a>
+                    {% endif %}
                     {% if is_granted('ROLE_TECH_ADMIN') %}
                     <a href="{{ path('app_admin_users') }}" class="header-link header-admin">Administration</a>
+                    <a href="{{ path('app_admin_audit_logs') }}" class="header-link header-admin">Journal d'audit</a>
                     {% endif %}
-                    <span class="header-user">{{ app.user.fullName }}</span>
+                    <a href="{{ path('app_profile') }}" class="header-link header-profile">{{ app.user.fullName }}</a>
                     <a href="{{ path('app_logout') }}" class="header-link">Déconnexion</a>
                 </nav>
                 {% endif %}

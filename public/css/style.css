@@ -122,6 +122,14 @@ main {
     font-size: 0.9rem;
 }
 
+.nav-card-admin {
+    border-left: 4px solid #c0392b;
+}
+
+.nav-card-admin h2 {
+    color: #c0392b;
+}
+
 /* Login page */
 .login-container {
     display: flex;
@@ -1031,6 +1039,130 @@ main {
 
 .form-fieldset legend {
     font-weight: 600;
+}
+
+/* Password reset / form helpers */
+.form-help-text {
+    color: #666;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.form-footer {
+    margin-top: 1.25rem;
+    text-align: center;
+}
+
+.form-footer a {
+    color: #3498db;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.form-footer a:hover {
+    text-decoration: underline;
+}
+
+.forgot-password-notice {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.admin-email-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-email-list li {
+    padding: 0.25rem 0;
+}
+
+.admin-email-list a {
+    color: #3498db;
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+
+.admin-email-list a:hover {
+    text-decoration: underline;
+}
+
+.admin-email-fallback {
+    font-size: 0.85rem;
+    color: #999;
+}
+
+/* Profile page */
+.header-profile {
+    color: #ecf0f1;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.header-profile:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+.profile-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.profile-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.profile-section h2 {
+    color: #2c3e50;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.profile-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.profile-label {
+    font-size: 0.85rem;
+    color: #888;
+    font-weight: 500;
+}
+
+.profile-value {
+    font-size: 1rem;
+    color: #333;
+}
+
+.profile-form-container {
+    max-width: 500px;
+}
+
+.form-help-text-left {
+    color: #666;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
     color: #2c3e50;
     padding: 0 0.5rem;
     font-size: 1rem;
@@ -1236,4 +1368,284 @@ main {
         width: 100%;
         text-align: center;
     }
+}
+
+/* Password Rules Checklist */
+.password-rules {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    border: 1px solid #e0e0e0;
+}
+
+.password-rules li {
+    padding: 0.35rem 0;
+    font-size: 0.9rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.2s ease;
+}
+
+.password-rules li .rule-icon {
+    font-weight: bold;
+    font-size: 1rem;
+    width: 1.2rem;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.password-rules li.rule-valid {
+    color: #27ae60;
+}
+
+.password-rules li.rule-valid .rule-icon {
+    color: #27ae60;
+}
+
+.password-rules li.rule-invalid {
+    color: #e74c3c;
+}
+
+.password-rules li.rule-invalid .rule-icon {
+    color: #e74c3c;
+}
+
+/* ===================================
+   AUDIT LOG
+   =================================== */
+
+.audit-container {
+    max-width: none;
+}
+
+/* Override main max-width when audit page is displayed */
+main:has(.audit-container) {
+    max-width: none;
+}
+
+.audit-table {
+    width: 100%;
+    table-layout: auto;
+    white-space: nowrap;
+}
+
+.audit-table th,
+.audit-table td {
+    padding: 0.5rem 0.75rem;
+}
+
+.audit-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.audit-badge-view { background: #d5e8f9; color: #1a5276; }
+.audit-badge-create { background: #d5f5e3; color: #1e8449; }
+.audit-badge-edit { background: #fef9e7; color: #b7950b; }
+.audit-badge-delete { background: #fadbd8; color: #922b21; }
+.audit-badge-search { background: #e8daef; color: #6c3483; }
+.audit-badge-password_change { background: #fdebd0; color: #b9770e; }
+
+.http-method {
+    display: inline-block;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: monospace;
+}
+
+.http-get { background: #d5e8f9; color: #1a5276; }
+.http-post { background: #d5f5e3; color: #1e8449; }
+
+.audit-date {
+    white-space: nowrap;
+    font-size: 0.85rem;
+    font-family: monospace;
+}
+
+.audit-user {
+    white-space: nowrap;
+    font-size: 0.85rem;
+}
+
+.audit-user-email {
+    color: #777;
+    font-size: 0.8rem;
+}
+
+.audit-uri {
+    font-size: 0.85rem;
+    font-family: monospace;
+    color: #555;
+    white-space: nowrap;
+}
+
+.audit-details {
+    font-size: 0.85rem;
+    color: #666;
+    white-space: nowrap;
+}
+
+.audit-row-delete {
+    background-color: #fdf2f2;
+}
+
+.audit-row-delete:hover {
+    background-color: #fce4e4 !important;
+}
+
+.audit-loader,
+.audit-end {
+    text-align: center;
+    padding: 1.5rem;
+    color: #888;
+    font-size: 0.9rem;
+}
+
+/* ===================================
+   TRANSPLANT PAGES
+   =================================== */
+
+/* Graft status badges */
+.graft-status {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.graft-functional {
+    background: #d5f5e3;
+    color: #1e8449;
+}
+
+.graft-non-functional {
+    background: #fadbd8;
+    color: #922b21;
+}
+
+/* Immunological risk badges */
+.risk-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.risk-green {
+    background: #d5f5e3;
+    color: #1e8449;
+}
+
+.risk-orange {
+    background: #fdebd0;
+    color: #b9770e;
+}
+
+.risk-red {
+    background: #fadbd8;
+    color: #922b21;
+}
+
+/* Serology badges */
+.serology-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.serology-positive {
+    background: #fadbd8;
+    color: #922b21;
+}
+
+.serology-negative {
+    background: #d5f5e3;
+    color: #1e8449;
+}
+
+/* Transplant details layout */
+.transplant-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.transplant-details h3 {
+    color: #2c3e50;
+    font-size: 1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px dashed #ddd;
+}
+
+.donor-section {
+    border-color: #3498db;
+    border-width: 2px;
+}
+
+/* Conditioning list */
+.conditioning-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Transplant form */
+.transplant-form {
+    max-width: 1000px;
+}
+
+.transplant-form .form-fieldset {
+    margin-bottom: 1.5rem;
+}
+
+.donor-fieldset {
+    border-color: #3498db;
+    background: #f0f8ff;
+}
+
+.donor-fieldset legend {
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.donor-fieldset h3 {
+    color: #2c3e50;
+    font-size: 0.95rem;
+    margin-top: 1.25rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px dashed #b0c4de;
+}
+
+/* Donor type badges */
+.badge-donor-living {
+    background: #d5f5e3;
+    color: #1e8449;
+}
+
+.badge-donor-deceased_encephalic {
+    background: #fadbd8;
+    color: #922b21;
+}
+
+.badge-donor-deceased_cardiac_arrest {
+    background: #fdebd0;
+    color: #b9770e;
 }

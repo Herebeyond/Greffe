@@ -37,7 +37,15 @@
                 <td>{{ user.name }}</td>
                 <td>{{ user.email }}</td>
                 <td>{{ user.cristalId ?? '-' }}</td>
-                <td>{{ user.isChuPractitioner ? 'Oui' : 'Non' }}</td>
+                <td>
+                    {% if 'ROLE_TECH_ADMIN' in user.roles and 'ROLE_MEDICAL_ADMIN' not in user.roles %}
+                        <span class="badge badge-secondary">N/A</span>
+                    {% elseif user.isChuPractitioner %}
+                        Oui
+                    {% else %}
+                        Non
+                    {% endif %}
+                </td>
                 <td>
                     {% for role in user.roles %}
                         <span class="badge badge-{{ role|lower|replace({'role_': ''}) }}">

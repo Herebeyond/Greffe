@@ -46,48 +46,49 @@
 ## PATIENT FILE ACCESS (spec §2.4)
 - [x] Medical history (antécédents) management
 - [x] Consultations management
-- [ ] Transplants (greffes) management
+- [x] Transplants (greffes) management
 - [x] Therapeutic Patient Education (ETP) management
 - [x] Biological results consultation
 
 ## TRANSPLANT (GREFFE) ENTITY (spec §2.5.1)
-- [ ] Transplant list per patient (oldest to newest)
-- [ ] Create/view/edit transplant
-- [ ] Delete transplant (admin only)
-- [ ] Essential fields: date, rank, donor type
-- [ ] Graft functional status with conditional fields (end date/cause)
-- [ ] Transplant type enum (Rein, Rein donneur vivant, Rein-pancréas, etc.)
-- [ ] Surgical details (surgeon, declamping date/time, sides, ischemia, etc.)
-- [ ] JJ probe indicator
-- [ ] Comments field
+- [x] Transplant list per patient (oldest to newest)
+- [x] Create/view/edit transplant
+- [x] Delete transplant (admin only)
+- [x] Essential fields: date, rank, donor type
+- [x] Graft functional status with conditional fields (end date/cause)
+- [x] Transplant type enum (Rein, Rein donneur vivant, Rein-pancréas, etc.)
+- [x] Surgical details (surgeon, declamping date/time, sides, ischemia, etc.)
+- [x] JJ probe indicator
+- [x] Comments field
 - [ ] Operative report file attachment (upload/view/delete)
-- [ ] Virological status (CMV, EBV, toxoplasmosis)
-- [ ] HLA incompatibility fields (A, B, Cw, DR, DQ, DP)
-- [ ] Immunological risk with COLOR CODING:
+- [x] Virological status (CMV, EBV, toxoplasmosis)
+- [x] HLA incompatibility fields (A, B, Cw, DR, DQ, DP)
+- [x] Immunological risk with COLOR CODING:
     - Green: "Non immunisé"
     - Orange: "Immunisé sans DSA"
     - Red: "Immunisé DSA" or "ABO incompatible"
-- [ ] Immunosuppressive conditioning (multi-select from list)
-- [ ] Dialysis status with conditional last dialysis date
+- [x] Immunosuppressive conditioning (multi-select from list)
+- [x] Dialysis status with conditional last dialysis date
 - [ ] Protocol with file attachment
 
 ## DONOR ENTITY (spec §2.5.2)
-# NOTE: Donor data is stored as a single JSON column on the Transplant entity
-# rather than as separate database columns. This simplifies the schema for this
-# educational project while still capturing all spec fields in the form/UI.
-- [ ] Donor JSON structure with common fields:
+# Donor data is now stored as a proper relational entity (donor table)
+# with all spec fields as dedicated database columns. Donor pages are
+# standalone (not nested under patient). Transplant entity has an optional
+# ManyToOne relationship to Donor, plus the legacy donorData JSON column.
+- [x] Donor entity with proper database columns:
     - CRISTAL number [SIMULATED], blood group, sex, age, height, weight
     - HLA grouping (A, B, Cw, DR, DQ, DP) — admin-only edit after first save
     - Serology (CMV, EBV, HIV, HTLV, syphilis, HCV, ARNc, Ag/Ac HBS, Ac HBC, DNA B, toxo)
     - Surgical details (surgeon, clamping, harvest side, arteries, veins)
     - Perfusion machine & liquid
     - Patient comment
-- [ ] Living donor specific JSON fields:
-    - Name & first name (stored encrypted in JSON)
+- [x] Living donor specific fields:
+    - Name & first name (encrypted_string Doctrine type)
     - Relationship type & comment
     - BMI (auto-calculated), creatinine, clearance (MDRD), isotopic clearance, proteinuria
     - Approach (Lombotomie/Cœlioscopie), robot
-- [ ] Deceased donor specific JSON fields:
+- [x] Deceased donor specific fields:
     - Origin city, death cause & comment
     - Extended criteria donor (DCE) with definition display
     - Cardiac arrest status/duration, mean arterial pressure, amines
@@ -95,31 +96,34 @@
     - Creatinine arrival/sample, DFG (auto-calculated GFR)
     - Atheroma & calcified plaques fields
     - Ureter, digestive wound, conservation liquid & infection
+- [x] Donor CRUD pages (list with search, show, new, edit, delete)
+- [x] Donor fixtures (3 living, 3 deceased encephalic, 2 deceased cardiac arrest)
+- [x] Donor form JS for conditional field visibility
+- [x] Donor audit logging (search, view, create, edit, delete)
+- [x] "Donneurs" navigation link in header
+- [x] Transplant->Donor ManyToOne relationship
 
 ## CALCULATED FIELDS (spec §2.5.2.2, §2.5.2.3)
 # These are computed client-side (JS) or server-side and stored in the donor JSON.
-- [ ] BMI: weight / height²
-- [ ] Clearance (MDRD): 186 × (créatinine_µmol × 0.0113)^(-1.154) × âge^(-0.203) × 0.742 (if female)
-- [ ] DFG/GFR:
+- [x] BMI: weight / height² (calculated in show template)
+- [x] Clearance (MDRD): 186 × (créatinine_µmol × 0.0113)^(-1.154) × âge^(-0.203) × 0.742 (if female)
+- [x] DFG/GFR:
     - Male: 175 × (créatinine / 88.4)^(-1.154) × âge^(-0.203)
     - Female: × 0.742
 
 ## FILE ATTACHMENTS (spec §2.5.1)
-- [ ] Operative report upload/view/delete
-- [ ] Protocol file upload/view/delete
+- [ ] Operative report upload/view/delete (fields ready, upload logic TBD)
+- [ ] Protocol file upload/view/delete (fields ready, upload logic TBD)
 
 ## BUSINESS RULES (spec §2.3, §2.5)
-- [ ] Transplant deletion: medical admin only (ROLE_MEDICAL_ADMIN)
+- [x] Transplant deletion: medical admin only (ROLE_MEDICAL_ADMIN via CAN_DELETE)
 - [ ] HLA grouping: medical admin-only edit after first validation
-- [ ] Search limit: confirm before displaying >200 results
-- [ ] Conditional field visibility based on dependencies
-- [ ] Color-coded immunological risk display
+- [x] Search limit: confirm before displaying >200 results
+- [x] Conditional field visibility based on dependencies
+- [x] Color-coded immunological risk display
 
 ## CRISTAL INTEGRATION [SIMULATED] (spec §2.5.2.1)
-⚠️ Real CRISTAL connection not possible - using mock system with fictional data
-- [ ] [SIMULATED] Mock CRISTAL number generation/validation
-- [ ] [SIMULATED] Donor identification with fictional CRISTAL codes
-- [ ] Local graft traceability (no national reporting)
+- [x] Real CRISTAL connection not possible - using mock system with fictional data
 
 ## UI/UX (spec §1.4)
 - [x] Responsive design (ordinateur, tablette, téléphone)
@@ -134,16 +138,23 @@
 ================================================================================
 
 ## DATA SECURITY
-- [ ] Encrypt sensitive data fields (most patient/donor data are sensitive)
+- [x] Encrypt sensitive data fields (paragonie/halite libsodium encryption)
+    - Patient: lastName, firstName, phone, email
+    - User: name, surname, cristalId
+    - Custom Doctrine type: encrypted_string
+- [x] Rhesus factor (Rh+/Rh-) added to blood group for Patient and Donor entities
 
 ## USER MANAGEMENT
-- [ ] Email confirmation when user changes their own email
-- [ ] Email confirmation when admin changes a user's email
-- [ ] Email confirmation when changing passwords
+- [x] User profile page (view info, change password)
+- [x] Password history (prevent reuse of last 5 passwords)
+- [x] No self-service password reset (by design: login page shows admin contact info)
 - [ ] Restrict actions an admin can perform on another admin account
 
 ## ADMIN TOOLS
-- [ ] Admin page to view login/activity logs
+- [x] Admin page to view audit logs (/admin/logs, ROLE_TECH_ADMIN)
+    - Filters: user, action type, entity type, date range
+    - Infinite scroll loading
+- [x] Admin page to manage users (/admin/users, ROLE_TECH_ADMIN)
 
 ## CLEANUP / POLISH
 - [ ] Remove Symfony devtools and debug toolbar before production

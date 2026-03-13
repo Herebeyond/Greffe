@@ -1,0 +1,98 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Registre des donneurs{% endblock %}
+
+{% block body %}
+<div class="page-container">
+    <div class="section-header">
+        <h2>Registre des donneurs</h2>
+        {% if is_granted('CAN_WRITE') %}
+        <a href="{{ path('app_donor_new') }}" class="btn btn-primary">Ajouter un donneur</a>
+        {% endif %}
+    </div>
+
+    {# Search form #}
+    <div class="search-form-container">
+        <form method="post" action="{{ path('app_donor_index') }}" class="search-form">
+            <input type="hidden" name="_token" value="{{ csrf_token('donor_search') }}">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="cristalNumber">Numéro CRISTAL</label>
+                    <input type="text" id="cristalNumber" name="cristalNumber" placeholder="Ex: CRI-2026-..." class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="bloodGroup">Groupe sanguin</label>
+                    <select id="bloodGroup" name="bloodGroup" class="form-control">
+                        <option value="">Tous</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="AB">AB</option>
+                        <option value="O">O</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="donorType">Type de donneur</label>
+                    <select id="donorType" name="donorType" class="form-control">
+                        <option value="">Tous</option>
+                        <option value="living">Donneur vivant</option>
+                        <option value="deceased_encephalic">Décédé (mort encéphalique)</option>
+                        <option value="deceased_cardiac_arrest">Décédé (arrêt cardiaque)</option>
+                    </select>
+                </div>
+                <div class="form-group form-group-actions">
+                    <button type="submit" class="btn btn-primary">Rechercher</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% if donors is empty %}
+        <div class="empty-state">
+            <p>{% if searched %}Aucun donneur trouvé pour ces critères.{% else %}Aucun donneur enregistré.{% endif %}</p>
+        </div>
+    {% else %}
+        <div class="results-count">
+            <p>{{ donors|length }} donneur{{ donors|length > 1 ? 's' : '' }} trouvé{{ donors|length > 1 ? 's' : '' }}</p>
+        </div>
+        <div class="data-table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>CRISTAL</th>
+                        <th>Type</th>
+                        <th>Identité</th>
+                        <th>Âge</th>
+                        <th>Sexe</th>
+                        <th>Groupe sanguin</th>
+                        <th>Sérologie HIV</th>
+                        <th>Date d'enregistrement</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for donor in donors %}
+                    <tr>
+                        <td><strong>{{ donor.cristalNumber }}</strong></td>
+                        <td><span class="badge badge-donor-{{ donor.donorType }}">{{ donor.donorTypeLabel }}</span></td>
+                        <td>{{ donor.displayName }}</td>
+                        <td>{{ donor.age }} ans</td>
+                        <td>{{ donor.sex == 'M' ? 'Masculin' : 'Féminin' }}</td>
+                        <td><span class="blood-group blood-group-{{ donor.bloodGroup }}">{{ donor.fullBloodGroup }}</span></td>
+                        <td>
+                            <span class="serology-badge serology-{{ donor.hiv == '+' ? 'positive' : 'negative' }}">{{ donor.hiv }}</span>
+                        </td>
+                        <td>{{ donor.createdAt|date('d/m/Y') }}</td>
+                        <td class="actions-cell">
+                            <a href="{{ path('app_donor_show', {id: donor.id}) }}" class="btn-small">Voir</a>
+                            {% if is_granted('CAN_WRITE') %}
+                            <a href="{{ path('app_donor_edit', {id: donor.id}) }}" class="btn-small">Modifier</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

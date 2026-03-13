@@ -1,0 +1,393 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Donneur {{ donor.displayName }}{% endblock %}
+
+{% block body %}
+<div class="page-container">
+    <div class="section-header">
+        <h2>Donneur — {{ donor.displayName }}</h2>
+        <div class="page-header-actions">
+            {% if is_granted('CAN_WRITE') %}
+            <a href="{{ path('app_donor_edit', {id: donor.id}) }}" class="btn btn-primary">Modifier</a>
+            {% endif %}
+            <a href="{{ path('app_donor_index') }}" class="btn btn-secondary">Retour au registre</a>
+        </div>
+    </div>
+
+    <div class="transplant-details">
+        {# ===== Identification ===== #}
+        <section class="detail-section">
+            <h2>Identification</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Numéro CRISTAL</span>
+                    <span class="detail-value"><strong>{{ donor.cristalNumber }}</strong></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Type de donneur</span>
+                    <span class="detail-value"><span class="badge badge-donor-{{ donor.donorType }}">{{ donor.donorTypeLabel }}</span></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Groupe sanguin</span>
+                    <span class="detail-value"><span class="blood-group blood-group-{{ donor.bloodGroup }}">{{ donor.fullBloodGroup }}</span></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Sexe</span>
+                    <span class="detail-value">{{ donor.sex == 'M' ? 'Masculin' : 'Féminin' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Âge</span>
+                    <span class="detail-value">{{ donor.age }} ans</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Taille</span>
+                    <span class="detail-value">{{ donor.height ? donor.height ~ ' cm' : '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Poids</span>
+                    <span class="detail-value">{{ donor.weight ? donor.weight ~ ' kg' : '—' }}</span>
+                </div>
+                {% if donor.bmi %}
+                <div class="detail-item">
+                    <span class="detail-label">IMC</span>
+                    <span class="detail-value">{{ donor.bmi }} kg/m²</span>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        {# ===== Living donor specific ===== #}
+        {% if donor.donorType == 'living' %}
+        <section class="detail-section">
+            <h2>Informations donneur vivant</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Nom</span>
+                    <span class="detail-value">{{ donor.lastName ?? '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Prénom</span>
+                    <span class="detail-value">{{ donor.firstName ?? '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Lien de parenté</span>
+                    <span class="detail-value">{{ donor.relationshipType ?? '—' }}</span>
+                </div>
+                {% if donor.relationshipComment %}
+                <div class="detail-item">
+                    <span class="detail-label">Commentaire lien</span>
+                    <span class="detail-value">{{ donor.relationshipComment }}</span>
+                </div>
+                {% endif %}
+                <div class="detail-item">
+                    <span class="detail-label">Créatinine</span>
+                    <span class="detail-value">{{ donor.creatinine ? donor.creatinine ~ ' µmol/L' : '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Clairance calculée (MDRD)</span>
+                    <span class="detail-value">{{ donor.calculatedClearance ? donor.calculatedClearance ~ ' mL/min' : '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Clairance isotopique</span>
+                    <span class="detail-value">{{ donor.isotopicClearance ? donor.isotopicClearance ~ ' mL/min' : '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Protéinurie</span>
+                    <span class="detail-value">{{ donor.proteinuria ? donor.proteinuria ~ ' g/24h' : '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Voie d'abord</span>
+                    <span class="detail-value">{{ donor.approach ?? '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Robot</span>
+                    <span class="detail-value">{{ donor.robot ? 'Oui' : 'Non' }}</span>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        {# ===== Deceased donor specific ===== #}
+        {% if donor.donorType == 'deceased_encephalic' or donor.donorType == 'deceased_cardiac_arrest' %}
+        <section class="detail-section">
+            <h2>Informations donneur décédé</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Ville d'origine</span>
+                    <span class="detail-value">{{ donor.originCity ?? '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Cause du décès</span>
+                    <span class="detail-value">{{ donor.deathCause ?? '—' }}</span>
+                </div>
+                {% if donor.deathCauseComment %}
+                <div class="detail-item">
+                    <span class="detail-label">Commentaire</span>
+                    <span class="detail-value">{{ donor.deathCauseComment }}</span>
+                </div>
+                {% endif %}
+                <div class="detail-item">
+                    <span class="detail-label">Donneur critères élargis (DCE)</span>
+                    <span class="detail-value">{{ donor.extendedCriteriaDonor ? 'Oui' : 'Non' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Arrêt cardiaque</span>
+                    <span class="detail-value">{{ donor.cardiacArrest ? 'Oui' : 'Non' }}</span>
+                </div>
+                {% if donor.cardiacArrestDuration %}
+                <div class="detail-item">
+                    <span class="detail-label">Durée arrêt cardiaque</span>
+                    <span class="detail-value">{{ donor.cardiacArrestDuration }} min</span>
+                </div>
+                {% endif %}
+                <div class="detail-item">
+                    <span class="detail-label">Pression artérielle moyenne</span>
+                    <span class="detail-value">{{ donor.meanArterialPressure ? donor.meanArterialPressure ~ ' mmHg' : '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Amines</span>
+                    <span class="detail-value">{{ donor.amines ? 'Oui' : 'Non' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Transfusion</span>
+                    <span class="detail-value">{{ donor.transfusion ? 'Oui' : 'Non' }}</span>
+                </div>
+                {% if donor.transfusion %}
+                <div class="detail-item">
+                    <span class="detail-label">CGR</span>
+                    <span class="detail-value">{{ donor.cgr ?? '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">CPA</span>
+                    <span class="detail-value">{{ donor.cpa ?? '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">PFC</span>
+                    <span class="detail-value">{{ donor.pfc ?? '—' }}</span>
+                </div>
+                {% endif %}
+                <div class="detail-item">
+                    <span class="detail-label">Créatinine à l'arrivée</span>
+                    <span class="detail-value">{{ donor.creatinineArrival ? donor.creatinineArrival ~ ' µmol/L' : '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Créatinine au prélèvement</span>
+                    <span class="detail-value">{{ donor.creatinineSample ? donor.creatinineSample ~ ' µmol/L' : '—' }}</span>
+                </div>
+                {% if donor.dfg %}
+                <div class="detail-item">
+                    <span class="detail-label">DFG calculé</span>
+                    <span class="detail-value">{{ donor.dfg }} mL/min</span>
+                </div>
+                {% endif %}
+                <div class="detail-item">
+                    <span class="detail-label">Uretère</span>
+                    <span class="detail-value">{{ donor.ureter ?? '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Liquide de conservation</span>
+                    <span class="detail-value">{{ donor.conservationLiquid ?? '—' }}</span>
+                </div>
+            </div>
+
+            {# Atheroma #}
+            <h3>Athérome</h3>
+            <div class="detail-grid">
+                {% set atheromaFields = {
+                    'aortaAtheroma': 'Athérome aorte',
+                    'calcifiedAortaPlaques': 'Plaques calcifiées aorte',
+                    'ostiumArteryAtheroma': 'Athérome ostium artère',
+                    'calcifiedOstiumPlaques': 'Plaques calcifiées ostium',
+                    'renalArteryAtheroma': 'Athérome artère rénale',
+                    'calcifiedRenalPlaques': 'Plaques calcifiées rénales',
+                    'digestiveWound': 'Plaie digestive',
+                    'conservationLiquidInfection': 'Infection liquide de conservation'
+                } %}
+                {% for field, label in atheromaFields %}
+                <div class="detail-item">
+                    <span class="detail-label">{{ label }}</span>
+                    <span class="detail-value">{{ attribute(donor, field) ? 'Oui' : 'Non' }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {# ===== HLA Grouping ===== #}
+        <section class="detail-section">
+            <h2>Groupage HLA</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">HLA-A</span>
+                    <span class="detail-value">{{ donor.hlaA }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">HLA-B</span>
+                    <span class="detail-value">{{ donor.hlaB }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">HLA-Cw</span>
+                    <span class="detail-value">{{ donor.hlaCw ?? '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">HLA-DR</span>
+                    <span class="detail-value">{{ donor.hlaDR }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">HLA-DQ</span>
+                    <span class="detail-value">{{ donor.hlaDQ }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">HLA-DP</span>
+                    <span class="detail-value">{{ donor.hlaDP ?? '—' }}</span>
+                </div>
+            </div>
+        </section>
+
+        {# ===== Serology ===== #}
+        <section class="detail-section">
+            <h2>Sérologie</h2>
+            <div class="detail-grid">
+                {% set serologyFields = {
+                    'cmv': 'CMV',
+                    'ebv': 'EBV',
+                    'hiv': 'HIV',
+                    'htlv': 'HTLV',
+                    'syphilis': 'Syphilis',
+                    'hcv': 'HCV',
+                    'agHbs': 'Ag HBs',
+                    'acHbs': 'Ac HBs',
+                    'acHbc': 'Ac HBc'
+                } %}
+                {% for field, label in serologyFields %}
+                <div class="detail-item">
+                    <span class="detail-label">{{ label }}</span>
+                    <span class="detail-value">
+                        <span class="serology-badge serology-{{ attribute(donor, field) == '+' ? 'positive' : 'negative' }}">{{ attribute(donor, field) }}</span>
+                    </span>
+                </div>
+                {% endfor %}
+                {% if donor.toxoplasmosis %}
+                <div class="detail-item">
+                    <span class="detail-label">Toxoplasmose</span>
+                    <span class="detail-value">
+                        {% if donor.toxoplasmosis == 'ND' %}
+                            <span class="badge">ND</span>
+                        {% else %}
+                            <span class="serology-badge serology-{{ donor.toxoplasmosis == '+' ? 'positive' : 'negative' }}">{{ donor.toxoplasmosis }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+                {% endif %}
+                {% if donor.arnc %}
+                <div class="detail-item">
+                    <span class="detail-label">ARNc</span>
+                    <span class="detail-value">
+                        <span class="serology-badge serology-{{ donor.arnc == '+' ? 'positive' : 'negative' }}">{{ donor.arnc }}</span>
+                    </span>
+                </div>
+                {% endif %}
+                {% if donor.dnaB %}
+                <div class="detail-item">
+                    <span class="detail-label">DNA B</span>
+                    <span class="detail-value">
+                        <span class="serology-badge serology-{{ donor.dnaB == '+' ? 'positive' : 'negative' }}">{{ donor.dnaB }}</span>
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        {# ===== Surgical details ===== #}
+        <section class="detail-section">
+            <h2>Détails chirurgicaux</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Chirurgien</span>
+                    <span class="detail-value">{{ donor.donorSurgeonName ?? '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Date de clampage</span>
+                    <span class="detail-value">{{ donor.clampingDate ? donor.clampingDate|date('d/m/Y') : '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Heure de clampage</span>
+                    <span class="detail-value">{{ donor.clampingTime ? donor.clampingTime|date('H:i') : '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Côté de prélèvement</span>
+                    <span class="detail-value">{{ donor.donorHarvestSide ? donor.donorHarvestSide|capitalize : '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Artère principale</span>
+                    <span class="detail-value">{{ donor.mainArtery ?? '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Artère polaire supérieure</span>
+                    <span class="detail-value">{{ donor.upperPolarArtery ?? '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Artère polaire inférieure</span>
+                    <span class="detail-value">{{ donor.lowerPolarArtery ?? '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Veine</span>
+                    <span class="detail-value">{{ donor.vein ?? '—' }}</span>
+                </div>
+                {% if donor.veinComment %}
+                <div class="detail-item">
+                    <span class="detail-label">Commentaire veine</span>
+                    <span class="detail-value">{{ donor.veinComment }}</span>
+                </div>
+                {% endif %}
+                <div class="detail-item">
+                    <span class="detail-label">Machine de perfusion</span>
+                    <span class="detail-value">{{ donor.perfusionMachine ?? '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Liquide de perfusion</span>
+                    <span class="detail-value">{{ donor.perfusionLiquid ?? '—' }}</span>
+                </div>
+            </div>
+        </section>
+
+        {# ===== Comment ===== #}
+        {% if donor.patientComment %}
+        <section class="detail-section">
+            <h2>Commentaire</h2>
+            <div class="detail-comment">
+                {{ donor.patientComment|nl2br }}
+            </div>
+        </section>
+        {% endif %}
+
+        {# ===== System info ===== #}
+        <section class="detail-section">
+            <h2>Informations système</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Créé le</span>
+                    <span class="detail-value">{{ donor.createdAt|date('d/m/Y à H:i') }}</span>
+                </div>
+                {% if donor.updatedAt %}
+                <div class="detail-item">
+                    <span class="detail-label">Dernière modification</span>
+                    <span class="detail-value">{{ donor.updatedAt|date('d/m/Y à H:i') }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    {% if is_granted('CAN_DELETE') %}
+    <div class="danger-zone">
+        <h2>Zone de danger</h2>
+        <form action="{{ path('app_donor_delete', {id: donor.id}) }}" method="post"
+              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce donneur ? Cette action est irréversible.');">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ donor.id) }}">
+            <button type="submit" class="btn btn-danger">Supprimer ce donneur</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
