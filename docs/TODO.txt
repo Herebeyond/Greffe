@@ -4,14 +4,6 @@
 #                                                                              #
 ################################################################################
 #                                                                              #
-#  This file is split into two sections:                                       #
-#                                                                              #
-#  1. FROM SPECIFICATIONS (specifications.txt)                                 #
-#     Required features from the BTS SIO project brief.                        #
-#                                                                              #
-#  2. OPTIONAL ENHANCEMENTS                                                    #
-#     Nice-to-have features not in the specification, added by the developer.  #
-#                                                                              #
 #  ⚠️ NOTE: This is a BTS SIO student exercise project. Some features cannot  #
 #  be fully implemented (no access to CRISTAL or CPS). These are marked        #
 #  [SIMULATED] and use mock/fictional data.                                    #
@@ -19,23 +11,25 @@
 ################################################################################
 
 
-================================================================================
-1. FROM SPECIFICATIONS (specifications.txt)
-================================================================================
-
 ## AUTHENTICATION & ACCESS (spec §2.1)
 - [x] [SIMULATED] CPS authentication → Use standard form login instead
 - [x] Fallback authentication (standard username/password)
 - [x] Activity logging: track user identity, login time, logout time
 - [x] User profiles with different access levels (full access vs read-only)
-- [x] Hybrid patient access control (Art. L1110-4, L1110-12 CSP):
-    - CHU practitioners (isChuPractitioner): access to all patient files
-    - External city nephrologists: access only to assigned patients
+- [x] Patient access control (Art. L1110-4, L1110-12 CSP):
+    - Every doctor (CHU or external) can only access their own assigned patients
     - Technical admins (ROLE_TECH_ADMIN): NO patient data access
-    - Medical admins (ROLE_MEDICAL_ADMIN): patient access via normal rules
     - PatientAccessVoter (VIEW_PATIENT) enforces per-patient access
-- [x] Split admin role: ROLE_TECH_ADMIN (system) vs ROLE_MEDICAL_ADMIN (clinical)
-- [ ] "Bris de glace" (break-the-glass) emergency access (see docs/PATIENT_ACCESS_LEGAL.md §5)
+    - isChuPractitioner deprecated — no longer used for access control
+- [x] ROLE_MEDICAL_ADMIN removed — replaced by break-the-glass (bris de glace):
+    - No role has blanket access to all patients (compliance with RGPD/CNIL)
+    - Doctors can use break-the-glass for emergency access (30 min, justified, audited)
+    - Nurses can also use break-the-glass with same constraints
+    - Technical admins cannot use break-the-glass (no patient data access)
+    - BreakTheGlassAccess entity logs: user, patient, justification, timestamps
+    - AccessDeniedHandler redirects medical personnel to BTG form
+    - Audit log records all BTG events
+- [x] Split admin role: ROLE_TECH_ADMIN (system) — no medical admin role exists
 
 ## PATIENT MANAGEMENT (spec §2.2, §2.3)
 - [x] Patient entity (nom, prénom, numéro de dossier, ville de résidence)
@@ -111,13 +105,15 @@
     - Male: 175 × (créatinine / 88.4)^(-1.154) × âge^(-0.203)
     - Female: × 0.742
 
-## FILE ATTACHMENTS (spec §2.5.1)
+## FILE ATTACHMENTS & IMAGE STORAGE (spec §2.5.1)
 - [ ] Operative report upload/view/delete (fields ready, upload logic TBD)
 - [ ] Protocol file upload/view/delete (fields ready, upload logic TBD)
+- [ ] Professional image/file storage solution (dedicated storage service, proper
+      directory structure, access control, cleanup policy, virus scanning, etc.)
 
 ## BUSINESS RULES (spec §2.3, §2.5)
-- [x] Transplant deletion: medical admin only (ROLE_MEDICAL_ADMIN via CAN_DELETE)
-- [ ] HLA grouping: medical admin-only edit after first validation
+- [x] Transplant deletion: doctors only (ROLE_DOCTOR via CAN_DELETE)
+- [ ] HLA grouping: restricted edit after first validation
 - [x] Search limit: confirm before displaying >200 results
 - [x] Conditional field visibility based on dependencies
 - [x] Color-coded immunological risk display
@@ -127,15 +123,16 @@
 
 ## UI/UX (spec §1.4)
 - [x] Responsive design (ordinateur, tablette, téléphone)
-- [ ] Mobile phone access with restricted functions (mostly read-only: consultation only, can create/edit/delete the comments)
+- [ ] Mobile phone access with restricted functions:
+    - [ ] Mobile users can add and edit consultations (own consultations only,
+          cannot edit consultations created by other practitioners)
+    - [ ] Mobile photo capture: doctor can take a photo (e.g. clinical finding on
+          the patient's body) and attach it to a consultation observation
+    - [ ] Mobile + PC file attachment: if the clinical finding is a file instead of a photo
+    - [ ] Other sections remain read-only on mobile
 - [x] French language UI
 - [x] Paginated lists
 - [x] Form validation with French error messages
-
-
-================================================================================
-2. OPTIONAL ENHANCEMENTS (not in specifications.txt)
-================================================================================
 
 ## DATA SECURITY
 - [x] Encrypt sensitive data fields (paragonie/halite libsodium encryption)
@@ -155,6 +152,28 @@
     - Filters: user, action type, entity type, date range
     - Infinite scroll loading
 - [x] Admin page to manage users (/admin/users, ROLE_TECH_ADMIN)
+
+## MOBILE APP & API (phone integration)
+- [ ] Build a REST/JSON API on the Symfony server (API Platform or custom controllers):
+    - [ ] Authentication endpoint (JWT or token-based login)
+    - [ ] Patient list & search endpoint (respects PatientAccessVoter rules)
+    - [ ] Consultation endpoints: list, show, create, edit (own only)
+    - [ ] Photo/file upload endpoint for consultation observations
+    - [ ] Read-only endpoints for other sections (medical history, biological
+          results, therapeutic education, transplants, donors)
+- [ ] Build the mobile application (PWA or native iOS/Android):
+    - [ ] Login screen (authenticate against Symfony API)
+    - [ ] Patient list & search (filtered by practitioner access)
+    - [ ] Consultation view: list, detail, create new, edit own
+    - [ ] Camera integration: capture photo and attach to consultation observation
+    - [ ] File picker: attach existing file to consultation observation
+    - [ ] Read-only views for other patient data sections
+    - [ ] Offline support / sync strategy (optional)
+- [ ] Secure communication between app and server:
+    - [ ] HTTPS only
+    - [ ] Token expiration & refresh mechanism
+    - [ ] Rate limiting on API endpoints
+    - [ ] CORS configuration for mobile app origin
 
 ## CLEANUP / POLISH
 - [ ] Remove Symfony devtools and debug toolbar before production

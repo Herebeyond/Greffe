@@ -43,16 +43,17 @@ The platform will integrate with the French national organ allocation system (CR
 │   ├── Command/            # Console commands (encryption key generation)
 │   ├── Controller/         # Controllers (Home, Login, Patient, Consultation,
 │   │                       #   BiologicalResult, MedicalHistory, TherapeuticEducation,
-│   │                       #   Transplant, Donor, Admin, Password, Profile)
+│   │                       #   Transplant, Donor, Admin, Password, Profile, BreakTheGlass)
 │   ├── DataFixtures/       # Doctrine fixtures for test data
 │   ├── Doctrine/           # Custom Doctrine types (encrypted_string)
 │   ├── Entity/             # Doctrine entities (User, Patient, Consultation,
 │   │                       #   BiologicalResult, MedicalHistory, TherapeuticEducation,
-│   │                       #   Transplant, Donor, AuditLog, LoginActivity, PasswordHistory)
+│   │                       #   Transplant, Donor, AuditLog, LoginActivity, PasswordHistory,
+│   │                       #   BreakTheGlassAccess)
 │   ├── EventSubscriber/    # AuditLogSubscriber (route-based audit logging)
 │   ├── Form/               # Form types (Patient, Consultation, BiologicalResult,
 │   │                       #   MedicalHistory, TherapeuticEducation, Transplant,
-│   │                       #   DonorData, Donor, User, Password, etc.)
+│   │                       #   DonorData, Donor, User, Password, BreakTheGlass, etc.)
 │   ├── Repository/         # Doctrine repositories
 │   ├── Security/           # Voters (PatientAccessVoter, WriteAccessVoter),
 │   │                       #   LoginActivityListener
@@ -411,30 +412,33 @@ The application implements the following roles:
 
 - `ROLE_USER`: Basic access, view-only for medical data
 - `ROLE_NURSE`: Same as ROLE_USER (read-only)
-- `ROLE_DOCTOR`: Can create and modify medical records
+- `ROLE_DOCTOR`: Can create, modify, and delete medical records
 - `ROLE_TECH_ADMIN`: System/user management, NO access to patient medical data
-- `ROLE_MEDICAL_ADMIN`: Senior doctor + admin privileges (inherits ROLE_DOCTOR + ROLE_TECH_ADMIN). Patient access follows normal rules (CHU/assigned)
 - `ROLE_PATIENT`: Patient-specific access
 
 > **⚠️ Legal note (Art. L1110-4 CSP):** Technical administrators must NOT have access
 > to patient medical data. Only healthcare professionals in the care team may view
-> patient files. The old `ROLE_ADMIN` has been split to enforce this separation.
+> patient files. No role has blanket access to all patients.
 
 Use `#[IsGranted('ROLE_DOCTOR')]` attributes on controller methods for protection.
 Use `#[IsGranted('ROLE_TECH_ADMIN')]` for admin panel access.
 
-### Patient Access Control (Hybrid Model)
+### Patient Access Control
 
 Per-patient access is enforced by `PatientAccessVoter` (attribute: `VIEW_PATIENT`), based on French health law (Art. L1110-4, L1110-12 CSP "équipe de soins"):
 
 | User Type | Access Level |
 |-----------|-------------|
-| CHU Practitioner (`isChuPractitioner=true`) | All patients |
-| External Practitioner (`isChuPractitioner=false`) | Only assigned patients (via `patient_authorized_user` join table) |
+| Any practitioner (doctor, nurse) | Only assigned patients (via `patient_authorized_user` join table) |
+| Any practitioner with active BTG | Temporary emergency access (3h, justified, audited) |
 | `ROLE_TECH_ADMIN` | **No patient access** (system management only) |
-| `ROLE_MEDICAL_ADMIN` + `isChuPractitioner=true` | All patients (via CHU rule) |
+
+> **Note:** The `isChuPractitioner` field is deprecated and no longer used for access control.
+> All practitioners must be explicitly assigned to patients they need to access.
+> `ROLE_MEDICAL_ADMIN` has been removed — replaced by break-the-glass.
 
 - **Voters**: `WriteAccessVoter` (CAN_WRITE, CAN_DELETE) + `PatientAccessVoter` (VIEW_PATIENT)
+- **Break-the-glass**: `BreakTheGlassAccess` entity + `BreakTheGlassController` for emergency access
 - **Legal reference**: See `docs/PATIENT_ACCESS_LEGAL.md`
 
 ---
