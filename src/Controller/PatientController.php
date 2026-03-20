@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Patient;
+use App\Entity\User;
 use App\Form\PatientType;
 use App\Form\PatientSearchType;
+use App\Repository\BreakTheGlassAccessRepository;
 use App\Repository\PatientRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,6 +20,7 @@ class PatientController extends AbstractController
 {
     public function __construct(
         private PatientRepository $patientRepository,
+        private BreakTheGlassAccessRepository $btgRepository,
     ) {
     }
 
@@ -38,8 +41,6 @@ class PatientController extends AbstractController
             'firstName' => $bag->get('firstName', ''),
             'fileNumber' => $bag->get('fileNumber', ''),
             'city' => $bag->get('city', ''),
-            'bloodGroup' => $bag->get('bloodGroup', ''),
-            'rhesus' => $bag->get('rhesus', ''),
         ];
 
         // Validate CSRF token on POST requests
@@ -53,9 +54,7 @@ class PatientController extends AbstractController
         $hasSearchCriteria = !empty($criteria['lastName']) 
             || !empty($criteria['firstName']) 
             || !empty($criteria['fileNumber']) 
-            || !empty($criteria['city'])
-            || !empty($criteria['bloodGroup'])
-            || !empty($criteria['rhesus']);
+            || !empty($criteria['city']);
 
         $patients = [];
         $total = 0;
@@ -84,6 +83,15 @@ class PatientController extends AbstractController
 
         $totalPages = (int) ceil($total / $limit);
 
+        // Find active BTG accesses for the current user across listed patients
+        $btgAccesses = [];
+        if (!empty($patients)) {
+            /** @var User $currentUser */
+            $currentUser = $this->getUser();
+            $patientIds = array_map(fn(Patient $p) => $p->getId(), $patients);
+            $btgAccesses = $this->btgRepository->findActiveAccessesForPatients($currentUser, $patientIds);
+        }
+
         return $this->render('patient/index.html.twig', [
             'patients' => $patients,
             'criteria' => $criteria,
@@ -93,6 +101,7 @@ class PatientController extends AbstractController
             'totalPages' => $totalPages,
             'limit' => $limit,
             'showConfirmation' => $showConfirmation,
+            'btgAccesses' => $btgAccesses,
         ]);
     }
 
@@ -129,8 +138,13 @@ class PatientController extends AbstractController
     {
         $this->denyAccessUnlessGranted('VIEW_PATIENT', $patient, 'Vous n\'êtes pas autorisé à accéder à ce dossier patient');
 
+        /** @var User $currentUser */
+        $currentUser = $this->getUser();
+        $btgAccess = $this->btgRepository->findActiveAccess($currentUser, $patient);
+
         return $this->render('patient/show.html.twig', [
             'patient' => $patient,
+            'btgAccess' => $btgAccess,
         ]);
     }
 

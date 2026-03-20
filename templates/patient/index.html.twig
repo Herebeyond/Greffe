@@ -45,25 +45,6 @@
                     <input type="text" id="city" name="city" value="{{ criteria.city }}" placeholder="Ex: Paris">
                 </div>
 
-                <div class="form-group">
-                    <label for="bloodGroup">Groupe sanguin</label>
-                    <select id="bloodGroup" name="bloodGroup">
-                        <option value="">Tous</option>
-                        <option value="A" {{ criteria.bloodGroup == 'A' ? 'selected' }}>A</option>
-                        <option value="B" {{ criteria.bloodGroup == 'B' ? 'selected' }}>B</option>
-                        <option value="AB" {{ criteria.bloodGroup == 'AB' ? 'selected' }}>AB</option>
-                        <option value="O" {{ criteria.bloodGroup == 'O' ? 'selected' }}>O</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="rhesus">Rhésus</label>
-                    <select id="rhesus" name="rhesus">
-                        <option value="">Tous</option>
-                        <option value="+" {{ criteria.rhesus == '+' ? 'selected' }}>+</option>
-                        <option value="-" {{ criteria.rhesus == '-' ? 'selected' }}>−</option>
-                    </select>
-                </div>
             </div>
             
             <div class="search-actions">
@@ -86,8 +67,6 @@
                         <input type="hidden" name="firstName" value="{{ criteria.firstName }}">
                         <input type="hidden" name="fileNumber" value="{{ criteria.fileNumber }}">
                         <input type="hidden" name="city" value="{{ criteria.city }}">
-                        <input type="hidden" name="bloodGroup" value="{{ criteria.bloodGroup }}">
-                        <input type="hidden" name="rhesus" value="{{ criteria.rhesus }}">
                         <input type="hidden" name="confirmed" value="1">
                         <button type="submit" class="btn btn-primary">Oui, afficher</button>
                     </form>
@@ -117,7 +96,8 @@
                     </thead>
                     <tbody>
                         {% for patient in patients %}
-                        <tr>
+                        {% set activeBtg = btgAccesses[patient.id] ?? null %}
+                        <tr{% if activeBtg %} class="btg-active-row"{% endif %}>
                             <td>{{ patient.lastName }}</td>
                             <td>{{ patient.firstName }}</td>
                             <td>{{ patient.fileNumber }}</td>
@@ -130,8 +110,11 @@
                                     {% if is_granted('CAN_WRITE') %}
                                 <a href="{{ path('app_patient_edit', {id: patient.id}) }}" class="btn btn-small btn-secondary">Modifier</a>
                                     {% endif %}
+                                    {% if activeBtg %}
+                                <span class="btg-badge" data-expires="{{ activeBtg.expiresAt|date('c') }}">⚠️ Bris de glace — <span class="btg-countdown"></span></span>
+                                    {% endif %}
                                 {% else %}
-                                <span class="text-restricted">Accès restreint</span>
+                                <span class="text-restricted btg-trigger" data-patient-id="{{ patient.id }}" data-patient-name="{{ patient.lastName }} {{ patient.firstName }}" data-patient-file="{{ patient.fileNumber }}">Accès restreint</span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -180,4 +163,118 @@
         </div>
     {% endif %}
 </div>
+
+<div id="btg-modal" class="btg-modal-overlay">
+    <div class="btg-modal-content">
+        <button type="button" class="btg-modal-close" aria-label="Fermer">&times;</button>
+        <h2>⚠️ Accès d'urgence (Bris de glace)</h2>
+        <div class="alert alert-warning">
+            <strong>Attention :</strong> Cette procédure est réservée aux situations d'urgence médicale.
+            Tout accès sera journalisé et audité.
+        </div>
+        <div class="btg-patient-info">Patient : <span id="btg-patient-info"></span></div>
+        <ul class="btg-conditions">
+            <li>Cet accès est limité à 3 heures</li>
+            <li>Une justification détaillée est obligatoire</li>
+            <li>Un audit sera effectué par les responsables médicaux</li>
+        </ul>
+        <form class="btg-form" method="post" action="">
+            <input type="hidden" name="break_the_glass[_token]" value="{{ csrf_token('break_the_glass') }}">
+            <label for="btg-justification"><strong>Justification de l'accès d'urgence</strong></label>
+            <textarea id="btg-justification" name="break_the_glass[justification]" rows="4"
+                      placeholder="Décrivez la raison de cet accès exceptionnel (ex: patient inconscient aux urgences, prise en charge urgente...)"
+                      required minlength="10"></textarea>
+            <div id="btg-error" class="btg-error" style="display:none"></div>
+            <div class="btg-actions">
+                <button type="button" class="btn btn-secondary btg-cancel">Annuler</button>
+                <button type="submit" class="btn btn-danger">Confirmer l'accès d'urgence</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // BTG Modal
+    var modal = document.getElementById('btg-modal');
+    if (modal) {
+        var closeBtn = modal.querySelector('.btg-modal-close');
+        var cancelBtn = modal.querySelector('.btg-cancel');
+        var form = modal.querySelector('.btg-form');
+        var patientInfo = document.getElementById('btg-patient-info');
+        var justificationInput = document.getElementById('btg-justification');
+        var errorEl = document.getElementById('btg-error');
+
+        document.querySelectorAll('.btg-trigger').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var patientId = this.dataset.patientId;
+                var patientName = this.dataset.patientName;
+                var patientFile = this.dataset.patientFile;
+                patientInfo.textContent = patientFile + ' — ' + patientName;
+                justificationInput.value = '';
+                errorEl.style.display = 'none';
+                form.action = '/break-the-glass/' + encodeURIComponent(patientId);
+                modal.classList.add('btg-modal-visible');
+                justificationInput.focus();
+            });
+        });
+
+        function closeModal() {
+            modal.classList.remove('btg-modal-visible');
+        }
+
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeModal();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        form.addEventListener('submit', function(e) {
+            var val = justificationInput.value.trim();
+            if (val.length < 10) {
+                e.preventDefault();
+                errorEl.textContent = 'La justification doit contenir au moins 10 caractères.';
+                errorEl.style.display = 'block';
+                justificationInput.focus();
+            }
+        });
+    }
+
+    // BTG Countdown timers
+    function updateCountdowns() {
+        document.querySelectorAll('.btg-badge').forEach(function(badge) {
+            var expiresAt = new Date(badge.dataset.expires);
+            var now = new Date();
+            var diff = expiresAt - now;
+            var countdown = badge.querySelector('.btg-countdown');
+
+            if (diff <= 0) {
+                countdown.textContent = 'expiré';
+                badge.classList.add('btg-expired');
+                return;
+            }
+
+            var hours = Math.floor(diff / 3600000);
+            var minutes = Math.floor((diff % 3600000) / 60000);
+            var seconds = Math.floor((diff % 60000) / 1000);
+
+            var parts = [];
+            if (hours > 0) parts.push(hours + 'h');
+            parts.push(minutes + 'min');
+            parts.push(seconds + 's');
+            countdown.textContent = parts.join(' ');
+        });
+    }
+
+    updateCountdowns();
+    setInterval(updateCountdowns, 1000);
+});
+</script>
 {% endblock %}

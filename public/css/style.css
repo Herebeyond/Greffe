@@ -171,6 +171,7 @@ main {
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 1rem;
+    height: 49px;
     transition: border-color 0.2s;
 }
 
@@ -325,6 +326,15 @@ main {
     background-color: #c0392b;
 }
 
+.btn-warning {
+    background-color: #e67e22;
+    color: white;
+}
+
+.btn-warning:hover {
+    background-color: #d35400;
+}
+
 .btn-small {
     padding: 0.4rem 0.75rem;
     font-size: 0.85rem;
@@ -339,6 +349,176 @@ main {
     color: #e74c3c;
     font-weight: 600;
     font-size: 0.85rem;
+}
+
+.btg-trigger {
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+}
+
+.btg-trigger:hover {
+    color: #c0392b;
+}
+
+.btg-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.btg-modal-visible {
+    display: flex;
+}
+
+.btg-modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 550px;
+    width: 90%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.btg-modal-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #7f8c8d;
+    line-height: 1;
+}
+
+.btg-modal-close:hover {
+    color: #2c3e50;
+}
+
+.btg-modal-content h2 {
+    margin-top: 0;
+    color: #e74c3c;
+}
+
+.btg-modal-content .alert {
+    margin-bottom: 1rem;
+}
+
+.btg-patient-info {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.75rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.btg-conditions {
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 1rem;
+    padding-left: 1.2rem;
+}
+
+.btg-conditions li {
+    margin-bottom: 0.3rem;
+}
+
+.btg-form textarea {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.btg-form textarea:focus {
+    outline: none;
+    border-color: #e67e22;
+    box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.2);
+}
+
+.btg-error {
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+}
+
+.btg-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    justify-content: flex-end;
+}
+
+/* BTG active row highlight (patient search table) */
+.btg-active-row {
+    background-color: #fef3e2 !important;
+    border-left: 4px solid #e67e22;
+}
+
+.btg-active-row:hover {
+    background-color: #fdebd0 !important;
+}
+
+.btg-badge {
+    display: inline-block;
+    background: #e67e22;
+    color: white;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.3rem;
+    white-space: nowrap;
+}
+
+.btg-badge.btg-expired {
+    background: #95a5a6;
+}
+
+/* BTG banner (patient show page) */
+.btg-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background: #fef3e2;
+    border: 2px solid #e67e22;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.btg-banner-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.btg-banner-text {
+    font-size: 0.95rem;
+    color: #7d5a29;
+    line-height: 1.5;
+}
+
+.btg-banner-text strong {
+    color: #c0392b;
+}
+
+.btg-countdown {
+    font-family: monospace;
+    font-weight: 700;
 }
 
 /* Admin forms */
@@ -467,6 +647,101 @@ main {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
+}
+
+.form-group-wide {
+    grid-column: 1 / -1;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+    cursor: pointer;
+}
+
+/* Multiselect dropdown */
+.multiselect-dropdown {
+    position: relative;
+    width: 120px;
+}
+
+.multiselect-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    background: white;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.85rem;
+}
+
+.multiselect-toggle.open {
+    border-color: #4a90d9;
+}
+
+.multiselect-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    line-height: 1.4;
+}
+
+.multiselect-arrow {
+    margin-left: 0.3rem;
+    font-size: 0.7rem;
+    color: #666;
+}
+
+.multiselect-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 10;
+    background: white;
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: max-content;
+}
+
+.multiselect-menu.open {
+    display: block;
+}
+
+.multiselect-item {
+    display: flex !important;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.4rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    margin-bottom: 0;
+}
+
+.multiselect-item:hover {
+    background: #f0f4f8;
+}
+
+.multiselect-item input[type="checkbox"] {
+    cursor: pointer;
+    margin: 0;
 }
 
 .search-actions {

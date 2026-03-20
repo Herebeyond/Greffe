@@ -24,6 +24,16 @@
         <div class="alert alert-error">{{ message }}</div>
     {% endfor %}
 
+    {% if btgAccess %}
+    <div class="btg-banner" data-expires="{{ btgAccess.expiresAt|date('c') }}">
+        <div class="btg-banner-icon">⚠️</div>
+        <div class="btg-banner-text">
+            <strong>Accès d'urgence (Bris de glace)</strong> — Cet accès est temporaire et sera audité.
+            <br>Temps restant : <span class="btg-countdown"></span>
+        </div>
+    </div>
+    {% endif %}
+
         {# Medical section navigation tabs #}
     <div class="patient-medical-sections">
         <nav class="medical-nav">
@@ -158,4 +168,39 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{% if btgAccess %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function updateCountdowns() {
+        document.querySelectorAll('.btg-banner').forEach(function(banner) {
+            var expiresAt = new Date(banner.dataset.expires);
+            var now = new Date();
+            var diff = expiresAt - now;
+            var countdown = banner.querySelector('.btg-countdown');
+
+            if (diff <= 0) {
+                countdown.textContent = 'expiré';
+                return;
+            }
+
+            var hours = Math.floor(diff / 3600000);
+            var minutes = Math.floor((diff % 3600000) / 60000);
+            var seconds = Math.floor((diff % 60000) / 1000);
+
+            var parts = [];
+            if (hours > 0) parts.push(hours + 'h');
+            parts.push(minutes + 'min');
+            parts.push(seconds + 's');
+            countdown.textContent = parts.join(' ');
+        });
+    }
+
+    updateCountdowns();
+    setInterval(updateCountdowns, 1000);
+});
+</script>
+{% endif %}
 {% endblock %}
