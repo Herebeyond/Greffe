@@ -4,6 +4,7 @@ namespace App\Security\Voter;
 
 use App\Entity\Patient;
 use App\Entity\User;
+use App\Repository\BreakTheGlassAccessRepository;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
@@ -11,22 +12,25 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 /**
  * Controls access to individual patient files.
  *
- * Access model (hybrid, Art. L1110-4 & L1110-12 CSP):
- *  - CHU practitioner (isChuPractitioner) → granted (same care team)
- *  - External practitioner assigned to the patient → granted
+ * Access model (Art. L1110-4 & L1110-12 CSP):
+ *  - Practitioner assigned to the patient → granted
+ *  - Active break-the-glass access for this user+patient → granted
  *  - Otherwise → denied
  *
  * ⚠️ LEGAL NOTE (Art. L1110-4 CSP, RGPD Art. 25/32):
  * Technical administrators (ROLE_TECH_ADMIN) have NO access to patient data.
  * Only healthcare professionals in the care team may view patient files.
- * ROLE_MEDICAL_ADMIN grants admin privileges but patient access relies on
- * normal rules (isChuPractitioner or explicit patient assignment).
- * A future "bris de glace" (break-the-glass) mechanism could allow audited
- * emergency access — see docs/PATIENT_ACCESS_LEGAL.md §5.
+ * "Bris de glace" (break-the-glass) allows audited emergency access
+ * — see docs/PATIENT_ACCESS_LEGAL.md §5.
  */
 class PatientAccessVoter extends Voter
 {
     public const VIEW_PATIENT = 'VIEW_PATIENT';
+
+    public function __construct(
+        private BreakTheGlassAccessRepository $btgRepository,
+    ) {
+    }
 
     protected function supports(string $attribute, mixed $subject): bool
     {
@@ -44,13 +48,13 @@ class PatientAccessVoter extends Voter
         /** @var Patient $patient */
         $patient = $subject;
 
-        // CHU transplant service practitioners can access all patients
-        if ($user->isChuPractitioner()) {
+        // Practitioners can access their assigned patients
+        if ($patient->isAuthorizedPractitioner($user)) {
             return true;
         }
 
-        // External practitioners can only access their assigned patients
-        if ($patient->isAuthorizedPractitioner($user)) {
+        // Check for active break-the-glass emergency access
+        if ($this->btgRepository->hasActiveAccess($user, $patient)) {
             return true;
         }
 

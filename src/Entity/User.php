@@ -84,15 +84,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
 
     /**
-     * Whether this user belongs to the CHU transplant service care team.
-     * CHU practitioners can access all patients in the service (Art. L1110-4, II).
-     * External practitioners (city nephrologists) can only access assigned patients.
+     * @deprecated No longer used for access control. Kept for DB compatibility.
+     * All practitioners now access only their assigned patients.
+     * Break-the-glass provides audited emergency access to unassigned patients.
      */
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $isChuPractitioner = false;
 
     /**
-     * Patients assigned to this practitioner (for external city nephrologists).
+     * Patients assigned to this practitioner.
+     * All practitioners (CHU or external) can only access their assigned patients.
      */
     #[ORM\ManyToMany(targetEntity: \App\Entity\Patient::class, mappedBy: 'authorizedPractitioners')]
     private Collection $assignedPatients;

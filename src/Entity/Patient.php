@@ -114,8 +114,9 @@ class Patient
     private ?\DateTimeImmutable $updatedAt = null;
 
     /**
-     * External practitioners authorized to access this patient's file.
-     * CHU practitioners don't need to be in this list (they have access via isChuPractitioner flag).
+     * Practitioners authorized to access this patient's file.
+     * Every practitioner must be explicitly assigned to access a patient.
+     * Break-the-glass emergency access checked via PatientAccessVoter.
      */
     #[ORM\ManyToMany(targetEntity: \App\Entity\User::class, inversedBy: 'assignedPatients')]
     #[ORM\JoinTable(name: 'patient_authorized_user')]

@@ -7,7 +7,7 @@
     <h1>Gestion des Greffes Rénales</h1>
 
     <nav class="home-navigation">
-        {% if not is_granted('ROLE_TECH_ADMIN') or is_granted('ROLE_MEDICAL_ADMIN') %}
+        {% if is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE') %}
         <a href="{{ path('app_patient_index') }}" class="nav-card">
             <h2>Patients</h2>
             <p>Rechercher et gérer les patients en attente ou ayant reçu une greffe rénale</p>

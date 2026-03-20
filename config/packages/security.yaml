@@ -44,9 +44,6 @@ security:
         ROLE_PATIENT: ROLE_USER
         # Technical admin: manages users and system config, NO patient data access
         ROLE_TECH_ADMIN: ROLE_USER
-        # Medical admin: senior doctor with admin privileges (delete records, edit HLA, etc.)
-        # Must be a healthcare professional — patient access follows normal rules (CHU/assigned)
-        ROLE_MEDICAL_ADMIN: [ROLE_DOCTOR, ROLE_TECH_ADMIN]
 
 when@test:
     security:

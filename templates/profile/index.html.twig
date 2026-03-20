@@ -47,8 +47,6 @@
                         <span class="badge badge-{{ role|lower|replace({'role_': ''}) }}">
                             {% if role == 'ROLE_TECH_ADMIN' %}
                                 Admin technique
-                            {% elseif role == 'ROLE_MEDICAL_ADMIN' %}
-                                Admin médical
                             {% elseif role == 'ROLE_DOCTOR' %}
                                 Docteur
                             {% elseif role == 'ROLE_NURSE' %}
@@ -65,14 +63,12 @@
                 </span>
             </div>
             <div class="profile-field">
-                <span class="profile-label">Praticien CHU</span>
+                <span class="profile-label">Accès patients</span>
                 <span class="profile-value">
-                    {% if 'ROLE_TECH_ADMIN' in user.roles and 'ROLE_MEDICAL_ADMIN' not in user.roles %}
+                    {% if 'ROLE_TECH_ADMIN' in user.roles %}
                         <span class="badge badge-secondary">N/A — administration technique uniquement</span>
-                    {% elseif user.isChuPractitioner %}
-                        <span class="badge badge-doctor">Oui — accès à tous les patients</span>
                     {% else %}
-                        <span class="badge badge-user">Non — accès aux patients assignés uniquement</span>
+                        <span class="badge badge-user">Patients assignés uniquement</span>
                     {% endif %}
                 </span>
             </div>

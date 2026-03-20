@@ -21,7 +21,7 @@
 
                 {% if app.user %}
                 <nav class="header-nav">
-                    {% if not is_granted('ROLE_TECH_ADMIN') or is_granted('ROLE_MEDICAL_ADMIN') %}
+                    {% if is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE') %}
                     <a href="{{ path('app_patient_index') }}" class="header-link">Patients</a>
                     <a href="{{ path('app_donor_index') }}" class="header-link">Donneurs</a>
                     {% endif %}

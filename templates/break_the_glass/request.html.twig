@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Bris de glace - Accès d'urgence{% endblock %}
+
+{% block body %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>🔓 Bris de glace — Accès d'urgence</h1>
+        <a href="{{ path('app_home') }}" class="btn btn-secondary">Annuler</a>
+    </div>
+
+    <div class="alert alert-error">
+        <strong>⚠️ Attention — Accès exceptionnel</strong>
+        <p>
+            Vous n'êtes pas dans l'équipe de soins de ce patient. L'accès à ce dossier
+            nécessite une justification d'urgence conformément à la réglementation
+            (Art. L1110-4 du Code de la Santé Publique).
+        </p>
+    </div>
+
+    <div class="profile-section">
+        <h2>Patient concerné</h2>
+        <div class="profile-grid">
+            <div class="profile-field">
+                <span class="profile-label">Numéro de dossier</span>
+                <span class="profile-value">{{ patient.fileNumber }}</span>
+            </div>
+            <div class="profile-field">
+                <span class="profile-label">Nom</span>
+                <span class="profile-value">{{ patient.lastName }} {{ patient.firstName }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-section">
+        <h2>Conditions d'accès</h2>
+        <ul>
+            <li>L'accès sera <strong>temporaire</strong> ({{ (duration / 60)|round(0, 'floor') }} heures)</li>
+            <li>Votre accès sera <strong>journalisé</strong> et soumis à <strong>audit a posteriori</strong></li>
+            <li>Le DPO et l'équipe de sécurité seront <strong>notifiés</strong></li>
+            <li>Vous devez fournir une <strong>justification médicale</strong> valable</li>
+        </ul>
+    </div>
+
+    {{ form_start(form, {'attr': {'class': 'admin-form'}}) }}
+        <div class="form-group">
+            {{ form_label(form.justification) }}
+            {{ form_widget(form.justification) }}
+            {{ form_errors(form.justification) }}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Confirmez-vous l\'activation du bris de glace ? Cet accès exceptionnel sera journalisé et audité.');">
+                🔓 Confirmer l'accès d'urgence
+            </button>
+            <a href="{{ path('app_home') }}" class="btn btn-secondary">Annuler</a>
+        </div>
+    {{ form_end(form) }}
+</div>
+{% endblock %}

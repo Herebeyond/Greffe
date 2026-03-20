@@ -38,10 +38,9 @@ information for care coordination **without explicit patient consent**, provided
 
 | User Type | Legal Basis | Access Level |
 |-----------|-------------|--------------|
-| **CHU transplant service practitioners** (doctors, nurses) | Same *équipe de soins*, same establishment — Art. L1110-4, II & L1110-12 | All patients in the transplant service |
+| **CHU transplant service practitioners** (doctors, nurses) | Same *équipe de soins*, same establishment — Art. L1110-4, II & L1110-12 | Only their assigned patients |
 | **City nephrologists** (external practitioners) | Extended care team for specific patients only — care coordination relationship | Only their assigned patients |
 | **Admins (ROLE_TECH_ADMIN)** | Technical role, system management | **No patient data access** (Art. L1110-4 CSP, RGPD Art. 25/32) |
-| **Medical Admins (ROLE_MEDICAL_ADMIN)** | Senior doctor + admin | Patient access via normal rules (CHU or assigned) |
 | **Patients** (ROLE_PATIENT) | Art. L1111-7 — right of access to own medical file | Own file only (future feature) |
 
 ---
@@ -50,10 +49,13 @@ information for care coordination **without explicit patient consent**, provided
 
 ### 1. "Need to Know" Principle (principe du besoin d'en connaître)
 
-Even within the CHU, access is limited to the **transplant service** (*service
-de transplantation rénale*). A CHU dermatologist should NOT access transplant
-patient files. The `isChuPractitioner` flag is set per-user and should only
-be enabled for users who belong to the transplant service.
+Access is limited to practitioners who are **explicitly assigned** to a patient.
+Even within the CHU, a doctor cannot access a patient's file unless they are
+in the `patient_authorized_user` join table.
+
+When emergency access is needed for an unassigned patient, healthcare
+professionals can use the **break-the-glass** mechanism (see §5 below),
+which requires justification and is heavily audited.
 
 ### 2. Mandatory Traceability (traçabilité obligatoire)
 
@@ -83,17 +85,23 @@ the sharing is for care coordination within the extended care team.
 
 ### Technical Design
 
-1. **User.isChuPractitioner** (boolean): Flag indicating the user belongs
-   to the CHU transplant service care team.
+1. **Patient.authorizedPractitioners** (ManyToMany → User): Join table
+   `patient_authorized_user` linking specific patients to their practitioners.
 
-2. **Patient.authorizedPractitioners** (ManyToMany → User): Join table
-   `patient_authorized_user` linking specific patients to external doctors.
-
-3. **PatientAccessVoter**: Symfony Voter checking access with this logic:
+2. **PatientAccessVoter**: Symfony Voter checking access with this logic:
    - `ROLE_TECH_ADMIN` → denied (no patient data access)
-   - `isChuPractitioner = true` → granted (same care team)
    - User in `patient.authorizedPractitioners` → granted (assigned)
+   - Active `BreakTheGlassAccess` for this user+patient → granted (emergency)
    - Otherwise → denied
+
+3. **AccessDeniedHandler**: When a medical professional (ROLE_DOCTOR, ROLE_NURSE)
+   is denied access to a patient, they are redirected to the break-the-glass
+   form instead of seeing a 403 error.
+
+> **Note:** The `User.isChuPractitioner` field is deprecated and no longer
+> used for access control decisions. It remains in the database for
+> backward compatibility but has no effect.
+> `ROLE_MEDICAL_ADMIN` has been removed — replaced by break-the-glass.
 
 ### References
 
@@ -105,9 +113,9 @@ the sharing is for care coordination within the extended care team.
 
 ---
 
-## §5 — Bris de Glace (Break-the-Glass) — NOT IMPLEMENTED
+## §5 — Bris de Glace (Break-the-Glass) — IMPLEMENTED
 
-> **Status**: Documented for future implementation. Not currently in the codebase.
+> **Status**: Implemented. Break-the-glass provides audited emergency access.
 
 ### Concept
 
@@ -128,49 +136,53 @@ provided it meets strict conditions.
 - **RGPD Art. 9(2)(c)**: Processing of health data justified by vital
   interests of the data subject.
 
-### Requirements for Implementation
+### Implementation
 
-If implemented in the future, the mechanism must satisfy:
+The mechanism satisfies the following requirements:
 
 1. **Explicit justification**: The user must state the reason for emergency
-   access (free text, mandatory).
-2. **Heavy logging**: Every break-the-glass access must be logged with:
+   access (free text, mandatory, minimum 10 characters).
+2. **Heavy logging**: Every break-the-glass access is logged with:
    - User identity and role
    - Patient file accessed
-   - Timestamp
+   - Timestamp (accessedAt)
    - Justification provided
-   - Duration of access
-3. **A posteriori audit**: The DPO (Data Protection Officer) or medical
-   director must regularly review all break-the-glass accesses.
-4. **Alert mechanism**: Automatic notification to the DPO or security team
-   when break-the-glass is triggered.
-5. **Time-limited**: Access should be temporary (e.g., 15-30 minutes),
-   requiring renewal if still needed.
-6. **Restricted to healthcare professionals**: Only users with medical
-   roles (ROLE_DOCTOR, ROLE_NURSE, ROLE_MEDICAL_ADMIN) may use it. Technical
-   administrators (ROLE_TECH_ADMIN) must never have this capability.
+   - Expiration time (expiresAt)
+   - Audit log event (ACTION_BREAK_THE_GLASS)
+3. **A posteriori audit**: The `BreakTheGlassAccess` entity tracks review
+   status (`reviewed`, `reviewedBy`, `reviewedAt`) for DPO review.
+4. **Time-limited**: Access expires after 30 minutes (configurable via
+   `BreakTheGlassAccess::DEFAULT_DURATION_MINUTES`).
+5. **Restricted to healthcare professionals**: Only users with medical
+   roles (ROLE_DOCTOR, ROLE_NURSE) may use it. Technical
+   administrators (ROLE_TECH_ADMIN) can never use this capability.
+6. **Automatic redirect**: When a medical professional is denied access
+   to a patient, the `AccessDeniedHandler` redirects them to the
+   break-the-glass form, where they must provide justification.
 
-### Suggested Technical Design
+### Technical Design
 
 ```
 Entity: BreakTheGlassAccess
   - user (ManyToOne → User)
   - patient (ManyToOne → Patient)
-  - justification (text, required)
-  - accessedAt (datetime)
-  - expiresAt (datetime, +30 min)
+  - justification (text, required, min 10 chars)
+  - accessedAt (datetime_immutable)
+  - expiresAt (datetime_immutable, +30 min)
   - reviewed (boolean, default false)
   - reviewedBy (ManyToOne → User, nullable)
-  - reviewedAt (datetime, nullable)
+  - reviewedAt (datetime_immutable, nullable)
 
-Voter logic addition:
-  - If normal access denied AND user has medical role
-    → check for active (non-expired) BreakTheGlassAccess
-    → if exists → GRANT
-    → if not → redirect to break-the-glass form
+Voter logic:
+  - User in patient.authorizedPractitioners → GRANT
+  - Active (non-expired) BreakTheGlassAccess for user+patient → GRANT
+  - Otherwise → DENY
+
+AccessDeniedHandler:
+  - If subject is Patient and user has medical role
+    → redirect to /break-the-glass/{patientId} form
+  - Otherwise → show standard 403 error
 ```
-
-This feature is logged in `docs/TODO.txt` as a future enhancement.
 
 ---
 
