@@ -7,6 +7,7 @@ use App\Entity\Consultation;
 use App\Entity\Donor;
 use App\Entity\MedicalHistory;
 use App\Entity\Patient;
+use App\Entity\Transplant;
 use App\Entity\TherapeuticEducation;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -27,16 +28,24 @@ class AppFixtures extends Fixture
 
         $manager->flush();
 
+        // Assign practitioners to patients after flush so findBy works
+        $this->loadPatientAssignments($manager);
+
         // Load medical data after flush so patient IDs are available
         $this->loadMedicalData($manager);
         $this->loadDonors($manager);
+
+        $manager->flush();
+
+        // Load transplants after donors are flushed so donor IDs are available
+        $this->loadTransplants($manager);
 
         $manager->flush();
     }
 
     private function loadUsers(ObjectManager $manager): void
     {
-        // Admin user: Sam Gamegie (technical admin, CHU practitioner)
+        // Admin user: Sam Gamegie (technical admin, no patient access)
         $admin = new User();
         $admin->setName('Sam');
         $admin->setSurname('Gamegie');
@@ -44,21 +53,20 @@ class AppFixtures extends Fixture
         $admin->setRoles(['ROLE_TECH_ADMIN']);
         $admin->setPassword($this->passwordHasher->hashPassword($admin, 'password'));
         $admin->setCristalId('CRISTAL-ADMIN-001');
-        $admin->setIsChuPractitioner(false);
         $manager->persist($admin);
 
-        // Medical admin user: Dr. Sophie Martin (senior doctor with admin privileges)
-        $medicalAdmin = new User();
-        $medicalAdmin->setName('Sophie');
-        $medicalAdmin->setSurname('Martin');
-        $medicalAdmin->setEmail('admin-medical@chu.fr');
-        $medicalAdmin->setRoles(['ROLE_MEDICAL_ADMIN']);
-        $medicalAdmin->setPassword($this->passwordHasher->hashPassword($medicalAdmin, 'password'));
-        $medicalAdmin->setCristalId('CRISTAL-MADM-001');
-        $medicalAdmin->setIsChuPractitioner(true);
-        $manager->persist($medicalAdmin);
+        // Doctor user: Dr. Sophie Martin (senior doctor, sees only assigned patients)
+        $doctorMartin = new User();
+        $doctorMartin->setName('Sophie');
+        $doctorMartin->setSurname('Martin');
+        $doctorMartin->setEmail('admin-medical@chu.fr');
+        $doctorMartin->setRoles(['ROLE_DOCTOR']);
+        $doctorMartin->setPassword($this->passwordHasher->hashPassword($doctorMartin, 'password'));
+        $doctorMartin->setCristalId('CRISTAL-MADM-001');
+        $manager->persist($doctorMartin);
+        $this->addReference('doctor-martin', $doctorMartin);
 
-        // Doctor user: John Doe (CHU practitioner)
+        // Doctor user: John Doe (CHU doctor, sees only assigned patients)
         $doctor = new User();
         $doctor->setName('John');
         $doctor->setSurname('Doe');
@@ -66,10 +74,10 @@ class AppFixtures extends Fixture
         $doctor->setRoles(['ROLE_DOCTOR']);
         $doctor->setPassword($this->passwordHasher->hashPassword($doctor, 'password'));
         $doctor->setCristalId('CRISTAL-DOC-001');
-        $doctor->setIsChuPractitioner(true);
         $manager->persist($doctor);
+        $this->addReference('doctor-doe', $doctor);
 
-        // Nurse user: Marie Curie (CHU practitioner, read-only access - can view but not modify)
+        // Nurse user: Marie Curie (read-only access - can view but not modify)
         $nurse = new User();
         $nurse->setName('Marie');
         $nurse->setSurname('Curie');
@@ -77,10 +85,10 @@ class AppFixtures extends Fixture
         $nurse->setRoles(['ROLE_NURSE']);
         $nurse->setPassword($this->passwordHasher->hashPassword($nurse, 'password'));
         $nurse->setCristalId('CRISTAL-INF-001');
-        $nurse->setIsChuPractitioner(true);
         $manager->persist($nurse);
+        $this->addReference('nurse-curie', $nurse);
 
-        // External city nephrologist: Dr. Lucie Vasseur (NOT CHU, only sees assigned patients)
+        // External city nephrologist: Dr. Lucie Vasseur (sees only assigned patients)
         $externalDoctor = new User();
         $externalDoctor->setName('Lucie');
         $externalDoctor->setSurname('Vasseur');
@@ -88,7 +96,6 @@ class AppFixtures extends Fixture
         $externalDoctor->setRoles(['ROLE_DOCTOR']);
         $externalDoctor->setPassword($this->passwordHasher->hashPassword($externalDoctor, 'password'));
         $externalDoctor->setCristalId('CRISTAL-EXT-001');
-        $externalDoctor->setIsChuPractitioner(false);
         $manager->persist($externalDoctor);
         $this->addReference('external-doctor', $externalDoctor);
 
@@ -111,15 +118,15 @@ class AppFixtures extends Fixture
         $disabled->setIsActive(false);
         $manager->persist($disabled);
 
-        // Test user: Benjamin Baillard (for testing password reset)
+        // Test user: Benjamin Baillard
         $benjamin = new User();
         $benjamin->setName('Benjamin');
         $benjamin->setSurname('Baillard');
         $benjamin->setEmail('baillard.bjm2@orange.fr');
         $benjamin->setRoles(['ROLE_DOCTOR']);
         $benjamin->setPassword($this->passwordHasher->hashPassword($benjamin, 'password'));
-        $benjamin->setIsChuPractitioner(true);
         $manager->persist($benjamin);
+        $this->addReference('doctor-benjamin', $benjamin);
     }
 
     private function loadPatients(ObjectManager $manager): void
@@ -235,15 +242,6 @@ class AppFixtures extends Fixture
             $manager->persist($patient);
         }
 
-        // Assign first 5 named patients to the external nephrologist
-        // (simulates city nephrologist following specific patients post-transplant)
-        $assignedPatients = $manager->getRepository(Patient::class)->findBy(
-            ['fileNumber' => ['2024-001', '2024-002', '2024-003', '2024-004', '2024-005']]
-        );
-        foreach ($assignedPatients as $assignedPatient) {
-            $assignedPatient->addAuthorizedPractitioner($externalDoctor);
-        }
-
         // Generate 300 additional Paris patients to test >200 results confirmation
         $parisFirstNames = ['Adrien', 'Alexandre', 'Alice', 'Amélie', 'Antoine', 'Arnaud', 'Arthur', 'Aurélie', 'Baptiste', 'Bastien', 'Béatrice', 'Benjamin', 'Camille', 'Cédric', 'Charlotte', 'Clara', 'Clément', 'Damien', 'Diane', 'Élise', 'Émile', 'Emma', 'Fabien', 'Florian', 'Gabriel', 'Guillaume', 'Hugo', 'Inès', 'Jade', 'Jules', 'Julie', 'Karine', 'Léa', 'Léo', 'Louis', 'Lucas', 'Lucie', 'Manon', 'Margaux', 'Mathilde', 'Maxime', 'Nathan', 'Nina', 'Noah', 'Noémie', 'Océane', 'Paul', 'Raphaël', 'Romain', 'Sarah', 'Simon', 'Théo', 'Thomas', 'Valentin', 'Valentine', 'Victor', 'Zoé', 'Yann', 'Xavier', 'Quentin'];
         $parisLastNames = ['Adam', 'Aubry', 'Barbier', 'Baron', 'Berger', 'Bertrand', 'Blanchard', 'Boucher', 'Brun', 'Carpentier', 'Chartier', 'Collet', 'Cordier', 'Coulon', 'David', 'Delorme', 'Denis', 'Descamps', 'Dufour', 'Dupuis', 'Etienne', 'Ferry', 'Fleury', 'Garnier', 'Gérard', 'Giraud', 'Grondin', 'Guillot', 'Hardy', 'Hubert', 'Jacob', 'Joly', 'Klein', 'Lacroix', 'Laurent', 'Leclerc', 'Lemoine', 'Leroux', 'Loiseau', 'Louis', 'Marchand', 'Marie', 'Martel', 'Mathieu', 'Menard', 'Monnier', 'Moulin', 'Noel', 'Olivier', 'Paris', 'Pascal', 'Pelletier', 'Pichon', 'Poirier', 'Raymond', 'Regnier', 'Rey', 'Rolland', 'Roussel', 'Roy'];
@@ -272,6 +270,66 @@ class AppFixtures extends Fixture
 
             $manager->persist($patient);
         }
+    }
+
+    private function loadPatientAssignments(ObjectManager $manager): void
+    {
+        /** @var User $externalDoctor */
+        $externalDoctor = $this->getReference('external-doctor', User::class);
+        /** @var User $doctorDoe */
+        $doctorDoe = $this->getReference('doctor-doe', User::class);
+        /** @var User $nurseCurie */
+        $nurseCurie = $this->getReference('nurse-curie', User::class);
+        /** @var User $doctorBenjamin */
+        $doctorBenjamin = $this->getReference('doctor-benjamin', User::class);
+        /** @var User $doctorMartin */
+        $doctorMartin = $this->getReference('doctor-martin', User::class);
+
+        // External nephrologist: patients 2024-001 through 2024-005
+        $externalPatients = $manager->getRepository(Patient::class)->findBy(
+            ['fileNumber' => ['2024-001', '2024-002', '2024-003', '2024-004', '2024-005']]
+        );
+        foreach ($externalPatients as $p) {
+            $p->addAuthorizedPractitioner($externalDoctor);
+        }
+
+        // Dr. Doe: patients 2024-001 through 2024-015
+        $doePatients = $manager->getRepository(Patient::class)->findBy(
+            ['fileNumber' => ['2024-001', '2024-002', '2024-003', '2024-004', '2024-005',
+                              '2024-006', '2024-007', '2024-010', '2024-011', '2024-012',
+                              '2024-013', '2024-014', '2024-015']]
+        );
+        foreach ($doePatients as $p) {
+            $p->addAuthorizedPractitioner($doctorDoe);
+        }
+
+        // Benjamin: patients 2024-016 through 2024-030
+        $benjaminPatients = $manager->getRepository(Patient::class)->findBy(
+            ['fileNumber' => ['2024-016', '2024-017', '2024-018', '2024-019', '2024-020',
+                              '2024-021', '2024-022', '2024-023', '2024-024', '2024-025',
+                              '2024-026', '2024-027', '2024-028', '2024-029', '2024-030']]
+        );
+        foreach ($benjaminPatients as $p) {
+            $p->addAuthorizedPractitioner($doctorBenjamin);
+        }
+
+        // Nurse Curie: same patients as Dr. Doe (read-only)
+        foreach ($doePatients as $p) {
+            $p->addAuthorizedPractitioner($nurseCurie);
+        }
+
+        // Dr. Martin: patients 2024-031 through 2024-050 (senior doctor)
+        $martinPatients = $manager->getRepository(Patient::class)->findBy(
+            ['fileNumber' => ['2024-031', '2024-032', '2024-033', '2024-034', '2024-035',
+                              '2024-036', '2024-037', '2024-038', '2024-039', '2024-040',
+                              '2024-041', '2024-042', '2024-043', '2024-044', '2024-045',
+                              '2024-046', '2024-047', '2024-048', '2024-049', '2024-050']]
+        );
+        foreach ($martinPatients as $p) {
+            $p->addAuthorizedPractitioner($doctorMartin);
+        }
+
+        $manager->flush();
     }
 
     private function loadMedicalData(ObjectManager $manager): void
@@ -755,6 +813,389 @@ class AppFixtures extends Fixture
             if (isset($data['patientComment'])) { $donor->setPatientComment($data['patientComment']); }
 
             $manager->persist($donor);
+        }
+    }
+
+    private function loadTransplants(ObjectManager $manager): void
+    {
+        $patientRepo = $manager->getRepository(Patient::class);
+        $donorRepo = $manager->getRepository(Donor::class);
+
+        // Map CRISTAL numbers to Donor entities
+        $donors = [];
+        foreach (['CRI-2025-V001', 'CRI-2025-V002', 'CRI-2025-V003', 'CRI-2025-D001', 'CRI-2025-D002', 'CRI-2025-D003', 'CRI-2025-C001', 'CRI-2025-C002'] as $cristal) {
+            $donor = $donorRepo->findOneBy(['cristalNumber' => $cristal]);
+            if ($donor) {
+                $donors[$cristal] = $donor;
+            }
+        }
+
+        $transplantsData = [
+            // Patient 2024-001 - Living donor transplant, functional
+            [
+                'patientFileNumber' => '2024-001',
+                'transplantDate' => '2024-06-15',
+                'rank' => 1,
+                'donorType' => 'living',
+                'transplantType' => 'Rein donneur vivant',
+                'isGraftFunctional' => true,
+                'surgeonName' => 'Pr. Legrand François',
+                'declampingDate' => '2024-06-15',
+                'declampingTime' => '10:45',
+                'harvestSide' => 'gauche',
+                'transplantSide' => 'droit',
+                'peritonealPosition' => 'Extra Péritonéal',
+                'totalIschemiaMinutes' => 180,
+                'anastomosisDuration' => 35,
+                'jjProbe' => true,
+                'cmvStatus' => 'D+/R+',
+                'ebvStatus' => 'D+/R+',
+                'toxoplasmosisStatus' => 'R+',
+                'hlaA' => 1, 'hlaB' => 1, 'hlaDR' => 0, 'hlaDQ' => 1,
+                'immunologicalRisk' => 'Non immunisé',
+                'immunosuppressiveConditioning' => ['Advagraf', 'Cellcept', 'Methylprednisolone'],
+                'dialysis' => true,
+                'lastDialysisDate' => '2024-06-14',
+                'hasProtocol' => false,
+                'cristalNumber' => 'CRI-2025-V001',
+                'comment' => 'Greffe de donneur vivant conjoint. Suites opératoires simples. Reprise de fonction immédiate.',
+            ],
+            // Patient 2024-002 - Deceased encephalic donor, functional
+            [
+                'patientFileNumber' => '2024-002',
+                'transplantDate' => '2024-09-22',
+                'rank' => 1,
+                'donorType' => 'deceased_encephalic',
+                'transplantType' => 'Rein',
+                'isGraftFunctional' => true,
+                'surgeonName' => 'Dr. Bernard Michel',
+                'declampingDate' => '2024-09-22',
+                'declampingTime' => '14:30',
+                'harvestSide' => 'droit',
+                'transplantSide' => 'gauche',
+                'peritonealPosition' => 'Extra Péritonéal',
+                'totalIschemiaMinutes' => 720,
+                'anastomosisDuration' => 42,
+                'jjProbe' => true,
+                'cmvStatus' => 'D+/R-',
+                'ebvStatus' => 'D+/R+',
+                'toxoplasmosisStatus' => 'R-',
+                'hlaA' => 2, 'hlaB' => 1, 'hlaDR' => 1, 'hlaDQ' => 0,
+                'hlaCw' => 1,
+                'immunologicalRisk' => 'Non immunisé',
+                'immunosuppressiveConditioning' => ['Prograf', 'Myfortic', 'Methylprednisolone', 'Simulect'],
+                'dialysis' => true,
+                'lastDialysisDate' => '2024-09-21',
+                'hasProtocol' => true,
+                'cristalNumber' => 'CRI-2025-D001',
+                'comment' => 'Ischémie froide longue (12h). Retard de reprise de fonction, dialyse transitoire post-greffe.',
+            ],
+            // Patient 2024-003 - Deceased encephalic, graft non-functional (lost)
+            [
+                'patientFileNumber' => '2024-003',
+                'transplantDate' => '2023-03-10',
+                'rank' => 1,
+                'donorType' => 'deceased_encephalic',
+                'transplantType' => 'Rein',
+                'isGraftFunctional' => false,
+                'graftEndDate' => '2024-11-05',
+                'graftEndCause' => 'Rejet chronique humoral avec DSA anti-HLA de novo. Retour en dialyse.',
+                'surgeonName' => 'Dr. Girard Anne',
+                'declampingDate' => '2023-03-10',
+                'declampingTime' => '16:10',
+                'harvestSide' => 'gauche',
+                'transplantSide' => 'droit',
+                'peritonealPosition' => 'Extra Péritonéal',
+                'totalIschemiaMinutes' => 840,
+                'anastomosisDuration' => 50,
+                'jjProbe' => false,
+                'cmvStatus' => 'D-/R+',
+                'ebvStatus' => 'D-/R-',
+                'hlaA' => 2, 'hlaB' => 2, 'hlaDR' => 2, 'hlaDQ' => 1,
+                'immunologicalRisk' => 'Immunisé DSA',
+                'immunosuppressiveConditioning' => ['Prograf', 'Cellcept', 'Methylprednisolone', 'Thymoglobulines'],
+                'dialysis' => true,
+                'lastDialysisDate' => '2023-03-09',
+                'hasProtocol' => false,
+                'cristalNumber' => 'CRI-2025-D002',
+                'comment' => 'Patient ré-inscrit sur liste d\'attente pour 2ème greffe.',
+            ],
+            // Patient 2024-003 - 2nd transplant (re-transplant), functional
+            [
+                'patientFileNumber' => '2024-003',
+                'transplantDate' => '2025-01-20',
+                'rank' => 2,
+                'donorType' => 'living',
+                'transplantType' => 'Rein donneur vivant',
+                'isGraftFunctional' => true,
+                'surgeonName' => 'Pr. Legrand François',
+                'declampingDate' => '2025-01-20',
+                'declampingTime' => '11:20',
+                'harvestSide' => 'gauche',
+                'transplantSide' => 'gauche',
+                'peritonealPosition' => 'Intra Péritonéal',
+                'totalIschemiaMinutes' => 150,
+                'anastomosisDuration' => 55,
+                'jjProbe' => true,
+                'cmvStatus' => 'D-/R+',
+                'ebvStatus' => 'D+/R-',
+                'toxoplasmosisStatus' => 'R+',
+                'hlaA' => 0, 'hlaB' => 1, 'hlaDR' => 1, 'hlaDQ' => 0,
+                'immunologicalRisk' => 'Immunisé sans DSA',
+                'immunosuppressiveConditioning' => ['Advagraf', 'Cellcept', 'Methylprednisolone', 'Mabthera', 'Ig IV'],
+                'dialysis' => true,
+                'lastDialysisDate' => '2025-01-19',
+                'hasProtocol' => true,
+                'cristalNumber' => 'CRI-2025-V002',
+                'comment' => 'Re-greffe après perte du premier greffon. Protocole de désensibilisation pré-greffe. Bonne reprise de fonction.',
+            ],
+            // Patient 2024-004 - Deceased cardiac arrest, functional
+            [
+                'patientFileNumber' => '2024-004',
+                'transplantDate' => '2024-11-08',
+                'rank' => 1,
+                'donorType' => 'deceased_cardiac_arrest',
+                'transplantType' => 'Rein',
+                'isGraftFunctional' => true,
+                'surgeonName' => 'Dr. Lambert Pierre',
+                'declampingDate' => '2024-11-08',
+                'declampingTime' => '08:55',
+                'harvestSide' => 'gauche',
+                'transplantSide' => 'droit',
+                'peritonealPosition' => 'Extra Péritonéal',
+                'totalIschemiaMinutes' => 540,
+                'anastomosisDuration' => 38,
+                'jjProbe' => true,
+                'cmvStatus' => 'D-/R-',
+                'ebvStatus' => 'D-/R+',
+                'hlaA' => 1, 'hlaB' => 0, 'hlaDR' => 1, 'hlaDQ' => 1,
+                'hlaCw' => 0,
+                'immunologicalRisk' => 'Non immunisé',
+                'immunosuppressiveConditioning' => ['Prograf', 'Myfortic', 'Methylprednisolone', 'Simulect'],
+                'dialysis' => false,
+                'hasProtocol' => false,
+                'cristalNumber' => 'CRI-2025-C001',
+                'comment' => 'Donneur après arrêt cardiaque. Reprise de fonction retardée J5.',
+            ],
+            // Patient 2024-005 - Rein-pancréas, deceased encephalic, functional
+            [
+                'patientFileNumber' => '2024-005',
+                'transplantDate' => '2024-04-03',
+                'rank' => 1,
+                'donorType' => 'deceased_encephalic',
+                'transplantType' => 'Rein-pancréas',
+                'isGraftFunctional' => true,
+                'surgeonName' => 'Pr. Duval Catherine',
+                'declampingDate' => '2024-04-03',
+                'declampingTime' => '13:00',
+                'harvestSide' => 'droit',
+                'transplantSide' => 'droit',
+                'peritonealPosition' => 'Intra Péritonéal',
+                'totalIschemiaMinutes' => 660,
+                'anastomosisDuration' => 65,
+                'jjProbe' => false,
+                'cmvStatus' => 'D+/R+',
+                'ebvStatus' => 'D+/R-',
+                'toxoplasmosisStatus' => 'R-',
+                'hlaA' => 1, 'hlaB' => 2, 'hlaDR' => 0, 'hlaDQ' => 2,
+                'hlaDP' => 1,
+                'immunologicalRisk' => 'Immunisé sans DSA',
+                'immunosuppressiveConditioning' => ['Prograf', 'Cellcept', 'Methylprednisolone', 'Thymoglobulines'],
+                'dialysis' => true,
+                'lastDialysisDate' => '2024-04-02',
+                'hasProtocol' => true,
+                'cristalNumber' => 'CRI-2025-D003',
+                'comment' => 'Double greffe rein-pancréas pour néphropathie diabétique. Sevrage insuline à J10.',
+            ],
+            // Patient 2024-006 - Living donor, ABO incompatible, functional
+            [
+                'patientFileNumber' => '2024-006',
+                'transplantDate' => '2024-08-12',
+                'rank' => 1,
+                'donorType' => 'living',
+                'transplantType' => 'Rein donneur vivant',
+                'isGraftFunctional' => true,
+                'surgeonName' => 'Dr. Petit Laurent',
+                'declampingDate' => '2024-08-12',
+                'declampingTime' => '09:30',
+                'harvestSide' => 'gauche',
+                'transplantSide' => 'gauche',
+                'peritonealPosition' => 'Extra Péritonéal',
+                'totalIschemiaMinutes' => 120,
+                'anastomosisDuration' => 40,
+                'jjProbe' => true,
+                'cmvStatus' => 'D+/R-',
+                'ebvStatus' => 'D-/R+',
+                'toxoplasmosisStatus' => 'R+',
+                'hlaA' => 0, 'hlaB' => 0, 'hlaDR' => 1, 'hlaDQ' => 0,
+                'immunologicalRisk' => 'ABO incompatible',
+                'immunosuppressiveConditioning' => ['Advagraf', 'Myfortic', 'Methylprednisolone', 'Mabthera', 'Plasmaphérese', 'Ig IV'],
+                'dialysis' => false,
+                'hasProtocol' => true,
+                'cristalNumber' => 'CRI-2025-V003',
+                'comment' => 'Greffe ABO incompatible. Protocole de désensibilisation avec plasmaphérèses. Excellente reprise de fonction immédiate.',
+            ],
+            // Patient 2024-007 - Deceased cardiac arrest, functional
+            [
+                'patientFileNumber' => '2024-007',
+                'transplantDate' => '2025-02-05',
+                'rank' => 1,
+                'donorType' => 'deceased_cardiac_arrest',
+                'transplantType' => 'Rein',
+                'isGraftFunctional' => true,
+                'surgeonName' => 'Dr. Faure Nathalie',
+                'declampingDate' => '2025-02-05',
+                'declampingTime' => '17:45',
+                'harvestSide' => 'droit',
+                'transplantSide' => 'gauche',
+                'peritonealPosition' => 'Extra Péritonéal',
+                'totalIschemiaMinutes' => 480,
+                'anastomosisDuration' => 32,
+                'jjProbe' => false,
+                'cmvStatus' => 'D+/R+',
+                'ebvStatus' => 'D+/R+',
+                'hlaA' => 1, 'hlaB' => 1, 'hlaDR' => 2, 'hlaDQ' => 1,
+                'immunologicalRisk' => 'Immunisé sans DSA',
+                'immunosuppressiveConditioning' => ['Neoral', 'Cellcept', 'Methylprednisolone', 'Simulect'],
+                'dialysis' => true,
+                'lastDialysisDate' => '2025-02-04',
+                'hasProtocol' => false,
+                'cristalNumber' => 'CRI-2025-C002',
+            ],
+            // Patient 2024-010 - Rein-foie, deceased, no donor entity linked
+            [
+                'patientFileNumber' => '2024-010',
+                'transplantDate' => '2024-07-19',
+                'rank' => 1,
+                'donorType' => 'deceased_encephalic',
+                'transplantType' => 'Rein-foie',
+                'isGraftFunctional' => true,
+                'surgeonName' => 'Pr. Moreau Jean-Philippe',
+                'declampingDate' => '2024-07-19',
+                'declampingTime' => '15:20',
+                'harvestSide' => 'droit',
+                'transplantSide' => 'droit',
+                'peritonealPosition' => 'Intra Péritonéal',
+                'totalIschemiaMinutes' => 600,
+                'anastomosisDuration' => 70,
+                'jjProbe' => true,
+                'cmvStatus' => 'D-/R+',
+                'ebvStatus' => 'D+/R+',
+                'toxoplasmosisStatus' => 'R-',
+                'hlaA' => 2, 'hlaB' => 1, 'hlaDR' => 1, 'hlaDQ' => 2,
+                'hlaDP' => 0, 'hlaCw' => 2,
+                'immunologicalRisk' => 'Immunisé DSA',
+                'immunosuppressiveConditioning' => ['Prograf', 'Cellcept', 'Methylprednisolone', 'Thymoglobulines', 'Soliris'],
+                'dialysis' => true,
+                'lastDialysisDate' => '2024-07-18',
+                'hasProtocol' => true,
+                'comment' => 'Double greffe rein-foie pour polykystose hépato-rénale. Intervention longue (8h). Suites complexes mais favorables.',
+            ],
+            // Patient 2024-015 - Old transplant, graft non-functional
+            [
+                'patientFileNumber' => '2024-015',
+                'transplantDate' => '2018-05-20',
+                'rank' => 1,
+                'donorType' => 'deceased_encephalic',
+                'transplantType' => 'Rein',
+                'isGraftFunctional' => false,
+                'graftEndDate' => '2023-08-15',
+                'graftEndCause' => 'Néphropathie chronique d\'allogreffe. Fibrose interstitielle et atrophie tubulaire sévères.',
+                'surgeonName' => 'Dr. Morel Patrick',
+                'harvestSide' => 'gauche',
+                'transplantSide' => 'droit',
+                'peritonealPosition' => 'Extra Péritonéal',
+                'totalIschemiaMinutes' => 900,
+                'anastomosisDuration' => 45,
+                'jjProbe' => true,
+                'cmvStatus' => 'D+/R-',
+                'hlaA' => 2, 'hlaB' => 2, 'hlaDR' => 1, 'hlaDQ' => 2,
+                'immunologicalRisk' => 'Immunisé sans DSA',
+                'immunosuppressiveConditioning' => ['Neoral', 'Imurel', 'Methylprednisolone'],
+                'dialysis' => true,
+                'lastDialysisDate' => '2018-05-19',
+                'hasProtocol' => false,
+                'comment' => 'Greffe ancienne (2018). Perte progressive du greffon sur 5 ans. Patient en hémodialyse depuis août 2023.',
+            ],
+        ];
+
+        foreach ($transplantsData as $data) {
+            $patient = $patientRepo->findOneBy(['fileNumber' => $data['patientFileNumber']]);
+            if (!$patient) {
+                continue;
+            }
+
+            $transplant = new Transplant();
+            $transplant->setPatient($patient);
+            $transplant->setTransplantDate(new \DateTime($data['transplantDate']));
+            $transplant->setRank($data['rank']);
+            $transplant->setDonorType($data['donorType']);
+            $transplant->setTransplantType($data['transplantType']);
+            $transplant->setIsGraftFunctional($data['isGraftFunctional']);
+
+            if (isset($data['graftEndDate'])) {
+                $transplant->setGraftEndDate(new \DateTime($data['graftEndDate']));
+            }
+            if (isset($data['graftEndCause'])) {
+                $transplant->setGraftEndCause($data['graftEndCause']);
+            }
+
+            $transplant->setSurgeonName($data['surgeonName'] ?? null);
+
+            if (isset($data['declampingDate'])) {
+                $transplant->setDeclampingDate(new \DateTime($data['declampingDate']));
+            }
+            if (isset($data['declampingTime'])) {
+                $transplant->setDeclampingTime(new \DateTime($data['declampingTime']));
+            }
+
+            $transplant->setHarvestSide($data['harvestSide']);
+            $transplant->setTransplantSide($data['transplantSide']);
+            $transplant->setPeritonealPosition($data['peritonealPosition']);
+            $transplant->setTotalIschemiaMinutes($data['totalIschemiaMinutes']);
+            $transplant->setAnastomosisDuration($data['anastomosisDuration']);
+            $transplant->setJjProbe($data['jjProbe']);
+
+            if (isset($data['comment'])) {
+                $transplant->setComment($data['comment']);
+            }
+
+            // Virological status
+            $transplant->setCmvStatus($data['cmvStatus']);
+            if (isset($data['ebvStatus'])) {
+                $transplant->setEbvStatus($data['ebvStatus']);
+            }
+            if (isset($data['toxoplasmosisStatus'])) {
+                $transplant->setToxoplasmosisStatus($data['toxoplasmosisStatus']);
+            }
+
+            // HLA incompatibility
+            $transplant->setHlaA($data['hlaA']);
+            $transplant->setHlaB($data['hlaB']);
+            if (isset($data['hlaCw'])) { $transplant->setHlaCw($data['hlaCw']); }
+            $transplant->setHlaDR($data['hlaDR']);
+            $transplant->setHlaDQ($data['hlaDQ']);
+            if (isset($data['hlaDP'])) { $transplant->setHlaDP($data['hlaDP']); }
+
+            // Immunological risk & conditioning
+            $transplant->setImmunologicalRisk($data['immunologicalRisk']);
+            $transplant->setImmunosuppressiveConditioning($data['immunosuppressiveConditioning']);
+
+            // Dialysis
+            $transplant->setDialysis($data['dialysis']);
+            if (isset($data['lastDialysisDate'])) {
+                $transplant->setLastDialysisDate(new \DateTime($data['lastDialysisDate']));
+            }
+
+            // Protocol
+            $transplant->setHasProtocol($data['hasProtocol']);
+
+            // Link to Donor entity if CRISTAL number provided
+            if (isset($data['cristalNumber']) && isset($donors[$data['cristalNumber']])) {
+                $transplant->setDonor($donors[$data['cristalNumber']]);
+            }
+
+            $manager->persist($transplant);
         }
     }
 }

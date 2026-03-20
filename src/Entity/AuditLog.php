@@ -21,6 +21,7 @@ class AuditLog
     public const ACTION_SEARCH = 'search';
     public const ACTION_EXPORT = 'export';
     public const ACTION_PASSWORD_CHANGE = 'password_change';
+    public const ACTION_BREAK_THE_GLASS = 'break_the_glass';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

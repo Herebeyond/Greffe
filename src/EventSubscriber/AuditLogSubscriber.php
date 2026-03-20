@@ -72,6 +72,9 @@ class AuditLogSubscriber implements EventSubscriberInterface
         // Profile
         'app_profile' => [AuditLog::ACTION_VIEW, 'Profile'],
         'app_profile_change_password' => [AuditLog::ACTION_PASSWORD_CHANGE, null],
+
+        // Break-the-glass
+        'app_break_the_glass' => [AuditLog::ACTION_BREAK_THE_GLASS, 'Patient'],
     ];
 
     public function __construct(
