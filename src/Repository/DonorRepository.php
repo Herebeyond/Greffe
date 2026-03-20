@@ -43,7 +43,7 @@ class DonorRepository extends ServiceEntityRepository
     /**
      * @return Donor[]
      */
-    public function search(?string $cristalNumber, ?string $bloodGroup, ?string $donorType): array
+    public function search(?string $cristalNumber, array $bloodTypes, ?string $donorType): array
     {
         $qb = $this->createQueryBuilder('d');
 
@@ -52,9 +52,16 @@ class DonorRepository extends ServiceEntityRepository
                ->setParameter('cristal', '%' . $cristalNumber . '%');
         }
 
-        if ($bloodGroup) {
-            $qb->andWhere('d.bloodGroup = :blood')
-               ->setParameter('blood', $bloodGroup);
+        if (!empty($bloodTypes)) {
+            $orConditions = [];
+            foreach ($bloodTypes as $i => $type) {
+                $group = rtrim($type, '+-');
+                $rh = str_ends_with($type, '+') ? '+' : '-';
+                $orConditions[] = sprintf('(d.bloodGroup = :bg%d AND d.rhesus = :rh%d)', $i, $i);
+                $qb->setParameter('bg' . $i, $group)
+                   ->setParameter('rh' . $i, $rh);
+            }
+            $qb->andWhere(implode(' OR ', $orConditions));
         }
 
         if ($donorType) {

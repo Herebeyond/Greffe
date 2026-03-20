@@ -26,15 +26,19 @@ class DonorController extends AbstractController
         $donors = [];
         $searched = false;
 
+        $bloodTypes = [];
+
         if ($request->isMethod('POST')) {
             $searched = true;
             $cristalNumber = $request->request->get('cristalNumber');
-            $bloodGroup = $request->request->get('bloodGroup');
             $donorType = $request->request->get('donorType');
+            $bloodTypes = $request->request->all('bloodTypes');
+            $allowedBloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+            $bloodTypes = array_intersect($bloodTypes, $allowedBloodTypes);
 
             $donors = $this->donorRepository->search(
                 $cristalNumber ?: null,
-                $bloodGroup ?: null,
+                $bloodTypes,
                 $donorType ?: null,
             );
         } else {
@@ -44,6 +48,7 @@ class DonorController extends AbstractController
         return $this->render('donor/index.html.twig', [
             'donors' => $donors,
             'searched' => $searched,
+            'bloodTypes' => $bloodTypes,
         ]);
     }
 

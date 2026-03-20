@@ -21,16 +21,6 @@
                     <input type="text" id="cristalNumber" name="cristalNumber" placeholder="Ex: CRI-2026-..." class="form-control">
                 </div>
                 <div class="form-group">
-                    <label for="bloodGroup">Groupe sanguin</label>
-                    <select id="bloodGroup" name="bloodGroup" class="form-control">
-                        <option value="">Tous</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="AB">AB</option>
-                        <option value="O">O</option>
-                    </select>
-                </div>
-                <div class="form-group">
                     <label for="donorType">Type de donneur</label>
                     <select id="donorType" name="donorType" class="form-control">
                         <option value="">Tous</option>
@@ -38,6 +28,23 @@
                         <option value="deceased_encephalic">Décédé (mort encéphalique)</option>
                         <option value="deceased_cardiac_arrest">Décédé (arrêt cardiaque)</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label>Groupe sanguin</label>
+                    <div class="multiselect-dropdown">
+                        <div class="multiselect-toggle form-control" id="bloodTypeToggle">
+                            <span class="multiselect-label">{{ bloodTypes|length > 0 ? bloodTypes|join(', ') : 'Tous' }}</span>
+                            <span class="multiselect-arrow">&#9662;</span>
+                        </div>
+                        <div class="multiselect-menu" id="bloodTypeMenu">
+                            {% for type in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                            <label class="multiselect-item">
+                                <input type="checkbox" name="bloodTypes[]" value="{{ type }}" {{ type in bloodTypes ? 'checked' }}>
+                                {{ type }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group form-group-actions">
                     <button type="submit" class="btn btn-primary">Rechercher</button>
@@ -95,4 +102,36 @@
         </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggle = document.getElementById('bloodTypeToggle');
+    const menu = document.getElementById('bloodTypeMenu');
+    const label = toggle.querySelector('.multiselect-label');
+    const checkboxes = menu.querySelectorAll('input[type="checkbox"]');
+
+    toggle.addEventListener('click', function () {
+        menu.classList.toggle('open');
+        toggle.classList.toggle('open');
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!toggle.contains(e.target) && !menu.contains(e.target)) {
+            menu.classList.remove('open');
+            toggle.classList.remove('open');
+        }
+    });
+
+    checkboxes.forEach(function (cb) {
+        cb.addEventListener('change', function () {
+            const checked = Array.from(checkboxes).filter(function (c) { return c.checked; });
+            label.textContent = checked.length > 0
+                ? checked.map(function (c) { return c.value; }).join(', ')
+                : 'Tous';
+        });
+    });
+});
+</script>
 {% endblock %}
