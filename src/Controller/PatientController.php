@@ -79,6 +79,15 @@ class PatientController extends AbstractController
                 $patients = $result['patients'];
                 $total = $result['total'];
             }
+        } else {
+            // No search criteria: show the user's assigned patients
+            /** @var User $currentUser */
+            $currentUser = $this->getUser();
+            $patients = $this->patientRepository->findByPractitioner($currentUser);
+            $total = count($patients);
+
+            // Paginate manually
+            $patients = array_slice($patients, ($page - 1) * $limit, $limit);
         }
 
         $totalPages = (int) ceil($total / $limit);
@@ -117,6 +126,9 @@ class PatientController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            /** @var User $currentUser */
+            $currentUser = $this->getUser();
+            $patient->addAuthorizedPractitioner($currentUser);
             $this->patientRepository->save($patient);
 
             $this->addFlash('success', 'Patient créé avec succès');

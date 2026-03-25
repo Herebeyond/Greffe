@@ -23,6 +23,8 @@
                 <nav class="header-nav">
                     {% if is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE') %}
                     <a href="{{ path('app_patient_index') }}" class="header-link">Patients</a>
+                    {% endif %}
+                    {% if is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE') or is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
                     <a href="{{ path('app_donor_index') }}" class="header-link">Donneurs</a>
                     {% endif %}
                     {% if is_granted('ROLE_TECH_ADMIN') %}

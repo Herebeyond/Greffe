@@ -2,7 +2,15 @@
 
 namespace App\Entity;
 
+use App\Entity\Reference\BloodGroup;
+use App\Entity\Reference\DeathCause;
+use App\Entity\Reference\PerfusionLiquid;
+use App\Entity\Reference\RelationshipType;
+use App\Entity\Reference\SurgicalApproach;
+use App\Entity\Reference\DonorType as DonorTypeRef;
 use App\Repository\DonorRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -14,36 +22,34 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: DonorRepository::class)]
 #[ORM\Table(name: 'donor')]
 #[ORM\Index(columns: ['cristal_number'], name: 'idx_donor_cristal')]
-#[ORM\Index(columns: ['donor_type'], name: 'idx_donor_type')]
 class Donor
 {
-    public const TYPE_LIVING = 'living';
-    public const TYPE_DECEASED_ENCEPHALIC = 'deceased_encephalic';
-    public const TYPE_DECEASED_CARDIAC_ARREST = 'deceased_cardiac_arrest';
-
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
+    // ===== Transplant relationship (inverse side) =====
+
+    /** @var Collection<int, Transplant> */
+    #[ORM\OneToMany(targetEntity: Transplant::class, mappedBy: 'donor')]
+    private Collection $transplants;
+
     // ===== Common fields =====
 
-    #[ORM\Column(length: 30)]
+    #[ORM\ManyToOne(targetEntity: DonorTypeRef::class)]
+    #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le type de donneur est obligatoire')]
-    #[Assert\Choice(
-        choices: [self::TYPE_LIVING, self::TYPE_DECEASED_ENCEPHALIC, self::TYPE_DECEASED_CARDIAC_ARREST],
-        message: 'Type de donneur invalide'
-    )]
-    private ?string $donorType = null;
+    private ?DonorTypeRef $donorType = null;
 
     #[ORM\Column(length: 50)]
     #[Assert\NotBlank(message: 'Le numéro CRISTAL est obligatoire')]
     private ?string $cristalNumber = null;
 
-    #[ORM\Column(length: 3)]
+    #[ORM\ManyToOne(targetEntity: BloodGroup::class)]
+    #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le groupe sanguin est obligatoire')]
-    #[Assert\Choice(choices: ['A', 'B', 'AB', 'O'], message: 'Groupe sanguin invalide')]
-    private ?string $bloodGroup = null;
+    private ?BloodGroup $bloodGroup = null;
 
     #[ORM\Column(length: 1)]
     #[Assert\NotBlank(message: 'Le rhésus est obligatoire')]
@@ -71,88 +77,17 @@ class Donor
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $patientComment = null;
 
-    // ===== HLA Grouping =====
+    // ===== HLA Grouping (junction table) =====
 
-    #[ORM\Column(type: Types::SMALLINT)]
-    #[Assert\NotBlank(message: 'Le HLA-A est obligatoire')]
-    private ?int $hlaA = null;
+    /** @var Collection<int, DonorHlaTyping> */
+    #[ORM\OneToMany(targetEntity: DonorHlaTyping::class, mappedBy: 'donor', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $hlaTypings;
 
-    #[ORM\Column(type: Types::SMALLINT)]
-    #[Assert\NotBlank(message: 'Le HLA-B est obligatoire')]
-    private ?int $hlaB = null;
+    // ===== Serology (junction table) =====
 
-    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
-    private ?int $hlaCw = null;
-
-    #[ORM\Column(type: Types::SMALLINT)]
-    #[Assert\NotBlank(message: 'Le HLA-DR est obligatoire')]
-    private ?int $hlaDR = null;
-
-    #[ORM\Column(type: Types::SMALLINT)]
-    #[Assert\NotBlank(message: 'Le HLA-DQ est obligatoire')]
-    private ?int $hlaDQ = null;
-
-    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
-    private ?int $hlaDP = null;
-
-    // ===== Serology =====
-
-    #[ORM\Column(length: 3)]
-    #[Assert\NotBlank(message: 'Le CMV est obligatoire')]
-    #[Assert\Choice(choices: ['+', '-'], message: 'Valeur CMV invalide')]
-    private ?string $cmv = null;
-
-    #[ORM\Column(length: 3)]
-    #[Assert\NotBlank(message: "L'EBV est obligatoire")]
-    #[Assert\Choice(choices: ['+', '-'], message: 'Valeur EBV invalide')]
-    private ?string $ebv = null;
-
-    #[ORM\Column(length: 3)]
-    #[Assert\NotBlank(message: 'Le HIV est obligatoire')]
-    #[Assert\Choice(choices: ['+', '-'], message: 'Valeur HIV invalide')]
-    private ?string $hiv = null;
-
-    #[ORM\Column(length: 3)]
-    #[Assert\NotBlank(message: 'Le HTLV est obligatoire')]
-    #[Assert\Choice(choices: ['+', '-'], message: 'Valeur HTLV invalide')]
-    private ?string $htlv = null;
-
-    #[ORM\Column(length: 3)]
-    #[Assert\NotBlank(message: 'La syphilis est obligatoire')]
-    #[Assert\Choice(choices: ['+', '-'], message: 'Valeur syphilis invalide')]
-    private ?string $syphilis = null;
-
-    #[ORM\Column(length: 3)]
-    #[Assert\NotBlank(message: 'Le HCV est obligatoire')]
-    #[Assert\Choice(choices: ['+', '-'], message: 'Valeur HCV invalide')]
-    private ?string $hcv = null;
-
-    #[ORM\Column(length: 3)]
-    #[Assert\NotBlank(message: "L'Ag HBs est obligatoire")]
-    #[Assert\Choice(choices: ['+', '-'], message: 'Valeur Ag HBs invalide')]
-    private ?string $agHbs = null;
-
-    #[ORM\Column(length: 3)]
-    #[Assert\NotBlank(message: "L'Ac HBs est obligatoire")]
-    #[Assert\Choice(choices: ['+', '-'], message: 'Valeur Ac HBs invalide')]
-    private ?string $acHbs = null;
-
-    #[ORM\Column(length: 3)]
-    #[Assert\NotBlank(message: "L'Ac HBc est obligatoire")]
-    #[Assert\Choice(choices: ['+', '-'], message: 'Valeur Ac HBc invalide')]
-    private ?string $acHbc = null;
-
-    #[ORM\Column(length: 3, nullable: true)]
-    #[Assert\Choice(choices: ['+', '-', 'ND'], message: 'Valeur toxoplasmose invalide')]
-    private ?string $toxoplasmosis = null;
-
-    #[ORM\Column(length: 3, nullable: true)]
-    #[Assert\Choice(choices: ['+', '-'], message: 'Valeur ARNc invalide')]
-    private ?string $arnc = null;
-
-    #[ORM\Column(length: 3, nullable: true)]
-    #[Assert\Choice(choices: ['+', '-'], message: 'Valeur DNA B invalide')]
-    private ?string $dnaB = null;
+    /** @var Collection<int, DonorSerology> */
+    #[ORM\OneToMany(targetEntity: DonorSerology::class, mappedBy: 'donor', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $serologyResults;
 
     // ===== Surgical details =====
 
@@ -188,9 +123,9 @@ class Donor
     #[Assert\Choice(choices: ['Oui', 'Non'], message: 'Valeur machine de perfusion invalide')]
     private ?string $perfusionMachine = null;
 
-    #[ORM\Column(length: 20, nullable: true)]
-    #[Assert\Choice(choices: ['Viaspan', 'Celsior', 'IGL', 'Scott'], message: 'Liquide de perfusion invalide')]
-    private ?string $perfusionLiquid = null;
+    #[ORM\ManyToOne(targetEntity: PerfusionLiquid::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?PerfusionLiquid $perfusionLiquid = null;
 
     // ===== Living donor specific =====
 
@@ -200,12 +135,9 @@ class Donor
     #[ORM\Column(type: 'encrypted_string', nullable: true)]
     private ?string $firstName = null;
 
-    #[ORM\Column(length: 30, nullable: true)]
-    #[Assert\Choice(
-        choices: ['Parent', 'Enfant', '2ème degré', 'Conjoint', 'Non apparenté', 'Autre'],
-        message: 'Type de lien invalide'
-    )]
-    private ?string $relationshipType = null;
+    #[ORM\ManyToOne(targetEntity: RelationshipType::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?RelationshipType $relationshipType = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $relationshipComment = null;
@@ -219,9 +151,9 @@ class Donor
     #[ORM\Column(type: Types::DECIMAL, precision: 8, scale: 2, nullable: true)]
     private ?string $proteinuria = null;
 
-    #[ORM\Column(length: 20, nullable: true)]
-    #[Assert\Choice(choices: ['Lombotomie', 'Cœlioscopie'], message: "Voie d'abord invalide")]
-    private ?string $approach = null;
+    #[ORM\ManyToOne(targetEntity: SurgicalApproach::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?SurgicalApproach $approach = null;
 
     #[ORM\Column(nullable: true)]
     private ?bool $robot = null;
@@ -231,12 +163,9 @@ class Donor
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $originCity = null;
 
-    #[ORM\Column(length: 30, nullable: true)]
-    #[Assert\Choice(
-        choices: ['AVC hémorragique', 'AVC ischémique', 'AVP', 'TC non AVP', 'Anoxie', 'Autre'],
-        message: 'Cause du décès invalide'
-    )]
-    private ?string $deathCause = null;
+    #[ORM\ManyToOne(targetEntity: DeathCause::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?DeathCause $deathCause = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $deathCauseComment = null;
@@ -278,9 +207,9 @@ class Donor
     #[Assert\Choice(choices: ['1', '2'], message: 'Uretère invalide')]
     private ?string $ureter = null;
 
-    #[ORM\Column(length: 20, nullable: true)]
-    #[Assert\Choice(choices: ['Viaspan', 'Celsior', 'IGL', 'Scott'], message: 'Liquide de conservation invalide')]
-    private ?string $conservationLiquid = null;
+    #[ORM\ManyToOne(targetEntity: PerfusionLiquid::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?PerfusionLiquid $conservationLiquid = null;
 
     // ===== Atheroma (deceased donor) =====
 
@@ -319,6 +248,9 @@ class Donor
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->hlaTypings = new ArrayCollection();
+        $this->serologyResults = new ArrayCollection();
+        $this->transplants = new ArrayCollection();
     }
 
     // ===== Getters & Setters =====
@@ -328,12 +260,20 @@ class Donor
         return $this->id;
     }
 
-    public function getDonorType(): ?string
+    /**
+     * @return Collection<int, Transplant>
+     */
+    public function getTransplants(): Collection
+    {
+        return $this->transplants;
+    }
+
+    public function getDonorType(): ?DonorTypeRef
     {
         return $this->donorType;
     }
 
-    public function setDonorType(?string $donorType): static
+    public function setDonorType(?DonorTypeRef $donorType): static
     {
         $this->donorType = $donorType;
 
@@ -342,12 +282,7 @@ class Donor
 
     public function getDonorTypeLabel(): string
     {
-        return match ($this->donorType) {
-            self::TYPE_LIVING => 'Donneur vivant',
-            self::TYPE_DECEASED_ENCEPHALIC => 'Donneur décédé (mort encéphalique)',
-            self::TYPE_DECEASED_CARDIAC_ARREST => 'Donneur décédé (arrêt cardiaque)',
-            default => $this->donorType ?? '',
-        };
+        return $this->donorType?->getLabel() ?? '';
     }
 
     public function getCristalNumber(): ?string
@@ -362,12 +297,12 @@ class Donor
         return $this;
     }
 
-    public function getBloodGroup(): ?string
+    public function getBloodGroup(): ?BloodGroup
     {
         return $this->bloodGroup;
     }
 
-    public function setBloodGroup(?string $bloodGroup): static
+    public function setBloodGroup(?BloodGroup $bloodGroup): static
     {
         $this->bloodGroup = $bloodGroup;
 
@@ -391,7 +326,7 @@ class Donor
      */
     public function getFullBloodGroup(): string
     {
-        return ($this->bloodGroup ?? '') . ($this->rhesus ?? '');
+        return ($this->bloodGroup?->getCode() ?? '') . ($this->rhesus ?? '');
     }
 
     public function getSex(): ?string
@@ -454,224 +389,78 @@ class Donor
         return $this;
     }
 
-    // ===== HLA =====
+    // ===== HLA (collection) =====
 
-    public function getHlaA(): ?int
+    /** @return Collection<int, DonorHlaTyping> */
+    public function getHlaTypings(): Collection
     {
-        return $this->hlaA;
+        return $this->hlaTypings;
     }
 
-    public function setHlaA(?int $hlaA): static
+    public function addHlaTyping(DonorHlaTyping $typing): static
     {
-        $this->hlaA = $hlaA;
-
+        if (!$this->hlaTypings->contains($typing)) {
+            $this->hlaTypings->add($typing);
+            $typing->setDonor($this);
+        }
         return $this;
     }
 
-    public function getHlaB(): ?int
+    public function removeHlaTyping(DonorHlaTyping $typing): static
     {
-        return $this->hlaB;
-    }
-
-    public function setHlaB(?int $hlaB): static
-    {
-        $this->hlaB = $hlaB;
-
+        if ($this->hlaTypings->removeElement($typing)) {
+            if ($typing->getDonor() === $this) {
+                $typing->setDonor(null);
+            }
+        }
         return $this;
     }
 
-    public function getHlaCw(): ?int
+    public function getHlaValueByCode(string $code): ?int
     {
-        return $this->hlaCw;
+        foreach ($this->hlaTypings as $typing) {
+            if ($typing->getHlaLocus()?->getCode() === $code) {
+                return $typing->getValue();
+            }
+        }
+        return null;
     }
 
-    public function setHlaCw(?int $hlaCw): static
-    {
-        $this->hlaCw = $hlaCw;
+    // ===== Serology (collection) =====
 
+    /** @return Collection<int, DonorSerology> */
+    public function getSerologyResults(): Collection
+    {
+        return $this->serologyResults;
+    }
+
+    public function addSerologyResult(DonorSerology $result): static
+    {
+        if (!$this->serologyResults->contains($result)) {
+            $this->serologyResults->add($result);
+            $result->setDonor($this);
+        }
         return $this;
     }
 
-    public function getHlaDR(): ?int
+    public function removeSerologyResult(DonorSerology $result): static
     {
-        return $this->hlaDR;
-    }
-
-    public function setHlaDR(?int $hlaDR): static
-    {
-        $this->hlaDR = $hlaDR;
-
+        if ($this->serologyResults->removeElement($result)) {
+            if ($result->getDonor() === $this) {
+                $result->setDonor(null);
+            }
+        }
         return $this;
     }
 
-    public function getHlaDQ(): ?int
+    public function getSerologyResultByCode(string $code): ?string
     {
-        return $this->hlaDQ;
-    }
-
-    public function setHlaDQ(?int $hlaDQ): static
-    {
-        $this->hlaDQ = $hlaDQ;
-
-        return $this;
-    }
-
-    public function getHlaDP(): ?int
-    {
-        return $this->hlaDP;
-    }
-
-    public function setHlaDP(?int $hlaDP): static
-    {
-        $this->hlaDP = $hlaDP;
-
-        return $this;
-    }
-
-    // ===== Serology =====
-
-    public function getCmv(): ?string
-    {
-        return $this->cmv;
-    }
-
-    public function setCmv(?string $cmv): static
-    {
-        $this->cmv = $cmv;
-
-        return $this;
-    }
-
-    public function getEbv(): ?string
-    {
-        return $this->ebv;
-    }
-
-    public function setEbv(?string $ebv): static
-    {
-        $this->ebv = $ebv;
-
-        return $this;
-    }
-
-    public function getHiv(): ?string
-    {
-        return $this->hiv;
-    }
-
-    public function setHiv(?string $hiv): static
-    {
-        $this->hiv = $hiv;
-
-        return $this;
-    }
-
-    public function getHtlv(): ?string
-    {
-        return $this->htlv;
-    }
-
-    public function setHtlv(?string $htlv): static
-    {
-        $this->htlv = $htlv;
-
-        return $this;
-    }
-
-    public function getSyphilis(): ?string
-    {
-        return $this->syphilis;
-    }
-
-    public function setSyphilis(?string $syphilis): static
-    {
-        $this->syphilis = $syphilis;
-
-        return $this;
-    }
-
-    public function getHcv(): ?string
-    {
-        return $this->hcv;
-    }
-
-    public function setHcv(?string $hcv): static
-    {
-        $this->hcv = $hcv;
-
-        return $this;
-    }
-
-    public function getAgHbs(): ?string
-    {
-        return $this->agHbs;
-    }
-
-    public function setAgHbs(?string $agHbs): static
-    {
-        $this->agHbs = $agHbs;
-
-        return $this;
-    }
-
-    public function getAcHbs(): ?string
-    {
-        return $this->acHbs;
-    }
-
-    public function setAcHbs(?string $acHbs): static
-    {
-        $this->acHbs = $acHbs;
-
-        return $this;
-    }
-
-    public function getAcHbc(): ?string
-    {
-        return $this->acHbc;
-    }
-
-    public function setAcHbc(?string $acHbc): static
-    {
-        $this->acHbc = $acHbc;
-
-        return $this;
-    }
-
-    public function getToxoplasmosis(): ?string
-    {
-        return $this->toxoplasmosis;
-    }
-
-    public function setToxoplasmosis(?string $toxoplasmosis): static
-    {
-        $this->toxoplasmosis = $toxoplasmosis;
-
-        return $this;
-    }
-
-    public function getArnc(): ?string
-    {
-        return $this->arnc;
-    }
-
-    public function setArnc(?string $arnc): static
-    {
-        $this->arnc = $arnc;
-
-        return $this;
-    }
-
-    public function getDnaB(): ?string
-    {
-        return $this->dnaB;
-    }
-
-    public function setDnaB(?string $dnaB): static
-    {
-        $this->dnaB = $dnaB;
-
-        return $this;
+        foreach ($this->serologyResults as $result) {
+            if ($result->getSerologyMarker()?->getCode() === $code) {
+                return $result->getResult();
+            }
+        }
+        return null;
     }
 
     // ===== Surgical details =====
@@ -796,12 +585,12 @@ class Donor
         return $this;
     }
 
-    public function getPerfusionLiquid(): ?string
+    public function getPerfusionLiquid(): ?PerfusionLiquid
     {
         return $this->perfusionLiquid;
     }
 
-    public function setPerfusionLiquid(?string $perfusionLiquid): static
+    public function setPerfusionLiquid(?PerfusionLiquid $perfusionLiquid): static
     {
         $this->perfusionLiquid = $perfusionLiquid;
 
@@ -845,19 +634,19 @@ class Donor
 
     public function getDisplayName(): string
     {
-        if ($this->donorType === self::TYPE_LIVING && $this->lastName) {
+        if ($this->donorType?->getCode() === 'living' && $this->lastName) {
             return $this->getFullName();
         }
 
         return $this->cristalNumber ?? 'Donneur #' . $this->id;
     }
 
-    public function getRelationshipType(): ?string
+    public function getRelationshipType(): ?RelationshipType
     {
         return $this->relationshipType;
     }
 
-    public function setRelationshipType(?string $relationshipType): static
+    public function setRelationshipType(?RelationshipType $relationshipType): static
     {
         $this->relationshipType = $relationshipType;
 
@@ -912,12 +701,12 @@ class Donor
         return $this;
     }
 
-    public function getApproach(): ?string
+    public function getApproach(): ?SurgicalApproach
     {
         return $this->approach;
     }
 
-    public function setApproach(?string $approach): static
+    public function setApproach(?SurgicalApproach $approach): static
     {
         $this->approach = $approach;
 
@@ -980,12 +769,12 @@ class Donor
         return $this;
     }
 
-    public function getDeathCause(): ?string
+    public function getDeathCause(): ?DeathCause
     {
         return $this->deathCause;
     }
 
-    public function setDeathCause(?string $deathCause): static
+    public function setDeathCause(?DeathCause $deathCause): static
     {
         $this->deathCause = $deathCause;
 
@@ -1168,12 +957,12 @@ class Donor
         return $this;
     }
 
-    public function getConservationLiquid(): ?string
+    public function getConservationLiquid(): ?PerfusionLiquid
     {
         return $this->conservationLiquid;
     }
 
-    public function setConservationLiquid(?string $conservationLiquid): static
+    public function setConservationLiquid(?PerfusionLiquid $conservationLiquid): static
     {
         $this->conservationLiquid = $conservationLiquid;
 

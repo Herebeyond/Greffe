@@ -160,11 +160,17 @@ class AuditLogSubscriber implements EventSubscriberInterface
     private function isFormDisplayOnly(string $routeName, Request $request): bool
     {
         // For routes that accept GET+POST, only log on POST (actual submission)
-        $postOnlyActions = ['_new', '_edit', '_delete'];
+        $postOnlyActions = ['_new', '_delete'];
         foreach ($postOnlyActions as $suffix) {
             if (str_ends_with($routeName, $suffix) && !$request->isMethod('POST')) {
                 return true;
             }
+        }
+
+        // Edit routes on POST are handled by EntityChangeListener (with field-level tracking)
+        // Only log GET (form display) is skipped for edit routes too
+        if (str_ends_with($routeName, '_edit')) {
+            return true;
         }
 
         return false;
@@ -172,20 +178,24 @@ class AuditLogSubscriber implements EventSubscriberInterface
 
     private function buildDetails(string $routeName, Request $request): ?string
     {
-        // For search, log the search criteria (non-sensitive)
+        // For search, log which criteria were used (not their values, except fileNumber)
         if ($routeName === 'app_patient_index' && $request->isMethod('POST')) {
             $criteria = [];
             foreach (['lastName', 'firstName', 'fileNumber', 'city'] as $field) {
                 $value = $request->request->get($field);
                 if ($value) {
-                    $criteria[] = $field . '="' . mb_substr($value, 0, 50) . '"';
+                    if ($field === 'fileNumber') {
+                        $criteria[] = $field . '="' . mb_substr($value, 0, 50) . '"';
+                    } else {
+                        $criteria[] = $field;
+                    }
                 }
             }
 
             return $criteria ? 'Critères: ' . implode(', ', $criteria) : null;
         }
 
-        // Donor search criteria
+        // Donor search criteria (non-personal data, safe to log values)
         if ($routeName === 'app_donor_index' && $request->isMethod('POST')) {
             $criteria = [];
             foreach (['cristalNumber', 'bloodGroup', 'donorType'] as $field) {

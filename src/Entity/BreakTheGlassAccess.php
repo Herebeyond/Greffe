@@ -24,7 +24,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 class BreakTheGlassAccess
 {
     /** Default duration of emergency access in minutes. */
-    public const DEFAULT_DURATION_MINUTES = 180;
+    public const DEFAULT_DURATION_MINUTES = 30;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

@@ -2,7 +2,14 @@
 
 namespace App\Entity;
 
+use App\Entity\Reference\DonorType as DonorTypeRef;
+use App\Entity\Reference\ImmunologicalRisk;
+use App\Entity\Reference\ImmunosuppressiveDrug;
+use App\Entity\Reference\PeritonealPosition;
+use App\Entity\Reference\TransplantType as TransplantTypeRef;
 use App\Repository\TransplantRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -10,7 +17,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Transplant entity - represents a kidney transplant (greffe rénale).
  * Links a patient (recipient) to a graft from a donor.
- * Donor data is stored as a JSON column to simplify the schema.
  */
 #[ORM\Entity(repositoryClass: TransplantRepository::class)]
 #[ORM\Table(name: 'transplant')]
@@ -37,13 +43,10 @@ class Transplant
     #[Assert\Positive(message: 'Le rang doit être un nombre positif')]
     private ?int $rank = null;
 
-    #[ORM\Column(length: 30)]
+    #[ORM\ManyToOne(targetEntity: DonorTypeRef::class)]
+    #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le type de donneur est obligatoire')]
-    #[Assert\Choice(
-        choices: ['living', 'deceased_encephalic', 'deceased_cardiac_arrest'],
-        message: 'Type de donneur invalide'
-    )]
-    private ?string $donorType = null;
+    private ?DonorTypeRef $donorType = null;
 
     // ===== Graft details =====
 
@@ -56,13 +59,10 @@ class Transplant
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $graftEndCause = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\ManyToOne(targetEntity: TransplantTypeRef::class)]
+    #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le type de transplantation est obligatoire')]
-    #[Assert\Choice(
-        choices: ['Rein', 'Rein donneur vivant', 'Rein-pancréas', 'Rein-foie', 'Rein-coeur', 'Autre'],
-        message: 'Type de transplantation invalide'
-    )]
-    private ?string $transplantType = null;
+    private ?TransplantTypeRef $transplantType = null;
 
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $surgeonName = null;
@@ -83,13 +83,10 @@ class Transplant
     #[Assert\Choice(choices: ['droit', 'gauche'], message: 'Côté de transplantation invalide')]
     private ?string $transplantSide = null;
 
-    #[ORM\Column(length: 20)]
+    #[ORM\ManyToOne(targetEntity: PeritonealPosition::class)]
+    #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'La position péritonéale est obligatoire')]
-    #[Assert\Choice(
-        choices: ['Extra Péritonéal', 'Intra Péritonéal'],
-        message: 'Position péritonéale invalide'
-    )]
-    private ?string $peritonealPosition = null;
+    private ?PeritonealPosition $peritonealPosition = null;
 
     /** Total ischemia in minutes (stored as integer, displayed as HH:MM). */
     #[ORM\Column]
@@ -111,66 +108,31 @@ class Transplant
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $operativeReportFilename = null;
 
-    // ===== Virological status =====
+    // ===== Virological status (junction table) =====
 
-    #[ORM\Column(length: 10)]
-    #[Assert\NotBlank(message: 'Le statut CMV est obligatoire')]
-    #[Assert\Choice(choices: ['D-/R-', 'D-/R+', 'D+/R-', 'D+/R+'], message: 'Statut CMV invalide')]
-    private ?string $cmvStatus = null;
+    /** @var Collection<int, TransplantVirologicalStatus> */
+    #[ORM\OneToMany(targetEntity: TransplantVirologicalStatus::class, mappedBy: 'transplant', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $virologicalStatuses;
 
-    #[ORM\Column(length: 10, nullable: true)]
-    #[Assert\Choice(choices: ['D-/R-', 'D-/R+', 'D+/R-', 'D+/R+'], message: 'Statut EBV invalide')]
-    private ?string $ebvStatus = null;
+    // ===== HLA incompatibility (junction table) =====
 
-    #[ORM\Column(length: 5, nullable: true)]
-    #[Assert\Choice(choices: ['R+', 'R-'], message: 'Statut toxoplasmose invalide')]
-    private ?string $toxoplasmosisStatus = null;
-
-    // ===== HLA incompatibility =====
-
-    #[ORM\Column(type: Types::SMALLINT)]
-    #[Assert\NotBlank(message: "L'incompatibilité HLA-A est obligatoire")]
-    #[Assert\Choice(choices: [0, 1, 2], message: 'Valeur HLA-A invalide')]
-    private ?int $hlaA = null;
-
-    #[ORM\Column(type: Types::SMALLINT)]
-    #[Assert\NotBlank(message: "L'incompatibilité HLA-B est obligatoire")]
-    #[Assert\Choice(choices: [0, 1, 2], message: 'Valeur HLA-B invalide')]
-    private ?int $hlaB = null;
-
-    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
-    #[Assert\Choice(choices: [0, 1, 2], message: 'Valeur HLA-Cw invalide')]
-    private ?int $hlaCw = null;
-
-    #[ORM\Column(type: Types::SMALLINT)]
-    #[Assert\NotBlank(message: "L'incompatibilité HLA-DR est obligatoire")]
-    #[Assert\Choice(choices: [0, 1, 2], message: 'Valeur HLA-DR invalide')]
-    private ?int $hlaDR = null;
-
-    #[ORM\Column(type: Types::SMALLINT)]
-    #[Assert\NotBlank(message: "L'incompatibilité HLA-DQ est obligatoire")]
-    #[Assert\Choice(choices: [0, 1, 2], message: 'Valeur HLA-DQ invalide')]
-    private ?int $hlaDQ = null;
-
-    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
-    #[Assert\Choice(choices: [0, 1, 2], message: 'Valeur HLA-DP invalide')]
-    private ?int $hlaDP = null;
+    /** @var Collection<int, TransplantHlaIncompatibility> */
+    #[ORM\OneToMany(targetEntity: TransplantHlaIncompatibility::class, mappedBy: 'transplant', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $hlaIncompatibilities;
 
     // ===== Immunological risk =====
 
-    #[ORM\Column(length: 30)]
+    #[ORM\ManyToOne(targetEntity: ImmunologicalRisk::class)]
+    #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le risque immunologique est obligatoire')]
-    #[Assert\Choice(
-        choices: ['Non immunisé', 'Immunisé sans DSA', 'Immunisé DSA', 'ABO incompatible'],
-        message: 'Risque immunologique invalide'
-    )]
-    private ?string $immunologicalRisk = null;
+    private ?ImmunologicalRisk $immunologicalRisk = null;
 
-    // ===== Immunosuppressive conditioning =====
+    // ===== Immunosuppressive conditioning (ManyToMany) =====
 
-    /** @var string[] */
-    #[ORM\Column(type: Types::JSON)]
-    private array $immunosuppressiveConditioning = [];
+    /** @var Collection<int, ImmunosuppressiveDrug> */
+    #[ORM\ManyToMany(targetEntity: ImmunosuppressiveDrug::class)]
+    #[ORM\JoinTable(name: 'transplant_immunosuppressive_drug')]
+    private Collection $immunosuppressiveDrugs;
 
     // ===== Dialysis =====
 
@@ -188,14 +150,14 @@ class Transplant
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $protocolFilename = null;
 
-    // ===== Donor data (JSON) =====
+    // ===== Donor data (JSON - legacy) =====
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $donorData = null;
 
     // ===== Donor relationship =====
 
-    #[ORM\ManyToOne(targetEntity: Donor::class)]
+    #[ORM\ManyToOne(targetEntity: Donor::class, inversedBy: 'transplants')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Donor $donor = null;
 
@@ -210,6 +172,9 @@ class Transplant
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->virologicalStatuses = new ArrayCollection();
+        $this->hlaIncompatibilities = new ArrayCollection();
+        $this->immunosuppressiveDrugs = new ArrayCollection();
     }
 
     // ===== Getters & Setters =====
@@ -255,12 +220,12 @@ class Transplant
         return $this;
     }
 
-    public function getDonorType(): ?string
+    public function getDonorType(): ?DonorTypeRef
     {
         return $this->donorType;
     }
 
-    public function setDonorType(?string $donorType): static
+    public function setDonorType(?DonorTypeRef $donorType): static
     {
         $this->donorType = $donorType;
 
@@ -269,12 +234,7 @@ class Transplant
 
     public function getDonorTypeLabel(): string
     {
-        return match ($this->donorType) {
-            'living' => 'Donneur vivant',
-            'deceased_encephalic' => 'Donneur décédé (mort encéphalique)',
-            'deceased_cardiac_arrest' => 'Donneur décédé (arrêt cardiaque)',
-            default => $this->donorType ?? '',
-        };
+        return $this->donorType?->getLabel() ?? '';
     }
 
     public function isGraftFunctional(): bool
@@ -313,12 +273,12 @@ class Transplant
         return $this;
     }
 
-    public function getTransplantType(): ?string
+    public function getTransplantType(): ?TransplantTypeRef
     {
         return $this->transplantType;
     }
 
-    public function setTransplantType(?string $transplantType): static
+    public function setTransplantType(?TransplantTypeRef $transplantType): static
     {
         $this->transplantType = $transplantType;
 
@@ -385,12 +345,12 @@ class Transplant
         return $this;
     }
 
-    public function getPeritonealPosition(): ?string
+    public function getPeritonealPosition(): ?PeritonealPosition
     {
         return $this->peritonealPosition;
     }
 
-    public function setPeritonealPosition(?string $peritonealPosition): static
+    public function setPeritonealPosition(?PeritonealPosition $peritonealPosition): static
     {
         $this->peritonealPosition = $peritonealPosition;
 
@@ -472,150 +432,116 @@ class Transplant
         return $this;
     }
 
-    public function getCmvStatus(): ?string
+    // ===== Virological statuses (collection) =====
+
+    /** @return Collection<int, TransplantVirologicalStatus> */
+    public function getVirologicalStatuses(): Collection
     {
-        return $this->cmvStatus;
+        return $this->virologicalStatuses;
     }
 
-    public function setCmvStatus(?string $cmvStatus): static
+    public function addVirologicalStatus(TransplantVirologicalStatus $status): static
     {
-        $this->cmvStatus = $cmvStatus;
-
+        if (!$this->virologicalStatuses->contains($status)) {
+            $this->virologicalStatuses->add($status);
+            $status->setTransplant($this);
+        }
         return $this;
     }
 
-    public function getEbvStatus(): ?string
+    public function removeVirologicalStatus(TransplantVirologicalStatus $status): static
     {
-        return $this->ebvStatus;
-    }
-
-    public function setEbvStatus(?string $ebvStatus): static
-    {
-        $this->ebvStatus = $ebvStatus;
-
+        if ($this->virologicalStatuses->removeElement($status)) {
+            if ($status->getTransplant() === $this) {
+                $status->setTransplant(null);
+            }
+        }
         return $this;
     }
 
-    public function getToxoplasmosisStatus(): ?string
+    public function getVirologicalStatusByCode(string $code): ?string
     {
-        return $this->toxoplasmosisStatus;
+        foreach ($this->virologicalStatuses as $status) {
+            if ($status->getVirologicalMarker()?->getCode() === $code) {
+                return $status->getStatus();
+            }
+        }
+        return null;
     }
 
-    public function setToxoplasmosisStatus(?string $toxoplasmosisStatus): static
-    {
-        $this->toxoplasmosisStatus = $toxoplasmosisStatus;
+    // ===== HLA incompatibilities (collection) =====
 
+    /** @return Collection<int, TransplantHlaIncompatibility> */
+    public function getHlaIncompatibilities(): Collection
+    {
+        return $this->hlaIncompatibilities;
+    }
+
+    public function addHlaIncompatibility(TransplantHlaIncompatibility $incompatibility): static
+    {
+        if (!$this->hlaIncompatibilities->contains($incompatibility)) {
+            $this->hlaIncompatibilities->add($incompatibility);
+            $incompatibility->setTransplant($this);
+        }
         return $this;
     }
 
-    public function getHlaA(): ?int
+    public function removeHlaIncompatibility(TransplantHlaIncompatibility $incompatibility): static
     {
-        return $this->hlaA;
-    }
-
-    public function setHlaA(?int $hlaA): static
-    {
-        $this->hlaA = $hlaA;
-
+        if ($this->hlaIncompatibilities->removeElement($incompatibility)) {
+            if ($incompatibility->getTransplant() === $this) {
+                $incompatibility->setTransplant(null);
+            }
+        }
         return $this;
     }
 
-    public function getHlaB(): ?int
+    public function getHlaIncompatibilityByCode(string $code): ?int
     {
-        return $this->hlaB;
+        foreach ($this->hlaIncompatibilities as $incomp) {
+            if ($incomp->getHlaLocus()?->getCode() === $code) {
+                return $incomp->getIncompatibilityCount();
+            }
+        }
+        return null;
     }
 
-    public function setHlaB(?int $hlaB): static
-    {
-        $this->hlaB = $hlaB;
-
-        return $this;
-    }
-
-    public function getHlaCw(): ?int
-    {
-        return $this->hlaCw;
-    }
-
-    public function setHlaCw(?int $hlaCw): static
-    {
-        $this->hlaCw = $hlaCw;
-
-        return $this;
-    }
-
-    public function getHlaDR(): ?int
-    {
-        return $this->hlaDR;
-    }
-
-    public function setHlaDR(?int $hlaDR): static
-    {
-        $this->hlaDR = $hlaDR;
-
-        return $this;
-    }
-
-    public function getHlaDQ(): ?int
-    {
-        return $this->hlaDQ;
-    }
-
-    public function setHlaDQ(?int $hlaDQ): static
-    {
-        $this->hlaDQ = $hlaDQ;
-
-        return $this;
-    }
-
-    public function getHlaDP(): ?int
-    {
-        return $this->hlaDP;
-    }
-
-    public function setHlaDP(?int $hlaDP): static
-    {
-        $this->hlaDP = $hlaDP;
-
-        return $this;
-    }
-
-    public function getImmunologicalRisk(): ?string
+    public function getImmunologicalRisk(): ?ImmunologicalRisk
     {
         return $this->immunologicalRisk;
     }
 
-    public function setImmunologicalRisk(?string $immunologicalRisk): static
+    public function setImmunologicalRisk(?ImmunologicalRisk $immunologicalRisk): static
     {
         $this->immunologicalRisk = $immunologicalRisk;
 
         return $this;
     }
 
-    /**
-     * Returns the CSS class for the immunological risk color coding.
-     */
     public function getImmunologicalRiskClass(): string
     {
-        return match ($this->immunologicalRisk) {
-            'Non immunisé' => 'risk-green',
-            'Immunisé sans DSA' => 'risk-orange',
-            'Immunisé DSA', 'ABO incompatible' => 'risk-red',
-            default => '',
-        };
+        return $this->immunologicalRisk?->getColorClass() ?? '';
     }
 
-    /** @return string[] */
-    public function getImmunosuppressiveConditioning(): array
+    // ===== Immunosuppressive drugs (ManyToMany) =====
+
+    /** @return Collection<int, ImmunosuppressiveDrug> */
+    public function getImmunosuppressiveDrugs(): Collection
     {
-        return $this->immunosuppressiveConditioning;
+        return $this->immunosuppressiveDrugs;
     }
 
-    /** @param string[] $immunosuppressiveConditioning */
-    public function setImmunosuppressiveConditioning(array $immunosuppressiveConditioning): static
+    public function addImmunosuppressiveDrug(ImmunosuppressiveDrug $drug): static
     {
-        $this->immunosuppressiveConditioning = $immunosuppressiveConditioning;
+        if (!$this->immunosuppressiveDrugs->contains($drug)) {
+            $this->immunosuppressiveDrugs->add($drug);
+        }
+        return $this;
+    }
 
+    public function removeImmunosuppressiveDrug(ImmunosuppressiveDrug $drug): static
+    {
+        $this->immunosuppressiveDrugs->removeElement($drug);
         return $this;
     }
 

@@ -74,17 +74,17 @@
                 </div>
             </div>
         </div>
-    {% elseif hasSearchCriteria %}
+    {% elseif patients|length > 0 %}
         <div class="results-section">
             <div class="results-header">
-                <h2>Résultats</h2>
-                <span class="results-count">{{ total }} patient(s) trouvé(s)</span>
+                <h2>{% if hasSearchCriteria %}Résultats{% else %}Mes patients{% endif %}</h2>
+                <span class="results-count">{{ total }} patient(s){% if hasSearchCriteria %} trouvé(s){% endif %}</span>
             </div>
 
-            {% if patients|length > 0 %}
-                <table class="data-table">
+            <table class="data-table">
                     <thead>
                         <tr>
+                            <th>ID</th>
                             <th>Nom</th>
                             <th>Prénom</th>
                             <th>N° Dossier</th>
@@ -98,6 +98,7 @@
                         {% for patient in patients %}
                         {% set activeBtg = btgAccesses[patient.id] ?? null %}
                         <tr{% if activeBtg %} class="btg-active-row"{% endif %}>
+                            <td>{{ patient.id }}</td>
                             <td>{{ patient.lastName }}</td>
                             <td>{{ patient.firstName }}</td>
                             <td>{{ patient.fileNumber }}</td>
@@ -153,13 +154,14 @@
                     {% endif %}
                 </nav>
                 {% endif %}
-            {% else %}
-                <p class="no-results">Aucun patient trouvé pour ces critères de recherche.</p>
-            {% endif %}
         </div>
     {% else %}
         <div class="search-prompt">
-            <p>Utilisez le formulaire ci-dessus pour rechercher des patients.</p>
+            {% if hasSearchCriteria %}
+                <p>Aucun patient trouvé pour ces critères de recherche.</p>
+            {% else %}
+                <p>Aucun patient ne vous est assigné. Utilisez le formulaire ci-dessus pour rechercher des patients.</p>
+            {% endif %}
         </div>
     {% endif %}
 </div>

@@ -41,7 +41,6 @@ information for care coordination **without explicit patient consent**, provided
 | **CHU transplant service practitioners** (doctors, nurses) | Same *équipe de soins*, same establishment — Art. L1110-4, II & L1110-12 | Only their assigned patients |
 | **City nephrologists** (external practitioners) | Extended care team for specific patients only — care coordination relationship | Only their assigned patients |
 | **Admins (ROLE_TECH_ADMIN)** | Technical role, system management | **No patient data access** (Art. L1110-4 CSP, RGPD Art. 25/32) |
-| **Patients** (ROLE_PATIENT) | Art. L1111-7 — right of access to own medical file | Own file only (future feature) |
 
 ---
 

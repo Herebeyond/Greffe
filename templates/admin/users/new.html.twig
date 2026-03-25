@@ -10,51 +10,65 @@
     </div>
 
     {{ form_start(form, {'attr': {'class': 'admin-form'}}) }}
-        <div class="form-row">
-            <div class="form-group">
-                {{ form_label(form.name) }}
-                {{ form_widget(form.name) }}
-                {{ form_errors(form.name) }}
+        <div class="form-section">
+            <h3 class="form-section-title">Informations personnelles</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form_label(form.name) }}
+                    {{ form_widget(form.name) }}
+                    {{ form_errors(form.name) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.surname) }}
+                    {{ form_widget(form.surname) }}
+                    {{ form_errors(form.surname) }}
+                </div>
             </div>
-            <div class="form-group">
-                {{ form_label(form.surname) }}
-                {{ form_widget(form.surname) }}
-                {{ form_errors(form.surname) }}
+
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form_label(form.email) }}
+                    {{ form_widget(form.email) }}
+                    {{ form_errors(form.email) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.cristalId) }}
+                    {{ form_widget(form.cristalId) }}
+                    {{ form_errors(form.cristalId) }}
+                </div>
             </div>
         </div>
 
-        <div class="form-row">
-            <div class="form-group">
-                {{ form_label(form.email) }}
-                {{ form_widget(form.email) }}
-                {{ form_errors(form.email) }}
-            </div>
-            <div class="form-group">
-                {{ form_label(form.cristalId) }}
-                {{ form_widget(form.cristalId) }}
-                {{ form_errors(form.cristalId) }}
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                {{ form_label(form.plainPassword.first) }}
-                {{ form_widget(form.plainPassword.first) }}
-                {{ form_errors(form.plainPassword.first) }}
-            </div>
-            <div class="form-group">
-                {{ form_label(form.plainPassword.second) }}
-                {{ form_widget(form.plainPassword.second) }}
-                {{ form_errors(form.plainPassword.second) }}
+        <div class="form-section">
+            <h3 class="form-section-title">Mot de passe</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form_label(form.plainPassword.first) }}
+                    {{ form_widget(form.plainPassword.first) }}
+                    {{ form_errors(form.plainPassword.first) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.plainPassword.second) }}
+                    {{ form_widget(form.plainPassword.second) }}
+                    {{ form_errors(form.plainPassword.second) }}
+                </div>
             </div>
         </div>
 
-        <div class="form-group">
-            {{ form_label(form.roles) }}
-            <div class="checkbox-group">
-                {{ form_widget(form.roles) }}
+        <div class="form-section">
+            <h3 class="form-section-title">Rôles et permissions</h3>
+            {% if form.roles is defined %}
+            <div class="form-group">
+                <div class="checkbox-group">
+                    {{ form_widget(form.roles) }}
+                </div>
+                {{ form_errors(form.roles) }}
             </div>
-            {{ form_errors(form.roles) }}
+            {% else %}
+            <div class="alert alert-info">
+                Cet utilisateur sera créé avec le rôle de base (Utilisateur). Seul un Super Admin peut attribuer des rôles privilégiés.
+            </div>
+            {% endif %}
         </div>
 
         <div class="form-actions">

@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Reference\ConsultationType as ConsultationTypeRef;
 use App\Repository\ConsultationRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -28,13 +29,10 @@ class Consultation
     #[Assert\NotBlank(message: 'Le nom du praticien est obligatoire')]
     private ?string $practitionerName = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\ManyToOne(targetEntity: ConsultationTypeRef::class)]
+    #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le type de consultation est obligatoire')]
-    #[Assert\Choice(
-        choices: ['Suivi post-greffe', 'Bilan pré-greffe', 'Urgence', 'Contrôle', 'Autre'],
-        message: 'Type de consultation invalide'
-    )]
-    private ?string $type = null;
+    private ?ConsultationTypeRef $type = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'Les observations sont obligatoires')]
@@ -95,12 +93,12 @@ class Consultation
         return $this;
     }
 
-    public function getType(): ?string
+    public function getType(): ?ConsultationTypeRef
     {
         return $this->type;
     }
 
-    public function setType(string $type): static
+    public function setType(?ConsultationTypeRef $type): static
     {
         $this->type = $type;
 

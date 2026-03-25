@@ -2,7 +2,13 @@
 
 namespace App\Form;
 
+use App\Entity\Reference\DonorType as DonorTypeRef;
+use App\Entity\Reference\ImmunologicalRisk;
+use App\Entity\Reference\ImmunosuppressiveDrug;
+use App\Entity\Reference\PeritonealPosition;
+use App\Entity\Reference\TransplantType as TransplantTypeRef;
 use App\Entity\Transplant;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -28,14 +34,14 @@ class TransplantType extends AbstractType
                 'label' => 'Rang de greffe',
                 'attr' => ['min' => 1, 'placeholder' => 'Ex: 1'],
             ])
-            ->add('donorType', ChoiceType::class, [
+            ->add('donorType', EntityType::class, [
+                'class' => DonorTypeRef::class,
                 'label' => 'Type de donneur',
                 'placeholder' => 'Sélectionner...',
-                'choices' => [
-                    'Donneur vivant' => 'living',
-                    'Donneur décédé (mort encéphalique)' => 'deceased_encephalic',
-                    'Donneur décédé (arrêt cardiaque)' => 'deceased_cardiac_arrest',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
 
             // ===== Graft details =====
@@ -53,17 +59,14 @@ class TransplantType extends AbstractType
                 'required' => false,
                 'attr' => ['rows' => 2],
             ])
-            ->add('transplantType', ChoiceType::class, [
+            ->add('transplantType', EntityType::class, [
+                'class' => TransplantTypeRef::class,
                 'label' => 'Type de transplantation',
                 'placeholder' => 'Sélectionner...',
-                'choices' => [
-                    'Rein' => 'Rein',
-                    'Rein donneur vivant' => 'Rein donneur vivant',
-                    'Rein-pancréas' => 'Rein-pancréas',
-                    'Rein-foie' => 'Rein-foie',
-                    'Rein-coeur' => 'Rein-coeur',
-                    'Autre' => 'Autre',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
             ->add('surgeonName', TextType::class, [
                 'label' => 'Chirurgien',
@@ -96,13 +99,14 @@ class TransplantType extends AbstractType
                     'Gauche' => 'gauche',
                 ],
             ])
-            ->add('peritonealPosition', ChoiceType::class, [
+            ->add('peritonealPosition', EntityType::class, [
+                'class' => PeritonealPosition::class,
                 'label' => 'Position péritonéale',
                 'placeholder' => 'Sélectionner...',
-                'choices' => [
-                    'Extra Péritonéal' => 'Extra Péritonéal',
-                    'Intra Péritonéal' => 'Intra Péritonéal',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
             ->add('totalIschemiaMinutes', IntegerType::class, [
                 'label' => 'Ischémie totale (minutes)',
@@ -122,10 +126,11 @@ class TransplantType extends AbstractType
                 'attr' => ['rows' => 3, 'placeholder' => 'Commentaire libre...'],
             ])
 
-            // ===== Virological status =====
+            // ===== Virological status (unmapped — handled by controller) =====
             ->add('cmvStatus', ChoiceType::class, [
                 'label' => 'Statut CMV',
                 'placeholder' => 'Sélectionner...',
+                'mapped' => false,
                 'choices' => [
                     'D-/R-' => 'D-/R-',
                     'D-/R+' => 'D-/R+',
@@ -136,6 +141,7 @@ class TransplantType extends AbstractType
             ->add('ebvStatus', ChoiceType::class, [
                 'label' => 'Statut EBV',
                 'placeholder' => 'Sélectionner...',
+                'mapped' => false,
                 'required' => false,
                 'choices' => [
                     'D-/R-' => 'D-/R-',
@@ -147,6 +153,7 @@ class TransplantType extends AbstractType
             ->add('toxoplasmosisStatus', ChoiceType::class, [
                 'label' => 'Statut toxoplasmose',
                 'placeholder' => 'Sélectionner...',
+                'mapped' => false,
                 'required' => false,
                 'choices' => [
                     'R+' => 'R+',
@@ -154,76 +161,68 @@ class TransplantType extends AbstractType
                 ],
             ])
 
-            // ===== HLA incompatibility =====
+            // ===== HLA incompatibility (unmapped — handled by controller) =====
             ->add('hlaA', ChoiceType::class, [
                 'label' => 'HLA-A',
                 'placeholder' => '...',
+                'mapped' => false,
                 'choices' => ['0' => 0, '1' => 1, '2' => 2],
             ])
             ->add('hlaB', ChoiceType::class, [
                 'label' => 'HLA-B',
                 'placeholder' => '...',
+                'mapped' => false,
                 'choices' => ['0' => 0, '1' => 1, '2' => 2],
             ])
             ->add('hlaCw', ChoiceType::class, [
                 'label' => 'HLA-Cw',
                 'placeholder' => '...',
+                'mapped' => false,
                 'required' => false,
                 'choices' => ['0' => 0, '1' => 1, '2' => 2],
             ])
             ->add('hlaDR', ChoiceType::class, [
                 'label' => 'HLA-DR',
                 'placeholder' => '...',
+                'mapped' => false,
                 'choices' => ['0' => 0, '1' => 1, '2' => 2],
             ])
             ->add('hlaDQ', ChoiceType::class, [
                 'label' => 'HLA-DQ',
                 'placeholder' => '...',
+                'mapped' => false,
                 'choices' => ['0' => 0, '1' => 1, '2' => 2],
             ])
             ->add('hlaDP', ChoiceType::class, [
                 'label' => 'HLA-DP',
                 'placeholder' => '...',
+                'mapped' => false,
                 'required' => false,
                 'choices' => ['0' => 0, '1' => 1, '2' => 2],
             ])
 
             // ===== Immunological risk =====
-            ->add('immunologicalRisk', ChoiceType::class, [
+            ->add('immunologicalRisk', EntityType::class, [
+                'class' => ImmunologicalRisk::class,
                 'label' => 'Risque immunologique',
                 'placeholder' => 'Sélectionner...',
-                'choices' => [
-                    'Non immunisé' => 'Non immunisé',
-                    'Immunisé sans DSA' => 'Immunisé sans DSA',
-                    'Immunisé DSA' => 'Immunisé DSA',
-                    'ABO incompatible' => 'ABO incompatible',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
 
             // ===== Immunosuppressive conditioning =====
-            ->add('immunosuppressiveConditioning', ChoiceType::class, [
+            ->add('immunosuppressiveDrugs', EntityType::class, [
+                'class' => ImmunosuppressiveDrug::class,
                 'label' => 'Conditionnement immunosuppresseur',
                 'multiple' => true,
                 'expanded' => true,
                 'required' => false,
-                'choices' => [
-                    'Advagraf' => 'Advagraf',
-                    'Prograf' => 'Prograf',
-                    'Neoral' => 'Neoral',
-                    'Rapamune' => 'Rapamune',
-                    'Certican' => 'Certican',
-                    'Cellcept' => 'Cellcept',
-                    'Myfortic' => 'Myfortic',
-                    'Imurel' => 'Imurel',
-                    'Methylprednisolone' => 'Methylprednisolone',
-                    'Mabthera' => 'Mabthera',
-                    'Ig IV' => 'Ig IV',
-                    'Soliris' => 'Soliris',
-                    'Thymoglobulines' => 'Thymoglobulines',
-                    'Simulect' => 'Simulect',
-                    'Plasmaphérèse' => 'Plasmaphérèse',
-                    'Immuno absorption' => 'Immuno absorption',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
 
             // ===== Dialysis =====

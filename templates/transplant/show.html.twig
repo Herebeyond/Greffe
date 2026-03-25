@@ -107,18 +107,17 @@
         <section class="detail-section">
             <h2>Statut virologique</h2>
             <div class="detail-grid">
+                {% for viroStatus in transplant.virologicalStatuses %}
                 <div class="detail-item">
-                    <span class="detail-label">CMV</span>
-                    <span class="detail-value">{{ transplant.cmvStatus }}</span>
+                    <span class="detail-label">{{ viroStatus.virologicalMarker.label }}</span>
+                    <span class="detail-value">{{ viroStatus.status }}</span>
                 </div>
+                {% endfor %}
+                {% if transplant.virologicalStatuses is empty %}
                 <div class="detail-item">
-                    <span class="detail-label">EBV</span>
-                    <span class="detail-value">{{ transplant.ebvStatus ?? '—' }}</span>
+                    <span class="detail-value">— Aucun statut virologique renseigné</span>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">Toxoplasmose</span>
-                    <span class="detail-value">{{ transplant.toxoplasmosisStatus ?? '—' }}</span>
-                </div>
+                {% endif %}
             </div>
         </section>
 
@@ -126,30 +125,17 @@
         <section class="detail-section">
             <h2>Incompatibilité HLA</h2>
             <div class="detail-grid">
+                {% for incompat in transplant.hlaIncompatibilities %}
                 <div class="detail-item">
-                    <span class="detail-label">HLA-A</span>
-                    <span class="detail-value">{{ transplant.hlaA }}</span>
+                    <span class="detail-label">HLA-{{ incompat.hlaLocus.code }}</span>
+                    <span class="detail-value">{{ incompat.incompatibilityCount }}</span>
                 </div>
+                {% endfor %}
+                {% if transplant.hlaIncompatibilities is empty %}
                 <div class="detail-item">
-                    <span class="detail-label">HLA-B</span>
-                    <span class="detail-value">{{ transplant.hlaB }}</span>
+                    <span class="detail-value">— Aucune incompatibilité HLA renseignée</span>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">HLA-Cw</span>
-                    <span class="detail-value">{{ transplant.hlaCw ?? '—' }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">HLA-DR</span>
-                    <span class="detail-value">{{ transplant.hlaDR }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">HLA-DQ</span>
-                    <span class="detail-value">{{ transplant.hlaDQ }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">HLA-DP</span>
-                    <span class="detail-value">{{ transplant.hlaDP ?? '—' }}</span>
-                </div>
+                {% endif %}
             </div>
         </section>
 
@@ -160,7 +146,7 @@
                 <div class="detail-item">
                     <span class="detail-label">Risque</span>
                     <span class="detail-value">
-                        <span class="risk-badge {{ transplant.immunologicalRiskClass }}">{{ transplant.immunologicalRisk }}</span>
+                        <span class="risk-badge {{ transplant.immunologicalRiskClass }}">{{ transplant.immunologicalRisk.label }}</span>
                     </span>
                 </div>
             </div>
@@ -169,10 +155,10 @@
         {# ===== Immunosuppressive conditioning ===== #}
         <section class="detail-section">
             <h2>Conditionnement immunosuppresseur</h2>
-            {% if transplant.immunosuppressiveConditioning is not empty %}
+            {% if transplant.immunosuppressiveDrugs is not empty %}
                 <div class="conditioning-list">
-                    {% for drug in transplant.immunosuppressiveConditioning %}
-                        <span class="badge">{{ drug }}</span>
+                    {% for drug in transplant.immunosuppressiveDrugs %}
+                        <span class="badge">{{ drug.label }}</span>
                     {% endfor %}
                 </div>
             {% else %}
@@ -219,6 +205,37 @@
         {% endif %}
 
         {# ===== Donor data ===== #}
+        {% if transplant.donor %}
+        <section class="detail-section donor-section">
+            <h2>
+                Donneur associé
+                <a href="{{ path('app_donor_show', {id: transplant.donor.id}) }}" class="btn-small" style="margin-left: 1rem;">Voir la fiche donneur ({{ transplant.donor.cristalNumber }})</a>
+            </h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Numéro CRISTAL</span>
+                    <span class="detail-value">{{ transplant.donor.cristalNumber }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Type</span>
+                    <span class="detail-value"><span class="badge badge-donor-{{ transplant.donor.donorType.code }}">{{ transplant.donor.donorTypeLabel }}</span></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Groupe sanguin</span>
+                    <span class="detail-value"><span class="blood-group blood-group-{{ transplant.donor.bloodGroup.code }}">{{ transplant.donor.fullBloodGroup }}</span></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Sexe</span>
+                    <span class="detail-value">{{ transplant.donor.sex == 'M' ? 'Masculin' : 'Féminin' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Âge</span>
+                    <span class="detail-value">{{ transplant.donor.age }} ans</span>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
         {% if transplant.donorData %}
         {% set donor = transplant.donorData %}
         <section class="detail-section donor-section">
@@ -284,7 +301,7 @@
             </div>
 
             {# Living donor specific #}
-            {% if transplant.donorType == 'living' %}
+            {% if transplant.donorType.code == 'living' %}
             <h3>Informations donneur vivant</h3>
             <div class="detail-grid">
                 <div class="detail-item">
@@ -353,7 +370,7 @@
             {% endif %}
 
             {# Deceased donor specific #}
-            {% if transplant.donorType == 'deceased_encephalic' or transplant.donorType == 'deceased_cardiac_arrest' %}
+            {% if transplant.donorType.code == 'deceased_encephalic' or transplant.donorType.code == 'deceased_cardiac_arrest' %}
             <h3>Informations donneur décédé</h3>
             <div class="detail-grid">
                 <div class="detail-item">

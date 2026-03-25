@@ -3,8 +3,9 @@
 namespace App\Form;
 
 use App\Entity\MedicalHistory;
+use App\Entity\Reference\MedicalHistoryType as MedicalHistoryTypeRef;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -15,16 +16,14 @@ class MedicalHistoryType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('type', ChoiceType::class, [
+            ->add('type', EntityType::class, [
+                'class' => MedicalHistoryTypeRef::class,
                 'label' => 'Type d\'antécédent',
                 'placeholder' => 'Sélectionner...',
-                'choices' => [
-                    'Médical' => 'Médical',
-                    'Chirurgical' => 'Chirurgical',
-                    'Familial' => 'Familial',
-                    'Allergique' => 'Allergique',
-                    'Autre' => 'Autre',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Description',

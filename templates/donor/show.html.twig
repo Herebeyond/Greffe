@@ -1,13 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Donneur {{ donor.displayName }}{% endblock %}
+{% block title %}Donneur #{{ donor.id }} — {{ donor.cristalNumber }}{% endblock %}
 
 {% block body %}
 <div class="page-container">
     <div class="section-header">
-        <h2>Donneur — {{ donor.displayName }}</h2>
+        <h2>Donneur #{{ donor.id }} — {{ donor.cristalNumber }}</h2>
         <div class="page-header-actions">
-            {% if is_granted('CAN_WRITE') %}
+            {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
             <a href="{{ path('app_donor_edit', {id: donor.id}) }}" class="btn btn-primary">Modifier</a>
             {% endif %}
             <a href="{{ path('app_donor_index') }}" class="btn btn-secondary">Retour au registre</a>
@@ -20,16 +20,20 @@
             <h2>Identification</h2>
             <div class="detail-grid">
                 <div class="detail-item">
+                    <span class="detail-label">ID</span>
+                    <span class="detail-value"><strong>{{ donor.id }}</strong></span>
+                </div>
+                <div class="detail-item">
                     <span class="detail-label">Numéro CRISTAL</span>
                     <span class="detail-value"><strong>{{ donor.cristalNumber }}</strong></span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Type de donneur</span>
-                    <span class="detail-value"><span class="badge badge-donor-{{ donor.donorType }}">{{ donor.donorTypeLabel }}</span></span>
+                    <span class="detail-value"><span class="badge badge-donor-{{ donor.donorType.code }}">{{ donor.donorTypeLabel }}</span></span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Groupe sanguin</span>
-                    <span class="detail-value"><span class="blood-group blood-group-{{ donor.bloodGroup }}">{{ donor.fullBloodGroup }}</span></span>
+                    <span class="detail-value"><span class="blood-group blood-group-{{ donor.bloodGroup.code }}">{{ donor.fullBloodGroup }}</span></span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Sexe</span>
@@ -57,10 +61,11 @@
         </section>
 
         {# ===== Living donor specific ===== #}
-        {% if donor.donorType == 'living' %}
+        {% if donor.donorType.code == 'living' %}
         <section class="detail-section">
             <h2>Informations donneur vivant</h2>
             <div class="detail-grid">
+                {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
                 <div class="detail-item">
                     <span class="detail-label">Nom</span>
                     <span class="detail-value">{{ donor.lastName ?? '—' }}</span>
@@ -78,6 +83,7 @@
                     <span class="detail-label">Commentaire lien</span>
                     <span class="detail-value">{{ donor.relationshipComment }}</span>
                 </div>
+                {% endif %}
                 {% endif %}
                 <div class="detail-item">
                     <span class="detail-label">Créatinine</span>
@@ -108,14 +114,16 @@
         {% endif %}
 
         {# ===== Deceased donor specific ===== #}
-        {% if donor.donorType == 'deceased_encephalic' or donor.donorType == 'deceased_cardiac_arrest' %}
+        {% if donor.donorType.code == 'deceased_encephalic' or donor.donorType.code == 'deceased_cardiac_arrest' %}
         <section class="detail-section">
             <h2>Informations donneur décédé</h2>
             <div class="detail-grid">
+                {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
                 <div class="detail-item">
                     <span class="detail-label">Ville d'origine</span>
                     <span class="detail-value">{{ donor.originCity ?? '—' }}</span>
                 </div>
+                {% endif %}
                 <div class="detail-item">
                     <span class="detail-label">Cause du décès</span>
                     <span class="detail-value">{{ donor.deathCause ?? '—' }}</span>
@@ -217,30 +225,17 @@
         <section class="detail-section">
             <h2>Groupage HLA</h2>
             <div class="detail-grid">
+                {% for typing in donor.hlaTypings %}
                 <div class="detail-item">
-                    <span class="detail-label">HLA-A</span>
-                    <span class="detail-value">{{ donor.hlaA }}</span>
+                    <span class="detail-label">HLA-{{ typing.hlaLocus.code }}</span>
+                    <span class="detail-value">{{ typing.value }}</span>
                 </div>
+                {% endfor %}
+                {% if donor.hlaTypings is empty %}
                 <div class="detail-item">
-                    <span class="detail-label">HLA-B</span>
-                    <span class="detail-value">{{ donor.hlaB }}</span>
+                    <span class="detail-value">— Aucun groupage HLA enregistré</span>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">HLA-Cw</span>
-                    <span class="detail-value">{{ donor.hlaCw ?? '—' }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">HLA-DR</span>
-                    <span class="detail-value">{{ donor.hlaDR }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">HLA-DQ</span>
-                    <span class="detail-value">{{ donor.hlaDQ }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">HLA-DP</span>
-                    <span class="detail-value">{{ donor.hlaDP ?? '—' }}</span>
-                </div>
+                {% endif %}
             </div>
         </section>
 
@@ -248,51 +243,21 @@
         <section class="detail-section">
             <h2>Sérologie</h2>
             <div class="detail-grid">
-                {% set serologyFields = {
-                    'cmv': 'CMV',
-                    'ebv': 'EBV',
-                    'hiv': 'HIV',
-                    'htlv': 'HTLV',
-                    'syphilis': 'Syphilis',
-                    'hcv': 'HCV',
-                    'agHbs': 'Ag HBs',
-                    'acHbs': 'Ac HBs',
-                    'acHbc': 'Ac HBc'
-                } %}
-                {% for field, label in serologyFields %}
+                {% for serology in donor.serologyResults %}
                 <div class="detail-item">
-                    <span class="detail-label">{{ label }}</span>
+                    <span class="detail-label">{{ serology.serologyMarker.label }}</span>
                     <span class="detail-value">
-                        <span class="serology-badge serology-{{ attribute(donor, field) == '+' ? 'positive' : 'negative' }}">{{ attribute(donor, field) }}</span>
-                    </span>
-                </div>
-                {% endfor %}
-                {% if donor.toxoplasmosis %}
-                <div class="detail-item">
-                    <span class="detail-label">Toxoplasmose</span>
-                    <span class="detail-value">
-                        {% if donor.toxoplasmosis == 'ND' %}
+                        {% if serology.result == 'ND' %}
                             <span class="badge">ND</span>
                         {% else %}
-                            <span class="serology-badge serology-{{ donor.toxoplasmosis == '+' ? 'positive' : 'negative' }}">{{ donor.toxoplasmosis }}</span>
+                            <span class="serology-badge serology-{{ serology.result == '+' ? 'positive' : 'negative' }}">{{ serology.result }}</span>
                         {% endif %}
                     </span>
                 </div>
-                {% endif %}
-                {% if donor.arnc %}
+                {% endfor %}
+                {% if donor.serologyResults is empty %}
                 <div class="detail-item">
-                    <span class="detail-label">ARNc</span>
-                    <span class="detail-value">
-                        <span class="serology-badge serology-{{ donor.arnc == '+' ? 'positive' : 'negative' }}">{{ donor.arnc }}</span>
-                    </span>
-                </div>
-                {% endif %}
-                {% if donor.dnaB %}
-                <div class="detail-item">
-                    <span class="detail-label">DNA B</span>
-                    <span class="detail-value">
-                        <span class="serology-badge serology-{{ donor.dnaB == '+' ? 'positive' : 'negative' }}">{{ donor.dnaB }}</span>
-                    </span>
+                    <span class="detail-value">— Aucune sérologie enregistrée</span>
                 </div>
                 {% endif %}
             </div>
@@ -361,7 +326,50 @@
         </section>
         {% endif %}
 
+        {# ===== Transplant recipients ===== #}
+        {% if donor.transplants is not empty %}
+        <section class="detail-section">
+            <h2>Receveurs ({{ donor.transplants|length }})</h2>
+            <div class="data-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Date de greffe</th>
+                            <th>Type</th>
+                            <th>Rang</th>
+                            <th>Greffon</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transplant in donor.transplants %}
+                        <tr>
+                            <td>{{ transplant.patient.fullName }} ({{ transplant.patient.fileNumber }})</td>
+                            <td>{{ transplant.transplantDate|date('d/m/Y') }}</td>
+                            <td><span class="badge">{{ transplant.transplantType }}</span></td>
+                            <td>{{ transplant.rank }}</td>
+                            <td>
+                                {% if transplant.isGraftFunctional %}
+                                    <span class="graft-status graft-functional">Fonctionnel</span>
+                                {% else %}
+                                    <span class="graft-status graft-non-functional">Non fonctionnel</span>
+                                {% endif %}
+                            </td>
+                            <td class="actions-cell">
+                                <a href="{{ path('app_transplant_show', {patientId: transplant.patient.id, id: transplant.id}) }}" class="btn-small">Voir greffe</a>
+                                <a href="{{ path('app_patient_show', {id: transplant.patient.id}) }}" class="btn-small">Voir patient</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
         {# ===== System info ===== #}
+        {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
         <section class="detail-section">
             <h2>Informations système</h2>
             <div class="detail-grid">
@@ -377,9 +385,10 @@
                 {% endif %}
             </div>
         </section>
+        {% endif %}
     </div>
 
-    {% if is_granted('CAN_DELETE') %}
+    {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
     <div class="danger-zone">
         <h2>Zone de danger</h2>
         <form action="{{ path('app_donor_delete', {id: donor.id}) }}" method="post"

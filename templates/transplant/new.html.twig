@@ -11,7 +11,7 @@
     </div>
 
     <div class="form-container transplant-form">
-        {{ form_start(form) }}
+        {{ form_start(form, {'attr': {'id': 'transplant'}}) }}
 
         {# Essential information #}
         <fieldset class="form-fieldset">
@@ -141,7 +141,8 @@
         <fieldset class="form-fieldset">
             <legend>Conditionnement immunosuppresseur</legend>
             <div class="checkbox-group">
-                {{ form_row(form.immunosuppressiveConditioning) }}
+                {{ form_widget(form.immunosuppressiveDrugs) }}
+                {{ form_errors(form.immunosuppressiveDrugs) }}
             </div>
         </fieldset>
 

@@ -38,18 +38,24 @@ class UserType extends AbstractType
                 'required' => false,
                 'attr' => ['placeholder' => 'CRISTAL-123 (optionnel)'],
             ])
-            ->add('roles', ChoiceType::class, [
+        ;
+
+        // Only ROLE_SUPER_ADMIN can assign privileged roles
+        // ROLE_TECH_ADMIN can only create basic ROLE_USER profiles (no role checkboxes shown)
+        if ($options['is_super_admin']) {
+            $builder->add('roles', ChoiceType::class, [
                 'label' => 'Rôles',
                 'choices' => [
+                    'Super Admin (gestion complète)' => 'ROLE_SUPER_ADMIN',
                     'Admin technique (gestion système)' => 'ROLE_TECH_ADMIN',
                     'Docteur' => 'ROLE_DOCTOR',
                     'Infirmière' => 'ROLE_NURSE',
-                    'Patient' => 'ROLE_PATIENT',
+                    'Coordinateur de transplantation' => 'ROLE_TRANSPLANT_COORDINATOR',
                 ],
                 'multiple' => true,
                 'expanded' => true,
-            ])
-        ;
+            ]);
+        }
 
         // Only add password field for new users or if explicitly requested
         if ($options['require_password']) {
@@ -102,6 +108,7 @@ class UserType extends AbstractType
         $resolver->setDefaults([
             'data_class' => User::class,
             'require_password' => true,
+            'is_super_admin' => false,
         ]);
     }
 }

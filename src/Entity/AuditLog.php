@@ -59,6 +59,14 @@ class AuditLog
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $details = null;
 
+    /** @var string[]|null List of field names that were changed (readable by admin) */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $changedFields = null;
+
+    /** Encrypted JSON of old→new values (NOT readable by admin, for legal audit only) */
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $encryptedChanges = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -188,6 +196,32 @@ class AuditLog
     public function setDetails(?string $details): static
     {
         $this->details = $details;
+
+        return $this;
+    }
+
+    /** @return string[]|null */
+    public function getChangedFields(): ?array
+    {
+        return $this->changedFields;
+    }
+
+    /** @param string[]|null $changedFields */
+    public function setChangedFields(?array $changedFields): static
+    {
+        $this->changedFields = $changedFields;
+
+        return $this;
+    }
+
+    public function getEncryptedChanges(): ?string
+    {
+        return $this->encryptedChanges;
+    }
+
+    public function setEncryptedChanges(?string $encryptedChanges): static
+    {
+        $this->encryptedChanges = $encryptedChanges;
 
         return $this;
     }

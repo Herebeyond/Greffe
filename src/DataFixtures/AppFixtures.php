@@ -5,17 +5,73 @@ namespace App\DataFixtures;
 use App\Entity\BiologicalResult;
 use App\Entity\Consultation;
 use App\Entity\Donor;
+use App\Entity\DonorHlaTyping;
+use App\Entity\DonorSerology;
 use App\Entity\MedicalHistory;
 use App\Entity\Patient;
 use App\Entity\Transplant;
+use App\Entity\TransplantHlaIncompatibility;
+use App\Entity\TransplantVirologicalStatus;
 use App\Entity\TherapeuticEducation;
 use App\Entity\User;
+use App\Entity\Reference\BloodGroup;
+use App\Entity\Reference\ConsultationType;
+use App\Entity\Reference\DeathCause;
+use App\Entity\Reference\DonorType as DonorTypeRef;
+use App\Entity\Reference\EducationTopic;
+use App\Entity\Reference\HlaLocus;
+use App\Entity\Reference\ImmunologicalRisk;
+use App\Entity\Reference\ImmunosuppressiveDrug;
+use App\Entity\Reference\MedicalHistoryType;
+use App\Entity\Reference\PatientProgress;
+use App\Entity\Reference\PerfusionLiquid;
+use App\Entity\Reference\PeritonealPosition;
+use App\Entity\Reference\RelationshipType;
+use App\Entity\Reference\SerologyMarker;
+use App\Entity\Reference\SurgicalApproach;
+use App\Entity\Reference\TransplantType;
+use App\Entity\Reference\VirologicalMarker;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class AppFixtures extends Fixture
 {
+    /** @var array<string, BloodGroup> */
+    private array $bloodGroups = [];
+    /** @var array<string, DonorTypeRef> */
+    private array $donorTypes = [];
+    /** @var array<string, ConsultationType> */
+    private array $consultationTypes = [];
+    /** @var array<string, TransplantType> */
+    private array $transplantTypes = [];
+    /** @var array<string, DeathCause> */
+    private array $deathCauses = [];
+    /** @var array<string, RelationshipType> */
+    private array $relationshipTypes = [];
+    /** @var array<string, EducationTopic> */
+    private array $educationTopics = [];
+    /** @var array<string, MedicalHistoryType> */
+    private array $medicalHistoryTypes = [];
+    /** @var array<string, ImmunologicalRisk> */
+    private array $immunologicalRisks = [];
+    /** @var array<string, ImmunosuppressiveDrug> */
+    private array $immunosuppressiveDrugs = [];
+    /** @var array<string, PerfusionLiquid> */
+    private array $perfusionLiquids = [];
+    /** @var array<string, PeritonealPosition> */
+    private array $peritonealPositions = [];
+    /** @var array<string, SurgicalApproach> */
+    private array $surgicalApproaches = [];
+    /** @var array<string, PatientProgress> */
+    private array $patientProgressValues = [];
+    /** @var array<string, HlaLocus> */
+    private array $hlaLoci = [];
+    /** @var array<string, SerologyMarker> */
+    private array $serologyMarkers = [];
+    /** @var array<string, VirologicalMarker> */
+    private array $virologicalMarkers = [];
+
     public function __construct(
         private UserPasswordHasherInterface $passwordHasher,
     ) {
@@ -23,6 +79,10 @@ class AppFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
+        // Reference tables must be loaded and flushed first
+        $this->loadReferenceData($manager);
+        $manager->flush();
+
         $this->loadUsers($manager);
         $this->loadPatients($manager);
 
@@ -43,9 +103,343 @@ class AppFixtures extends Fixture
         $manager->flush();
     }
 
+    // ===================================================================
+    // REFERENCE DATA
+    // ===================================================================
+
+    private function loadReferenceData(ObjectManager $manager): void
+    {
+        $this->loadBloodGroups($manager);
+        $this->loadDonorTypes($manager);
+        $this->loadConsultationTypes($manager);
+        $this->loadTransplantTypes($manager);
+        $this->loadDeathCauses($manager);
+        $this->loadRelationshipTypes($manager);
+        $this->loadEducationTopics($manager);
+        $this->loadMedicalHistoryTypes($manager);
+        $this->loadImmunologicalRisks($manager);
+        $this->loadImmunosuppressiveDrugs($manager);
+        $this->loadPerfusionLiquids($manager);
+        $this->loadPeritonealPositions($manager);
+        $this->loadSurgicalApproaches($manager);
+        $this->loadPatientProgressValues($manager);
+        $this->loadHlaLoci($manager);
+        $this->loadSerologyMarkers($manager);
+        $this->loadVirologicalMarkers($manager);
+    }
+
+    private function loadBloodGroups(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'A',  'label' => 'A',  'order' => 1],
+            ['code' => 'B',  'label' => 'B',  'order' => 2],
+            ['code' => 'AB', 'label' => 'AB', 'order' => 3],
+            ['code' => 'O',  'label' => 'O',  'order' => 4],
+        ];
+        foreach ($data as $d) {
+            $e = new BloodGroup();
+            $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->bloodGroups[$d['code']] = $e;
+        }
+    }
+
+    private function loadDonorTypes(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'living',                'label' => 'Donneur vivant',                       'order' => 1],
+            ['code' => 'deceased_encephalic',    'label' => 'Donneur décédé (mort encéphalique)',   'order' => 2],
+            ['code' => 'deceased_cardiac_arrest', 'label' => 'Donneur décédé (arrêt cardiaque)',   'order' => 3],
+        ];
+        foreach ($data as $d) {
+            $e = new DonorTypeRef();
+            $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->donorTypes[$d['code']] = $e;
+        }
+    }
+
+    private function loadConsultationTypes(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'suivi_post_greffe', 'label' => 'Suivi post-greffe', 'order' => 1],
+            ['code' => 'bilan_pre_greffe',  'label' => 'Bilan pré-greffe',  'order' => 2],
+            ['code' => 'urgence',           'label' => 'Urgence',           'order' => 3],
+            ['code' => 'controle',          'label' => 'Contrôle',          'order' => 4],
+            ['code' => 'autre',             'label' => 'Autre',             'order' => 5],
+        ];
+        foreach ($data as $d) {
+            $e = new ConsultationType();
+            $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->consultationTypes[$d['code']] = $e;
+        }
+    }
+
+    private function loadTransplantTypes(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'rein',                  'label' => 'Rein',                   'order' => 1],
+            ['code' => 'rein_donneur_vivant',   'label' => 'Rein donneur vivant',    'order' => 2],
+            ['code' => 'rein_pancreas',         'label' => 'Rein-pancréas',          'order' => 3],
+            ['code' => 'rein_foie',             'label' => 'Rein-foie',              'order' => 4],
+            ['code' => 'rein_coeur',            'label' => 'Rein-cœur',              'order' => 5],
+            ['code' => 'autre',                 'label' => 'Autre',                  'order' => 6],
+        ];
+        foreach ($data as $d) {
+            $e = new TransplantType();
+            $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->transplantTypes[$d['code']] = $e;
+        }
+    }
+
+    private function loadDeathCauses(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'avc_hemorragique', 'label' => 'AVC hémorragique', 'order' => 1],
+            ['code' => 'avc_ischemique',   'label' => 'AVC ischémique',   'order' => 2],
+            ['code' => 'avp',              'label' => 'AVP',              'order' => 3],
+            ['code' => 'tc_non_avp',       'label' => 'TC non AVP',       'order' => 4],
+            ['code' => 'anoxie',           'label' => 'Anoxie',           'order' => 5],
+            ['code' => 'autre',            'label' => 'Autre',            'order' => 6],
+        ];
+        foreach ($data as $d) {
+            $e = new DeathCause();
+            $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->deathCauses[$d['code']] = $e;
+        }
+    }
+
+    private function loadRelationshipTypes(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'parent',          'label' => 'Parent',          'order' => 1],
+            ['code' => 'enfant',          'label' => 'Enfant',          'order' => 2],
+            ['code' => '2eme_degre',      'label' => '2ème degré',      'order' => 3],
+            ['code' => 'conjoint',        'label' => 'Conjoint',        'order' => 4],
+            ['code' => 'non_apparente',   'label' => 'Non apparenté',   'order' => 5],
+            ['code' => 'autre',           'label' => 'Autre',           'order' => 6],
+        ];
+        foreach ($data as $d) {
+            $e = new RelationshipType();
+            $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->relationshipTypes[$d['code']] = $e;
+        }
+    }
+
+    private function loadEducationTopics(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'observance',        'label' => 'Observance médicamenteuse', 'order' => 1],
+            ['code' => 'hygiene_vie',       'label' => 'Hygiène de vie',            'order' => 2],
+            ['code' => 'signes_rejet',      'label' => 'Signes de rejet',           'order' => 3],
+            ['code' => 'dietetique',        'label' => 'Diététique',                'order' => 4],
+            ['code' => 'activite_physique', 'label' => 'Activité physique',         'order' => 5],
+            ['code' => 'gestion_stress',    'label' => 'Gestion du stress',         'order' => 6],
+            ['code' => 'autre',             'label' => 'Autre',                     'order' => 7],
+        ];
+        foreach ($data as $d) {
+            $e = new EducationTopic();
+            $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->educationTopics[$d['code']] = $e;
+        }
+    }
+
+    private function loadMedicalHistoryTypes(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'medical',      'label' => 'Médical',      'order' => 1],
+            ['code' => 'chirurgical',   'label' => 'Chirurgical',  'order' => 2],
+            ['code' => 'familial',      'label' => 'Familial',     'order' => 3],
+            ['code' => 'allergique',    'label' => 'Allergique',   'order' => 4],
+            ['code' => 'autre',         'label' => 'Autre',        'order' => 5],
+        ];
+        foreach ($data as $d) {
+            $e = new MedicalHistoryType();
+            $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->medicalHistoryTypes[$d['code']] = $e;
+        }
+    }
+
+    private function loadImmunologicalRisks(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'non_immunise',      'label' => 'Non immunisé',        'color' => 'risk-green',  'order' => 1],
+            ['code' => 'immunise_sans_dsa', 'label' => 'Immunisé sans DSA',   'color' => 'risk-orange', 'order' => 2],
+            ['code' => 'immunise_dsa',      'label' => 'Immunisé DSA',        'color' => 'risk-red',    'order' => 3],
+            ['code' => 'abo_incompatible',  'label' => 'ABO incompatible',    'color' => 'risk-red',    'order' => 4],
+        ];
+        foreach ($data as $d) {
+            $e = new ImmunologicalRisk();
+            $e->setCode($d['code'])->setLabel($d['label'])->setColorClass($d['color'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->immunologicalRisks[$d['code']] = $e;
+        }
+    }
+
+    private function loadImmunosuppressiveDrugs(ObjectManager $manager): void
+    {
+        $data = [
+            'advagraf', 'prograf', 'neoral', 'rapamune', 'certican',
+            'cellcept', 'myfortic', 'imurel', 'methylprednisolone',
+            'mabthera', 'ig_iv', 'soliris', 'thymoglobulines',
+            'simulect', 'plasmapherese', 'immuno_absorption',
+        ];
+        $labels = [
+            'advagraf' => 'Advagraf', 'prograf' => 'Prograf', 'neoral' => 'Neoral',
+            'rapamune' => 'Rapamune', 'certican' => 'Certican', 'cellcept' => 'Cellcept',
+            'myfortic' => 'Myfortic', 'imurel' => 'Imurel', 'methylprednisolone' => 'Methylprednisolone',
+            'mabthera' => 'Mabthera', 'ig_iv' => 'Ig IV', 'soliris' => 'Soliris',
+            'thymoglobulines' => 'Thymoglobulines', 'simulect' => 'Simulect',
+            'plasmapherese' => 'Plasmaphérèse', 'immuno_absorption' => 'Immuno absorption',
+        ];
+        $order = 1;
+        foreach ($data as $code) {
+            $e = new ImmunosuppressiveDrug();
+            $e->setCode($code)->setLabel($labels[$code])->setDisplayOrder($order++);
+            $manager->persist($e);
+            $this->immunosuppressiveDrugs[$code] = $e;
+        }
+    }
+
+    private function loadPerfusionLiquids(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'viaspan', 'label' => 'Viaspan', 'order' => 1],
+            ['code' => 'celsior', 'label' => 'Celsior', 'order' => 2],
+            ['code' => 'igl',     'label' => 'IGL',     'order' => 3],
+            ['code' => 'scott',   'label' => 'Scott',   'order' => 4],
+        ];
+        foreach ($data as $d) {
+            $e = new PerfusionLiquid();
+            $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->perfusionLiquids[$d['code']] = $e;
+        }
+    }
+
+    private function loadPeritonealPositions(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'extra_peritoneal', 'label' => 'Extra Péritonéal', 'order' => 1],
+            ['code' => 'intra_peritoneal', 'label' => 'Intra Péritonéal', 'order' => 2],
+        ];
+        foreach ($data as $d) {
+            $e = new PeritonealPosition();
+            $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->peritonealPositions[$d['code']] = $e;
+        }
+    }
+
+    private function loadSurgicalApproaches(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'lombotomie',   'label' => 'Lombotomie',   'order' => 1],
+            ['code' => 'coelioscopie', 'label' => 'Cœlioscopie',  'order' => 2],
+        ];
+        foreach ($data as $d) {
+            $e = new SurgicalApproach();
+            $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->surgicalApproaches[$d['code']] = $e;
+        }
+    }
+
+    private function loadPatientProgressValues(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'acquis',     'label' => 'Acquis',     'order' => 1],
+            ['code' => 'en_cours',   'label' => 'En cours',   'order' => 2],
+            ['code' => 'non_acquis', 'label' => 'Non acquis', 'order' => 3],
+        ];
+        foreach ($data as $d) {
+            $e = new PatientProgress();
+            $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->patientProgressValues[$d['code']] = $e;
+        }
+    }
+
+    private function loadHlaLoci(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'A',  'label' => 'HLA-A',  'required' => true,  'order' => 1],
+            ['code' => 'B',  'label' => 'HLA-B',  'required' => true,  'order' => 2],
+            ['code' => 'Cw', 'label' => 'HLA-Cw', 'required' => false, 'order' => 3],
+            ['code' => 'DR', 'label' => 'HLA-DR', 'required' => true,  'order' => 4],
+            ['code' => 'DQ', 'label' => 'HLA-DQ', 'required' => true,  'order' => 5],
+            ['code' => 'DP', 'label' => 'HLA-DP', 'required' => false, 'order' => 6],
+        ];
+        foreach ($data as $d) {
+            $e = new HlaLocus();
+            $e->setCode($d['code'])->setLabel($d['label'])->setIsRequired($d['required'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->hlaLoci[$d['code']] = $e;
+        }
+    }
+
+    private function loadSerologyMarkers(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'cmv',           'label' => 'CMV',           'required' => true,  'values' => ['+', '-'],           'order' => 1],
+            ['code' => 'ebv',           'label' => 'EBV',           'required' => true,  'values' => ['+', '-'],           'order' => 2],
+            ['code' => 'hiv',           'label' => 'HIV',           'required' => true,  'values' => ['+', '-'],           'order' => 3],
+            ['code' => 'htlv',          'label' => 'HTLV',          'required' => true,  'values' => ['+', '-'],           'order' => 4],
+            ['code' => 'syphilis',      'label' => 'Syphilis',      'required' => true,  'values' => ['+', '-'],           'order' => 5],
+            ['code' => 'hcv',           'label' => 'HCV',           'required' => true,  'values' => ['+', '-'],           'order' => 6],
+            ['code' => 'agHbs',         'label' => 'Ag HBs',        'required' => true,  'values' => ['+', '-'],           'order' => 7],
+            ['code' => 'acHbs',         'label' => 'Ac HBs',        'required' => true,  'values' => ['+', '-'],           'order' => 8],
+            ['code' => 'acHbc',         'label' => 'Ac HBc',        'required' => true,  'values' => ['+', '-'],           'order' => 9],
+            ['code' => 'toxoplasmosis', 'label' => 'Toxoplasmose',  'required' => false, 'values' => ['+', '-', 'ND'],     'order' => 10],
+            ['code' => 'arnc',          'label' => 'ARNc',          'required' => false, 'values' => ['+', '-'],           'order' => 11],
+            ['code' => 'dnaB',          'label' => 'DNAb',          'required' => false, 'values' => ['+', '-'],           'order' => 12],
+        ];
+        foreach ($data as $d) {
+            $e = new SerologyMarker();
+            $e->setCode($d['code'])->setLabel($d['label'])->setIsRequired($d['required'])->setPossibleValues($d['values'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->serologyMarkers[$d['code']] = $e;
+        }
+    }
+
+    private function loadVirologicalMarkers(ObjectManager $manager): void
+    {
+        $data = [
+            ['code' => 'CMV',           'label' => 'CMV',          'statuses' => ['D-/R-', 'D-/R+', 'D+/R-', 'D+/R+'], 'order' => 1],
+            ['code' => 'EBV',           'label' => 'EBV',          'statuses' => ['D-/R-', 'D-/R+', 'D+/R-', 'D+/R+'], 'order' => 2],
+            ['code' => 'toxoplasmosis', 'label' => 'Toxoplasmose', 'statuses' => ['R+', 'R-'],                          'order' => 3],
+        ];
+        foreach ($data as $d) {
+            $e = new VirologicalMarker();
+            $e->setCode($d['code'])->setLabel($d['label'])->setPossibleStatuses($d['statuses'])->setDisplayOrder($d['order']);
+            $manager->persist($e);
+            $this->virologicalMarkers[$d['code']] = $e;
+        }
+    }
+
+    // ===================================================================
+    // USERS
+    // ===================================================================
+
     private function loadUsers(ObjectManager $manager): void
     {
-        // Admin user: Sam Gamegie (technical admin, no patient access)
+        // Super admin user: Gandalf Le Blanc (full system management)
+        $superAdmin = new User();
+        $superAdmin->setName('Gandalf');
+        $superAdmin->setSurname('Le Blanc');
+        $superAdmin->setEmail('superadmin@admin.fr');
+        $superAdmin->setRoles(['ROLE_SUPER_ADMIN']);
+        $superAdmin->setPassword($this->passwordHasher->hashPassword($superAdmin, 'password'));
+        $superAdmin->setCristalId('CRISTAL-SADM-001');
+        $manager->persist($superAdmin);
+
+        // Admin user: Sam Gamegie (technical admin, no patient access, ROLE_USER only creation)
         $admin = new User();
         $admin->setName('Sam');
         $admin->setSurname('Gamegie');
@@ -54,6 +448,16 @@ class AppFixtures extends Fixture
         $admin->setPassword($this->passwordHasher->hashPassword($admin, 'password'));
         $admin->setCristalId('CRISTAL-ADMIN-001');
         $manager->persist($admin);
+
+        // Transplant coordinator: Claire Fontaine (manages donors, links to patients)
+        $coordinator = new User();
+        $coordinator->setName('Claire');
+        $coordinator->setSurname('Fontaine');
+        $coordinator->setEmail('coordinateur@chu.fr');
+        $coordinator->setRoles(['ROLE_TRANSPLANT_COORDINATOR']);
+        $coordinator->setPassword($this->passwordHasher->hashPassword($coordinator, 'password'));
+        $coordinator->setCristalId('CRISTAL-COORD-001');
+        $manager->persist($coordinator);
 
         // Doctor user: Dr. Sophie Martin (senior doctor, sees only assigned patients)
         $doctorMartin = new User();
@@ -99,15 +503,6 @@ class AppFixtures extends Fixture
         $manager->persist($externalDoctor);
         $this->addReference('external-doctor', $externalDoctor);
 
-        // Patient user: Jean Dupont
-        $patient = new User();
-        $patient->setName('Jean');
-        $patient->setSurname('Dupont');
-        $patient->setEmail('patient@email.fr');
-        $patient->setRoles(['ROLE_PATIENT']);
-        $patient->setPassword($this->passwordHasher->hashPassword($patient, 'password'));
-        $manager->persist($patient);
-
         // Disabled user: for testing account deactivation
         $disabled = new User();
         $disabled->setName('Compte');
@@ -129,11 +524,12 @@ class AppFixtures extends Fixture
         $this->addReference('doctor-benjamin', $benjamin);
     }
 
+    // ===================================================================
+    // PATIENTS
+    // ===================================================================
+
     private function loadPatients(ObjectManager $manager): void
     {
-        /** @var User $externalDoctor */
-        $externalDoctor = $this->getReference('external-doctor', User::class);
-
         $patientsData = [
             // Paris region
             ['fileNumber' => '2024-001', 'lastName' => 'Martin', 'firstName' => 'Pierre', 'city' => 'Paris', 'birthDate' => '1965-03-15', 'sex' => 'M', 'bloodGroup' => 'A', 'rhesus' => '+', 'phone' => '06 12 34 56 78', 'email' => 'pierre.martin@email.fr'],
@@ -224,7 +620,7 @@ class AppFixtures extends Fixture
                 $patient->setSex($data['sex']);
             }
             if (isset($data['bloodGroup'])) {
-                $patient->setBloodGroup($data['bloodGroup']);
+                $patient->setBloodGroup($this->bloodGroups[$data['bloodGroup']]);
             }
             if (isset($data['rhesus'])) {
                 $patient->setRhesus($data['rhesus']);
@@ -245,14 +641,14 @@ class AppFixtures extends Fixture
         // Generate 300 additional Paris patients to test >200 results confirmation
         $parisFirstNames = ['Adrien', 'Alexandre', 'Alice', 'Amélie', 'Antoine', 'Arnaud', 'Arthur', 'Aurélie', 'Baptiste', 'Bastien', 'Béatrice', 'Benjamin', 'Camille', 'Cédric', 'Charlotte', 'Clara', 'Clément', 'Damien', 'Diane', 'Élise', 'Émile', 'Emma', 'Fabien', 'Florian', 'Gabriel', 'Guillaume', 'Hugo', 'Inès', 'Jade', 'Jules', 'Julie', 'Karine', 'Léa', 'Léo', 'Louis', 'Lucas', 'Lucie', 'Manon', 'Margaux', 'Mathilde', 'Maxime', 'Nathan', 'Nina', 'Noah', 'Noémie', 'Océane', 'Paul', 'Raphaël', 'Romain', 'Sarah', 'Simon', 'Théo', 'Thomas', 'Valentin', 'Valentine', 'Victor', 'Zoé', 'Yann', 'Xavier', 'Quentin'];
         $parisLastNames = ['Adam', 'Aubry', 'Barbier', 'Baron', 'Berger', 'Bertrand', 'Blanchard', 'Boucher', 'Brun', 'Carpentier', 'Chartier', 'Collet', 'Cordier', 'Coulon', 'David', 'Delorme', 'Denis', 'Descamps', 'Dufour', 'Dupuis', 'Etienne', 'Ferry', 'Fleury', 'Garnier', 'Gérard', 'Giraud', 'Grondin', 'Guillot', 'Hardy', 'Hubert', 'Jacob', 'Joly', 'Klein', 'Lacroix', 'Laurent', 'Leclerc', 'Lemoine', 'Leroux', 'Loiseau', 'Louis', 'Marchand', 'Marie', 'Martel', 'Mathieu', 'Menard', 'Monnier', 'Moulin', 'Noel', 'Olivier', 'Paris', 'Pascal', 'Pelletier', 'Pichon', 'Poirier', 'Raymond', 'Regnier', 'Rey', 'Rolland', 'Roussel', 'Roy'];
-        $bloodGroups = ['A', 'B', 'AB', 'O'];
+        $bloodGroupCodes = ['A', 'B', 'AB', 'O'];
         $rhesusValues = ['+', '-'];
 
         for ($i = 1; $i <= 300; $i++) {
             $sex = $i % 2 === 0 ? 'F' : 'M';
             $firstName = $parisFirstNames[$i % count($parisFirstNames)];
             $lastName = $parisLastNames[$i % count($parisLastNames)];
-            $bloodGroup = $bloodGroups[$i % count($bloodGroups)];
+            $bloodGroupCode = $bloodGroupCodes[$i % count($bloodGroupCodes)];
             $rhesus = $rhesusValues[$i % count($rhesusValues)];
             $year = 1950 + ($i % 45);
             $month = ($i % 12) + 1;
@@ -265,12 +661,16 @@ class AppFixtures extends Fixture
             $patient->setCity('Paris');
             $patient->setBirthDate(new \DateTime(sprintf('%d-%02d-%02d', $year, $month, $day)));
             $patient->setSex($sex);
-            $patient->setBloodGroup($bloodGroup);
+            $patient->setBloodGroup($this->bloodGroups[$bloodGroupCode]);
             $patient->setRhesus($rhesus);
 
             $manager->persist($patient);
         }
     }
+
+    // ===================================================================
+    // PATIENT ASSIGNMENTS
+    // ===================================================================
 
     private function loadPatientAssignments(ObjectManager $manager): void
     {
@@ -293,11 +693,11 @@ class AppFixtures extends Fixture
             $p->addAuthorizedPractitioner($externalDoctor);
         }
 
-        // Dr. Doe: patients 2024-001 through 2024-015
+        // Dr. Doe: patients 2024-001 through 2024-015 (including 2024-008, 2024-009)
         $doePatients = $manager->getRepository(Patient::class)->findBy(
             ['fileNumber' => ['2024-001', '2024-002', '2024-003', '2024-004', '2024-005',
-                              '2024-006', '2024-007', '2024-010', '2024-011', '2024-012',
-                              '2024-013', '2024-014', '2024-015']]
+                              '2024-006', '2024-007', '2024-008', '2024-009', '2024-010',
+                              '2024-011', '2024-012', '2024-013', '2024-014', '2024-015']]
         );
         foreach ($doePatients as $p) {
             $p->addAuthorizedPractitioner($doctorDoe);
@@ -332,6 +732,10 @@ class AppFixtures extends Fixture
         $manager->flush();
     }
 
+    // ===================================================================
+    // MEDICAL DATA
+    // ===================================================================
+
     private function loadMedicalData(ObjectManager $manager): void
     {
         $patients = $manager->getRepository(Patient::class)->findBy(
@@ -349,17 +753,17 @@ class AppFixtures extends Fixture
     private function loadMedicalHistoryFor(ObjectManager $manager, Patient $patient): void
     {
         $entries = [
-            ['type' => 'Médical', 'description' => 'Hypertension artérielle traitée par inhibiteurs calciques', 'diagnosisDate' => '2015-06-10', 'comment' => 'Bien contrôlée sous traitement'],
-            ['type' => 'Médical', 'description' => 'Insuffisance rénale chronique stade 5, étiologie glomérulonéphrite', 'diagnosisDate' => '2018-03-20'],
-            ['type' => 'Chirurgical', 'description' => 'Pose de fistule artério-veineuse au bras gauche', 'diagnosisDate' => '2019-01-15'],
-            ['type' => 'Allergique', 'description' => 'Allergie documentée à la pénicilline (éruption cutanée)', 'diagnosisDate' => '2010-09-05', 'comment' => 'Utiliser macrolides en alternative'],
-            ['type' => 'Familial', 'description' => 'Père décédé d\'insuffisance rénale à 62 ans, mère diabétique type 2'],
+            ['type' => 'medical', 'description' => 'Hypertension artérielle traitée par inhibiteurs calciques', 'diagnosisDate' => '2015-06-10', 'comment' => 'Bien contrôlée sous traitement'],
+            ['type' => 'medical', 'description' => 'Insuffisance rénale chronique stade 5, étiologie glomérulonéphrite', 'diagnosisDate' => '2018-03-20'],
+            ['type' => 'chirurgical', 'description' => 'Pose de fistule artério-veineuse au bras gauche', 'diagnosisDate' => '2019-01-15'],
+            ['type' => 'allergique', 'description' => 'Allergie documentée à la pénicilline (éruption cutanée)', 'diagnosisDate' => '2010-09-05', 'comment' => 'Utiliser macrolides en alternative'],
+            ['type' => 'familial', 'description' => 'Père décédé d\'insuffisance rénale à 62 ans, mère diabétique type 2'],
         ];
 
         foreach ($entries as $data) {
             $history = new MedicalHistory();
             $history->setPatient($patient);
-            $history->setType($data['type']);
+            $history->setType($this->medicalHistoryTypes[$data['type']]);
             $history->setDescription($data['description']);
             if (isset($data['diagnosisDate'])) {
                 $history->setDiagnosisDate(new \DateTime($data['diagnosisDate']));
@@ -374,10 +778,10 @@ class AppFixtures extends Fixture
     private function loadConsultationsFor(ObjectManager $manager, Patient $patient): void
     {
         $entries = [
-            ['date' => '2025-01-15', 'practitionerName' => 'Dr. Martin Sophie', 'type' => 'Suivi post-greffe', 'observations' => 'Bonne évolution clinique. Créatinine stable. Pas de signe de rejet.', 'treatmentNotes' => 'Maintien du tacrolimus à 5mg/j', 'nextAppointmentDate' => '2025-02-15'],
-            ['date' => '2025-02-15', 'practitionerName' => 'Dr. Martin Sophie', 'type' => 'Suivi post-greffe', 'observations' => 'Patient en bon état général. Tension artérielle bien contrôlée 130/80. Greffon fonctionnel.', 'nextAppointmentDate' => '2025-03-15'],
-            ['date' => '2024-12-01', 'practitionerName' => 'Dr. Doe John', 'type' => 'Contrôle', 'observations' => 'Contrôle annuel. Bilan complet demandé. Échographie du greffon sans anomalie.'],
-            ['date' => '2024-10-20', 'practitionerName' => 'Dr. Vasseur Lucie', 'type' => 'Suivi post-greffe', 'observations' => 'Suivi néphrologue de ville. Fonction rénale stable. Poursuite du traitement immunosuppresseur.', 'treatmentNotes' => 'Réduction progressive des corticoïdes'],
+            ['date' => '2025-01-15', 'practitionerName' => 'Dr. Martin Sophie', 'type' => 'suivi_post_greffe', 'observations' => 'Bonne évolution clinique. Créatinine stable. Pas de signe de rejet.', 'treatmentNotes' => 'Maintien du tacrolimus à 5mg/j', 'nextAppointmentDate' => '2025-02-15'],
+            ['date' => '2025-02-15', 'practitionerName' => 'Dr. Martin Sophie', 'type' => 'suivi_post_greffe', 'observations' => 'Patient en bon état général. Tension artérielle bien contrôlée 130/80. Greffon fonctionnel.', 'nextAppointmentDate' => '2025-03-15'],
+            ['date' => '2024-12-01', 'practitionerName' => 'Dr. Doe John', 'type' => 'controle', 'observations' => 'Contrôle annuel. Bilan complet demandé. Échographie du greffon sans anomalie.'],
+            ['date' => '2024-10-20', 'practitionerName' => 'Dr. Vasseur Lucie', 'type' => 'suivi_post_greffe', 'observations' => 'Suivi néphrologue de ville. Fonction rénale stable. Poursuite du traitement immunosuppresseur.', 'treatmentNotes' => 'Réduction progressive des corticoïdes'],
         ];
 
         foreach ($entries as $data) {
@@ -385,7 +789,7 @@ class AppFixtures extends Fixture
             $consultation->setPatient($patient);
             $consultation->setDate(new \DateTime($data['date']));
             $consultation->setPractitionerName($data['practitionerName']);
-            $consultation->setType($data['type']);
+            $consultation->setType($this->consultationTypes[$data['type']]);
             $consultation->setObservations($data['observations']);
             if (isset($data['treatmentNotes'])) {
                 $consultation->setTreatmentNotes($data['treatmentNotes']);
@@ -400,17 +804,17 @@ class AppFixtures extends Fixture
     private function loadTherapeuticEducationFor(ObjectManager $manager, Patient $patient): void
     {
         $entries = [
-            ['sessionDate' => '2025-01-20', 'topic' => 'Observance médicamenteuse', 'educator' => 'Mme Curie Marie', 'objectives' => 'Comprendre l\'importance de la prise régulière des immunosuppresseurs', 'observations' => 'Patient attentif, bonne compréhension', 'patientProgress' => 'Acquis', 'nextSessionDate' => '2025-02-20'],
-            ['sessionDate' => '2025-02-20', 'topic' => 'Signes de rejet', 'educator' => 'Mme Curie Marie', 'objectives' => 'Savoir identifier les signes précoces de rejet du greffon', 'observations' => 'Patient capable de citer les principaux signes d\'alerte', 'patientProgress' => 'En cours', 'nextSessionDate' => '2025-03-20'],
-            ['sessionDate' => '2024-12-10', 'topic' => 'Hygiène de vie', 'educator' => 'M. Laurent Pierre', 'objectives' => 'Adapter l\'alimentation et l\'activité physique post-greffe', 'observations' => 'Conseils diététiques donnés, programme d\'activité physique établi', 'patientProgress' => 'En cours'],
-            ['sessionDate' => '2024-11-05', 'topic' => 'Diététique', 'educator' => 'Mme Blanc Sophie', 'objectives' => 'Régime pauvre en sel et suivi des apports hydriques', 'patientProgress' => 'Acquis'],
+            ['sessionDate' => '2025-01-20', 'topic' => 'observance', 'educator' => 'Mme Curie Marie', 'objectives' => 'Comprendre l\'importance de la prise régulière des immunosuppresseurs', 'observations' => 'Patient attentif, bonne compréhension', 'patientProgress' => 'acquis', 'nextSessionDate' => '2025-02-20'],
+            ['sessionDate' => '2025-02-20', 'topic' => 'signes_rejet', 'educator' => 'Mme Curie Marie', 'objectives' => 'Savoir identifier les signes précoces de rejet du greffon', 'observations' => 'Patient capable de citer les principaux signes d\'alerte', 'patientProgress' => 'en_cours', 'nextSessionDate' => '2025-03-20'],
+            ['sessionDate' => '2024-12-10', 'topic' => 'hygiene_vie', 'educator' => 'M. Laurent Pierre', 'objectives' => 'Adapter l\'alimentation et l\'activité physique post-greffe', 'observations' => 'Conseils diététiques donnés, programme d\'activité physique établi', 'patientProgress' => 'en_cours'],
+            ['sessionDate' => '2024-11-05', 'topic' => 'dietetique', 'educator' => 'Mme Blanc Sophie', 'objectives' => 'Régime pauvre en sel et suivi des apports hydriques', 'patientProgress' => 'acquis'],
         ];
 
         foreach ($entries as $data) {
             $session = new TherapeuticEducation();
             $session->setPatient($patient);
             $session->setSessionDate(new \DateTime($data['sessionDate']));
-            $session->setTopic($data['topic']);
+            $session->setTopic($this->educationTopics[$data['topic']]);
             $session->setEducator($data['educator']);
             if (isset($data['objectives'])) {
                 $session->setObjectives($data['objectives']);
@@ -419,7 +823,7 @@ class AppFixtures extends Fixture
                 $session->setObservations($data['observations']);
             }
             if (isset($data['patientProgress'])) {
-                $session->setPatientProgress($data['patientProgress']);
+                $session->setPatientProgress($this->patientProgressValues[$data['patientProgress']]);
             }
             if (isset($data['nextSessionDate'])) {
                 $session->setNextSessionDate(new \DateTime($data['nextSessionDate']));
@@ -456,12 +860,16 @@ class AppFixtures extends Fixture
         }
     }
 
+    // ===================================================================
+    // DONORS
+    // ===================================================================
+
     private function loadDonors(ObjectManager $manager): void
     {
         $donorsData = [
             // Living donors
             [
-                'donorType' => Donor::TYPE_LIVING,
+                'donorType' => 'living',
                 'cristalNumber' => 'CRI-2025-V001',
                 'bloodGroup' => 'A',
                 'rhesus' => '+',
@@ -471,23 +879,22 @@ class AppFixtures extends Fixture
                 'weight' => 62,
                 'lastName' => 'Martin',
                 'firstName' => 'Claire',
-                'relationshipType' => 'Conjoint',
+                'relationshipType' => 'conjoint',
                 'creatinine' => '72.00',
                 'isotopicClearance' => '95.50',
                 'proteinuria' => '0.08',
-                'approach' => 'Cœlioscopie',
+                'approach' => 'coelioscopie',
                 'robot' => true,
-                'hlaA' => 2, 'hlaB' => 7, 'hlaCw' => 4, 'hlaDR' => 11, 'hlaDQ' => 3, 'hlaDP' => 1,
-                'cmv' => '+', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
-                'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '-', 'toxoplasmosis' => '+',
+                'hla' => ['A' => 2, 'B' => 7, 'Cw' => 4, 'DR' => 11, 'DQ' => 3, 'DP' => 1],
+                'serology' => ['cmv' => '+', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-', 'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '-', 'toxoplasmosis' => '+'],
                 'donorSurgeonName' => 'Dr. Legrand',
                 'clampingDate' => '2025-03-10',
                 'donorHarvestSide' => 'gauche',
                 'perfusionMachine' => 'Non',
-                'perfusionLiquid' => 'Celsior',
+                'perfusionLiquid' => 'celsior',
             ],
             [
-                'donorType' => Donor::TYPE_LIVING,
+                'donorType' => 'living',
                 'cristalNumber' => 'CRI-2025-V002',
                 'bloodGroup' => 'O',
                 'rhesus' => '-',
@@ -497,24 +904,22 @@ class AppFixtures extends Fixture
                 'weight' => 80,
                 'lastName' => 'Dupont',
                 'firstName' => 'Michel',
-                'relationshipType' => 'Parent',
+                'relationshipType' => 'parent',
                 'creatinine' => '85.00',
                 'isotopicClearance' => '102.30',
                 'proteinuria' => '0.05',
-                'approach' => 'Lombotomie',
+                'approach' => 'lombotomie',
                 'robot' => false,
-                'hlaA' => 1, 'hlaB' => 8, 'hlaDR' => 15, 'hlaDQ' => 6, 'hlaDP' => null,
-                'hlaCw' => null,
-                'cmv' => '-', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
-                'agHbs' => '-', 'acHbs' => '-', 'acHbc' => '-', 'toxoplasmosis' => '-',
+                'hla' => ['A' => 1, 'B' => 8, 'DR' => 15, 'DQ' => 6],
+                'serology' => ['cmv' => '-', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-', 'agHbs' => '-', 'acHbs' => '-', 'acHbc' => '-', 'toxoplasmosis' => '-'],
                 'donorSurgeonName' => 'Dr. Moreau',
                 'clampingDate' => '2025-02-20',
                 'donorHarvestSide' => 'droit',
                 'perfusionMachine' => 'Non',
-                'perfusionLiquid' => 'Viaspan',
+                'perfusionLiquid' => 'viaspan',
             ],
             [
-                'donorType' => Donor::TYPE_LIVING,
+                'donorType' => 'living',
                 'cristalNumber' => 'CRI-2025-V003',
                 'bloodGroup' => 'B',
                 'rhesus' => '+',
@@ -524,25 +929,24 @@ class AppFixtures extends Fixture
                 'weight' => 68,
                 'lastName' => 'Rousseau',
                 'firstName' => 'Anne',
-                'relationshipType' => '2ème degré',
+                'relationshipType' => '2eme_degre',
                 'creatinine' => '90.00',
                 'isotopicClearance' => '88.00',
                 'proteinuria' => '0.12',
-                'approach' => 'Cœlioscopie',
+                'approach' => 'coelioscopie',
                 'robot' => true,
-                'hlaA' => 3, 'hlaB' => 44, 'hlaCw' => 5, 'hlaDR' => 4, 'hlaDQ' => 8, 'hlaDP' => 2,
-                'cmv' => '+', 'ebv' => '-', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
-                'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '+', 'toxoplasmosis' => 'ND',
+                'hla' => ['A' => 3, 'B' => 44, 'Cw' => 5, 'DR' => 4, 'DQ' => 8, 'DP' => 2],
+                'serology' => ['cmv' => '+', 'ebv' => '-', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-', 'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '+', 'toxoplasmosis' => 'ND'],
                 'donorSurgeonName' => 'Dr. Petit',
                 'clampingDate' => '2025-01-15',
                 'donorHarvestSide' => 'gauche',
                 'perfusionMachine' => 'Oui',
-                'perfusionLiquid' => 'IGL',
+                'perfusionLiquid' => 'igl',
             ],
 
             // Deceased donors - encephalic
             [
-                'donorType' => Donor::TYPE_DECEASED_ENCEPHALIC,
+                'donorType' => 'deceased_encephalic',
                 'cristalNumber' => 'CRI-2025-D001',
                 'bloodGroup' => 'A',
                 'rhesus' => '+',
@@ -551,7 +955,7 @@ class AppFixtures extends Fixture
                 'height' => 175,
                 'weight' => 78,
                 'originCity' => 'Lyon',
-                'deathCause' => 'AVC hémorragique',
+                'deathCause' => 'avc_hemorragique',
                 'deathCauseComment' => 'Hémorragie cérébrale massive, coma profond',
                 'extendedCriteriaDonor' => true,
                 'cardiacArrest' => false,
@@ -565,23 +969,22 @@ class AppFixtures extends Fixture
                 'creatinineArrival' => '98.00',
                 'creatinineSample' => '112.00',
                 'ureter' => '1',
-                'conservationLiquid' => 'Celsior',
-                'hlaA' => 2, 'hlaB' => 35, 'hlaCw' => 7, 'hlaDR' => 1, 'hlaDQ' => 5, 'hlaDP' => null,
-                'cmv' => '+', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
-                'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '-', 'toxoplasmosis' => '+',
+                'conservationLiquid' => 'celsior',
+                'hla' => ['A' => 2, 'B' => 35, 'Cw' => 7, 'DR' => 1, 'DQ' => 5],
+                'serology' => ['cmv' => '+', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-', 'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '-', 'toxoplasmosis' => '+'],
                 'donorSurgeonName' => 'Dr. Bernard',
                 'clampingDate' => '2025-03-05',
                 'donorHarvestSide' => 'droit',
                 'mainArtery' => '1 artère principale',
                 'vein' => '1 veine rénale',
                 'perfusionMachine' => 'Oui',
-                'perfusionLiquid' => 'Celsior',
+                'perfusionLiquid' => 'celsior',
                 'aortaAtheroma' => true,
                 'calcifiedAortaPlaques' => false,
                 'renalArteryAtheroma' => false,
             ],
             [
-                'donorType' => Donor::TYPE_DECEASED_ENCEPHALIC,
+                'donorType' => 'deceased_encephalic',
                 'cristalNumber' => 'CRI-2025-D002',
                 'bloodGroup' => 'O',
                 'rhesus' => '-',
@@ -590,7 +993,7 @@ class AppFixtures extends Fixture
                 'height' => 162,
                 'weight' => 58,
                 'originCity' => 'Marseille',
-                'deathCause' => 'Anoxie',
+                'deathCause' => 'anoxie',
                 'deathCauseComment' => 'Arrêt cardiaque récupéré puis mort encéphalique',
                 'extendedCriteriaDonor' => false,
                 'cardiacArrest' => true,
@@ -601,10 +1004,9 @@ class AppFixtures extends Fixture
                 'creatinineArrival' => '75.00',
                 'creatinineSample' => '88.00',
                 'ureter' => '1',
-                'conservationLiquid' => 'Viaspan',
-                'hlaA' => 11, 'hlaB' => 27, 'hlaCw' => null, 'hlaDR' => 7, 'hlaDQ' => 2, 'hlaDP' => null,
-                'cmv' => '-', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
-                'agHbs' => '-', 'acHbs' => '-', 'acHbc' => '-', 'toxoplasmosis' => '-',
+                'conservationLiquid' => 'viaspan',
+                'hla' => ['A' => 11, 'B' => 27, 'DR' => 7, 'DQ' => 2],
+                'serology' => ['cmv' => '-', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-', 'agHbs' => '-', 'acHbs' => '-', 'acHbc' => '-', 'toxoplasmosis' => '-'],
                 'donorSurgeonName' => 'Dr. Girard',
                 'clampingDate' => '2025-02-28',
                 'donorHarvestSide' => 'gauche',
@@ -612,10 +1014,10 @@ class AppFixtures extends Fixture
                 'upperPolarArtery' => '1 polaire supérieure',
                 'vein' => '1 veine rénale',
                 'perfusionMachine' => 'Oui',
-                'perfusionLiquid' => 'Viaspan',
+                'perfusionLiquid' => 'viaspan',
             ],
             [
-                'donorType' => Donor::TYPE_DECEASED_ENCEPHALIC,
+                'donorType' => 'deceased_encephalic',
                 'cristalNumber' => 'CRI-2025-D003',
                 'bloodGroup' => 'AB',
                 'rhesus' => '+',
@@ -624,7 +1026,7 @@ class AppFixtures extends Fixture
                 'height' => 180,
                 'weight' => 92,
                 'originCity' => 'Bordeaux',
-                'deathCause' => 'AVC ischémique',
+                'deathCause' => 'avc_ischemique',
                 'deathCauseComment' => 'AVC ischémique massif hémisphère droit',
                 'extendedCriteriaDonor' => true,
                 'cardiacArrest' => false,
@@ -638,17 +1040,16 @@ class AppFixtures extends Fixture
                 'creatinineArrival' => '140.00',
                 'creatinineSample' => '155.00',
                 'ureter' => '2',
-                'conservationLiquid' => 'IGL',
-                'hlaA' => 24, 'hlaB' => 51, 'hlaCw' => 1, 'hlaDR' => 13, 'hlaDQ' => 6, 'hlaDP' => 4,
-                'cmv' => '+', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
-                'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '+', 'toxoplasmosis' => '+',
+                'conservationLiquid' => 'igl',
+                'hla' => ['A' => 24, 'B' => 51, 'Cw' => 1, 'DR' => 13, 'DQ' => 6, 'DP' => 4],
+                'serology' => ['cmv' => '+', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-', 'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '+', 'toxoplasmosis' => '+'],
                 'donorSurgeonName' => 'Dr. Duval',
                 'clampingDate' => '2025-01-22',
                 'donorHarvestSide' => 'droit',
                 'mainArtery' => '2 artères',
                 'vein' => '1 veine rénale',
                 'perfusionMachine' => 'Oui',
-                'perfusionLiquid' => 'IGL',
+                'perfusionLiquid' => 'igl',
                 'aortaAtheroma' => true,
                 'calcifiedAortaPlaques' => true,
                 'ostiumArteryAtheroma' => true,
@@ -657,7 +1058,7 @@ class AppFixtures extends Fixture
 
             // Deceased donor - cardiac arrest
             [
-                'donorType' => Donor::TYPE_DECEASED_CARDIAC_ARREST,
+                'donorType' => 'deceased_cardiac_arrest',
                 'cristalNumber' => 'CRI-2025-C001',
                 'bloodGroup' => 'B',
                 'rhesus' => '-',
@@ -666,7 +1067,7 @@ class AppFixtures extends Fixture
                 'height' => 172,
                 'weight' => 75,
                 'originCity' => 'Toulouse',
-                'deathCause' => 'AVP',
+                'deathCause' => 'avp',
                 'deathCauseComment' => 'Accident de la voie publique, traumatisme thoracique sévère',
                 'extendedCriteriaDonor' => false,
                 'cardiacArrest' => true,
@@ -680,10 +1081,9 @@ class AppFixtures extends Fixture
                 'creatinineArrival' => '110.00',
                 'creatinineSample' => '130.00',
                 'ureter' => '1',
-                'conservationLiquid' => 'Scott',
-                'hlaA' => 29, 'hlaB' => 13, 'hlaCw' => 6, 'hlaDR' => 17, 'hlaDQ' => 9, 'hlaDP' => null,
-                'cmv' => '-', 'ebv' => '-', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
-                'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '-',
+                'conservationLiquid' => 'scott',
+                'hla' => ['A' => 29, 'B' => 13, 'Cw' => 6, 'DR' => 17, 'DQ' => 9],
+                'serology' => ['cmv' => '-', 'ebv' => '-', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-', 'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '-'],
                 'donorSurgeonName' => 'Dr. Lambert',
                 'clampingDate' => '2025-03-01',
                 'donorHarvestSide' => 'gauche',
@@ -691,11 +1091,11 @@ class AppFixtures extends Fixture
                 'vein' => '1 veine rénale',
                 'veinComment' => 'Veine courte, anastomose sur VCI',
                 'perfusionMachine' => 'Oui',
-                'perfusionLiquid' => 'Scott',
+                'perfusionLiquid' => 'scott',
                 'digestiveWound' => true,
             ],
             [
-                'donorType' => Donor::TYPE_DECEASED_CARDIAC_ARREST,
+                'donorType' => 'deceased_cardiac_arrest',
                 'cristalNumber' => 'CRI-2025-C002',
                 'bloodGroup' => 'O',
                 'rhesus' => '+',
@@ -704,7 +1104,7 @@ class AppFixtures extends Fixture
                 'height' => 168,
                 'weight' => 65,
                 'originCity' => 'Nantes',
-                'deathCause' => 'TC non AVP',
+                'deathCause' => 'tc_non_avp',
                 'deathCauseComment' => 'Traumatisme crânien suite à une chute domestique',
                 'extendedCriteriaDonor' => false,
                 'cardiacArrest' => true,
@@ -715,50 +1115,29 @@ class AppFixtures extends Fixture
                 'creatinineArrival' => '65.00',
                 'creatinineSample' => '72.00',
                 'ureter' => '1',
-                'conservationLiquid' => 'Celsior',
-                'hlaA' => 32, 'hlaB' => 44, 'hlaCw' => 5, 'hlaDR' => 11, 'hlaDQ' => 7, 'hlaDP' => 2,
-                'cmv' => '+', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-',
-                'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '-', 'toxoplasmosis' => '+',
+                'conservationLiquid' => 'celsior',
+                'hla' => ['A' => 32, 'B' => 44, 'Cw' => 5, 'DR' => 11, 'DQ' => 7, 'DP' => 2],
+                'serology' => ['cmv' => '+', 'ebv' => '+', 'hiv' => '-', 'htlv' => '-', 'syphilis' => '-', 'hcv' => '-', 'agHbs' => '-', 'acHbs' => '+', 'acHbc' => '-', 'toxoplasmosis' => '+'],
                 'donorSurgeonName' => 'Dr. Faure',
                 'clampingDate' => '2025-02-14',
                 'donorHarvestSide' => 'droit',
                 'mainArtery' => '1 artère rénale',
                 'vein' => '1 veine rénale',
                 'perfusionMachine' => 'Non',
-                'perfusionLiquid' => 'Celsior',
+                'perfusionLiquid' => 'celsior',
             ],
         ];
 
         foreach ($donorsData as $data) {
             $donor = new Donor();
-            $donor->setDonorType($data['donorType']);
+            $donor->setDonorType($this->donorTypes[$data['donorType']]);
             $donor->setCristalNumber($data['cristalNumber']);
-            $donor->setBloodGroup($data['bloodGroup']);
+            $donor->setBloodGroup($this->bloodGroups[$data['bloodGroup']]);
             $donor->setRhesus($data['rhesus']);
             $donor->setSex($data['sex']);
             $donor->setAge($data['age']);
             if (isset($data['height'])) { $donor->setHeight($data['height']); }
             if (isset($data['weight'])) { $donor->setWeight($data['weight']); }
-
-            // HLA
-            $donor->setHlaA($data['hlaA']);
-            $donor->setHlaB($data['hlaB']);
-            if (isset($data['hlaCw'])) { $donor->setHlaCw($data['hlaCw']); }
-            $donor->setHlaDR($data['hlaDR']);
-            $donor->setHlaDQ($data['hlaDQ']);
-            if (isset($data['hlaDP'])) { $donor->setHlaDP($data['hlaDP']); }
-
-            // Serology
-            $donor->setCmv($data['cmv']);
-            $donor->setEbv($data['ebv']);
-            $donor->setHiv($data['hiv']);
-            $donor->setHtlv($data['htlv']);
-            $donor->setSyphilis($data['syphilis']);
-            $donor->setHcv($data['hcv']);
-            $donor->setAgHbs($data['agHbs']);
-            $donor->setAcHbs($data['acHbs']);
-            $donor->setAcHbc($data['acHbc']);
-            if (isset($data['toxoplasmosis'])) { $donor->setToxoplasmosis($data['toxoplasmosis']); }
 
             // Surgical
             if (isset($data['donorSurgeonName'])) { $donor->setDonorSurgeonName($data['donorSurgeonName']); }
@@ -770,21 +1149,21 @@ class AppFixtures extends Fixture
             if (isset($data['vein'])) { $donor->setVein($data['vein']); }
             if (isset($data['veinComment'])) { $donor->setVeinComment($data['veinComment']); }
             if (isset($data['perfusionMachine'])) { $donor->setPerfusionMachine($data['perfusionMachine']); }
-            if (isset($data['perfusionLiquid'])) { $donor->setPerfusionLiquid($data['perfusionLiquid']); }
+            if (isset($data['perfusionLiquid'])) { $donor->setPerfusionLiquid($this->perfusionLiquids[$data['perfusionLiquid']]); }
 
             // Living donor specific
             if (isset($data['lastName'])) { $donor->setLastName($data['lastName']); }
             if (isset($data['firstName'])) { $donor->setFirstName($data['firstName']); }
-            if (isset($data['relationshipType'])) { $donor->setRelationshipType($data['relationshipType']); }
+            if (isset($data['relationshipType'])) { $donor->setRelationshipType($this->relationshipTypes[$data['relationshipType']]); }
             if (isset($data['creatinine'])) { $donor->setCreatinine($data['creatinine']); }
             if (isset($data['isotopicClearance'])) { $donor->setIsotopicClearance($data['isotopicClearance']); }
             if (isset($data['proteinuria'])) { $donor->setProteinuria($data['proteinuria']); }
-            if (isset($data['approach'])) { $donor->setApproach($data['approach']); }
+            if (isset($data['approach'])) { $donor->setApproach($this->surgicalApproaches[$data['approach']]); }
             if (isset($data['robot'])) { $donor->setRobot($data['robot']); }
 
             // Deceased donor specific
             if (isset($data['originCity'])) { $donor->setOriginCity($data['originCity']); }
-            if (isset($data['deathCause'])) { $donor->setDeathCause($data['deathCause']); }
+            if (isset($data['deathCause'])) { $donor->setDeathCause($this->deathCauses[$data['deathCause']]); }
             if (isset($data['deathCauseComment'])) { $donor->setDeathCauseComment($data['deathCauseComment']); }
             if (isset($data['extendedCriteriaDonor'])) { $donor->setExtendedCriteriaDonor($data['extendedCriteriaDonor']); }
             if (isset($data['cardiacArrest'])) { $donor->setCardiacArrest($data['cardiacArrest']); }
@@ -798,7 +1177,7 @@ class AppFixtures extends Fixture
             if (isset($data['creatinineArrival'])) { $donor->setCreatinineArrival($data['creatinineArrival']); }
             if (isset($data['creatinineSample'])) { $donor->setCreatinineSample($data['creatinineSample']); }
             if (isset($data['ureter'])) { $donor->setUreter($data['ureter']); }
-            if (isset($data['conservationLiquid'])) { $donor->setConservationLiquid($data['conservationLiquid']); }
+            if (isset($data['conservationLiquid'])) { $donor->setConservationLiquid($this->perfusionLiquids[$data['conservationLiquid']]); }
 
             // Atheroma
             if (isset($data['aortaAtheroma'])) { $donor->setAortaAtheroma($data['aortaAtheroma']); }
@@ -813,7 +1192,101 @@ class AppFixtures extends Fixture
             if (isset($data['patientComment'])) { $donor->setPatientComment($data['patientComment']); }
 
             $manager->persist($donor);
+
+            // HLA typings (junction table)
+            if (isset($data['hla'])) {
+                foreach ($data['hla'] as $locusCode => $value) {
+                    if (isset($this->hlaLoci[$locusCode])) {
+                        $typing = new DonorHlaTyping();
+                        $typing->setDonor($donor);
+                        $typing->setHlaLocus($this->hlaLoci[$locusCode]);
+                        $typing->setValue($value);
+                        $manager->persist($typing);
+                    }
+                }
+            }
+
+            // Serology results (junction table)
+            if (isset($data['serology'])) {
+                foreach ($data['serology'] as $markerCode => $result) {
+                    if (isset($this->serologyMarkers[$markerCode])) {
+                        $serology = new DonorSerology();
+                        $serology->setDonor($donor);
+                        $serology->setSerologyMarker($this->serologyMarkers[$markerCode]);
+                        $serology->setResult($result);
+                        $manager->persist($serology);
+                    }
+                }
+            }
         }
+    }
+
+    // ===================================================================
+    // TRANSPLANTS
+    // ===================================================================
+
+    /**
+     * Map from fixture drug labels to reference entity codes.
+     */
+    private function getDrugCode(string $label): string
+    {
+        $map = [
+            'Advagraf' => 'advagraf', 'Prograf' => 'prograf', 'Neoral' => 'neoral',
+            'Rapamune' => 'rapamune', 'Certican' => 'certican', 'Cellcept' => 'cellcept',
+            'Myfortic' => 'myfortic', 'Imurel' => 'imurel', 'Methylprednisolone' => 'methylprednisolone',
+            'Mabthera' => 'mabthera', 'Ig IV' => 'ig_iv', 'Soliris' => 'soliris',
+            'Thymoglobulines' => 'thymoglobulines', 'Simulect' => 'simulect',
+            'Plasmaphérèse' => 'plasmapherese', 'Plasmaphérese' => 'plasmapherese',
+            'Immuno absorption' => 'immuno_absorption',
+        ];
+
+        return $map[$label] ?? strtolower($label);
+    }
+
+    /**
+     * Map from fixture immunological risk labels to reference entity codes.
+     */
+    private function getImmunologicalRiskCode(string $label): string
+    {
+        $map = [
+            'Non immunisé' => 'non_immunise',
+            'Immunisé sans DSA' => 'immunise_sans_dsa',
+            'Immunisé DSA' => 'immunise_dsa',
+            'ABO incompatible' => 'abo_incompatible',
+        ];
+
+        return $map[$label] ?? $label;
+    }
+
+    /**
+     * Map from fixture transplant type labels to reference entity codes.
+     */
+    private function getTransplantTypeCode(string $label): string
+    {
+        $map = [
+            'Rein' => 'rein',
+            'Rein donneur vivant' => 'rein_donneur_vivant',
+            'Rein-pancréas' => 'rein_pancreas',
+            'Rein-foie' => 'rein_foie',
+            'Rein-cœur' => 'rein_coeur',
+            'Rein-coeur' => 'rein_coeur',
+            'Autre' => 'autre',
+        ];
+
+        return $map[$label] ?? strtolower($label);
+    }
+
+    /**
+     * Map from fixture peritoneal position labels to reference entity codes.
+     */
+    private function getPeritonealPositionCode(string $label): string
+    {
+        $map = [
+            'Extra Péritonéal' => 'extra_peritoneal',
+            'Intra Péritonéal' => 'intra_peritoneal',
+        ];
+
+        return $map[$label] ?? $label;
     }
 
     private function loadTransplants(ObjectManager $manager): void
@@ -851,7 +1324,7 @@ class AppFixtures extends Fixture
                 'cmvStatus' => 'D+/R+',
                 'ebvStatus' => 'D+/R+',
                 'toxoplasmosisStatus' => 'R+',
-                'hlaA' => 1, 'hlaB' => 1, 'hlaDR' => 0, 'hlaDQ' => 1,
+                'hla' => ['A' => 1, 'B' => 1, 'DR' => 0, 'DQ' => 1],
                 'immunologicalRisk' => 'Non immunisé',
                 'immunosuppressiveConditioning' => ['Advagraf', 'Cellcept', 'Methylprednisolone'],
                 'dialysis' => true,
@@ -880,8 +1353,7 @@ class AppFixtures extends Fixture
                 'cmvStatus' => 'D+/R-',
                 'ebvStatus' => 'D+/R+',
                 'toxoplasmosisStatus' => 'R-',
-                'hlaA' => 2, 'hlaB' => 1, 'hlaDR' => 1, 'hlaDQ' => 0,
-                'hlaCw' => 1,
+                'hla' => ['A' => 2, 'B' => 1, 'Cw' => 1, 'DR' => 1, 'DQ' => 0],
                 'immunologicalRisk' => 'Non immunisé',
                 'immunosuppressiveConditioning' => ['Prograf', 'Myfortic', 'Methylprednisolone', 'Simulect'],
                 'dialysis' => true,
@@ -911,7 +1383,7 @@ class AppFixtures extends Fixture
                 'jjProbe' => false,
                 'cmvStatus' => 'D-/R+',
                 'ebvStatus' => 'D-/R-',
-                'hlaA' => 2, 'hlaB' => 2, 'hlaDR' => 2, 'hlaDQ' => 1,
+                'hla' => ['A' => 2, 'B' => 2, 'DR' => 2, 'DQ' => 1],
                 'immunologicalRisk' => 'Immunisé DSA',
                 'immunosuppressiveConditioning' => ['Prograf', 'Cellcept', 'Methylprednisolone', 'Thymoglobulines'],
                 'dialysis' => true,
@@ -940,7 +1412,7 @@ class AppFixtures extends Fixture
                 'cmvStatus' => 'D-/R+',
                 'ebvStatus' => 'D+/R-',
                 'toxoplasmosisStatus' => 'R+',
-                'hlaA' => 0, 'hlaB' => 1, 'hlaDR' => 1, 'hlaDQ' => 0,
+                'hla' => ['A' => 0, 'B' => 1, 'DR' => 1, 'DQ' => 0],
                 'immunologicalRisk' => 'Immunisé sans DSA',
                 'immunosuppressiveConditioning' => ['Advagraf', 'Cellcept', 'Methylprednisolone', 'Mabthera', 'Ig IV'],
                 'dialysis' => true,
@@ -968,8 +1440,7 @@ class AppFixtures extends Fixture
                 'jjProbe' => true,
                 'cmvStatus' => 'D-/R-',
                 'ebvStatus' => 'D-/R+',
-                'hlaA' => 1, 'hlaB' => 0, 'hlaDR' => 1, 'hlaDQ' => 1,
-                'hlaCw' => 0,
+                'hla' => ['A' => 1, 'B' => 0, 'Cw' => 0, 'DR' => 1, 'DQ' => 1],
                 'immunologicalRisk' => 'Non immunisé',
                 'immunosuppressiveConditioning' => ['Prograf', 'Myfortic', 'Methylprednisolone', 'Simulect'],
                 'dialysis' => false,
@@ -997,8 +1468,7 @@ class AppFixtures extends Fixture
                 'cmvStatus' => 'D+/R+',
                 'ebvStatus' => 'D+/R-',
                 'toxoplasmosisStatus' => 'R-',
-                'hlaA' => 1, 'hlaB' => 2, 'hlaDR' => 0, 'hlaDQ' => 2,
-                'hlaDP' => 1,
+                'hla' => ['A' => 1, 'B' => 2, 'DP' => 1, 'DR' => 0, 'DQ' => 2],
                 'immunologicalRisk' => 'Immunisé sans DSA',
                 'immunosuppressiveConditioning' => ['Prograf', 'Cellcept', 'Methylprednisolone', 'Thymoglobulines'],
                 'dialysis' => true,
@@ -1027,7 +1497,7 @@ class AppFixtures extends Fixture
                 'cmvStatus' => 'D+/R-',
                 'ebvStatus' => 'D-/R+',
                 'toxoplasmosisStatus' => 'R+',
-                'hlaA' => 0, 'hlaB' => 0, 'hlaDR' => 1, 'hlaDQ' => 0,
+                'hla' => ['A' => 0, 'B' => 0, 'DR' => 1, 'DQ' => 0],
                 'immunologicalRisk' => 'ABO incompatible',
                 'immunosuppressiveConditioning' => ['Advagraf', 'Myfortic', 'Methylprednisolone', 'Mabthera', 'Plasmaphérese', 'Ig IV'],
                 'dialysis' => false,
@@ -1054,13 +1524,70 @@ class AppFixtures extends Fixture
                 'jjProbe' => false,
                 'cmvStatus' => 'D+/R+',
                 'ebvStatus' => 'D+/R+',
-                'hlaA' => 1, 'hlaB' => 1, 'hlaDR' => 2, 'hlaDQ' => 1,
+                'hla' => ['A' => 1, 'B' => 1, 'DR' => 2, 'DQ' => 1],
                 'immunologicalRisk' => 'Immunisé sans DSA',
                 'immunosuppressiveConditioning' => ['Neoral', 'Cellcept', 'Methylprednisolone', 'Simulect'],
                 'dialysis' => true,
                 'lastDialysisDate' => '2025-02-04',
                 'hasProtocol' => false,
                 'cristalNumber' => 'CRI-2025-C002',
+            ],
+            // Patient 2024-008 — Second kidney from CRI-2025-D001 (same deceased donor as patient 2024-002)
+            [
+                'patientFileNumber' => '2024-008',
+                'transplantDate' => '2024-09-22',
+                'rank' => 1,
+                'donorType' => 'deceased_encephalic',
+                'transplantType' => 'Rein',
+                'isGraftFunctional' => true,
+                'surgeonName' => 'Dr. Bernard Michel',
+                'declampingDate' => '2024-09-22',
+                'declampingTime' => '16:00',
+                'harvestSide' => 'gauche',
+                'transplantSide' => 'droit',
+                'peritonealPosition' => 'Extra Péritonéal',
+                'totalIschemiaMinutes' => 780,
+                'anastomosisDuration' => 44,
+                'jjProbe' => true,
+                'cmvStatus' => 'D+/R+',
+                'ebvStatus' => 'D+/R+',
+                'hla' => ['A' => 2, 'B' => 1, 'Cw' => 1, 'DR' => 1, 'DQ' => 0],
+                'immunologicalRisk' => 'Non immunisé',
+                'immunosuppressiveConditioning' => ['Prograf', 'Myfortic', 'Methylprednisolone', 'Simulect'],
+                'dialysis' => true,
+                'lastDialysisDate' => '2024-09-21',
+                'hasProtocol' => true,
+                'cristalNumber' => 'CRI-2025-D001',
+                'comment' => 'Deuxième rein du même donneur (CRI-2025-D001). Rein gauche. Ischémie froide un peu plus longue. Bonne reprise de fonction.',
+            ],
+            // Patient 2024-009 — Second kidney from CRI-2025-D003 (same deceased donor as patient 2024-005)
+            [
+                'patientFileNumber' => '2024-009',
+                'transplantDate' => '2024-04-03',
+                'rank' => 1,
+                'donorType' => 'deceased_encephalic',
+                'transplantType' => 'Rein',
+                'isGraftFunctional' => true,
+                'surgeonName' => 'Pr. Duval Catherine',
+                'declampingDate' => '2024-04-03',
+                'declampingTime' => '15:30',
+                'harvestSide' => 'gauche',
+                'transplantSide' => 'gauche',
+                'peritonealPosition' => 'Extra Péritonéal',
+                'totalIschemiaMinutes' => 720,
+                'anastomosisDuration' => 48,
+                'jjProbe' => true,
+                'cmvStatus' => 'D+/R-',
+                'ebvStatus' => 'D+/R+',
+                'toxoplasmosisStatus' => 'R+',
+                'hla' => ['A' => 1, 'B' => 2, 'DR' => 0, 'DQ' => 2],
+                'immunologicalRisk' => 'Immunisé sans DSA',
+                'immunosuppressiveConditioning' => ['Prograf', 'Cellcept', 'Methylprednisolone', 'Simulect'],
+                'dialysis' => true,
+                'lastDialysisDate' => '2024-04-02',
+                'hasProtocol' => false,
+                'cristalNumber' => 'CRI-2025-D003',
+                'comment' => 'Deuxième rein du même donneur (CRI-2025-D003). Rein gauche. Reprise de fonction rapide.',
             ],
             // Patient 2024-010 - Rein-foie, deceased, no donor entity linked
             [
@@ -1082,8 +1609,7 @@ class AppFixtures extends Fixture
                 'cmvStatus' => 'D-/R+',
                 'ebvStatus' => 'D+/R+',
                 'toxoplasmosisStatus' => 'R-',
-                'hlaA' => 2, 'hlaB' => 1, 'hlaDR' => 1, 'hlaDQ' => 2,
-                'hlaDP' => 0, 'hlaCw' => 2,
+                'hla' => ['A' => 2, 'B' => 1, 'Cw' => 2, 'DP' => 0, 'DR' => 1, 'DQ' => 2],
                 'immunologicalRisk' => 'Immunisé DSA',
                 'immunosuppressiveConditioning' => ['Prograf', 'Cellcept', 'Methylprednisolone', 'Thymoglobulines', 'Soliris'],
                 'dialysis' => true,
@@ -1109,7 +1635,7 @@ class AppFixtures extends Fixture
                 'anastomosisDuration' => 45,
                 'jjProbe' => true,
                 'cmvStatus' => 'D+/R-',
-                'hlaA' => 2, 'hlaB' => 2, 'hlaDR' => 1, 'hlaDQ' => 2,
+                'hla' => ['A' => 2, 'B' => 2, 'DR' => 1, 'DQ' => 2],
                 'immunologicalRisk' => 'Immunisé sans DSA',
                 'immunosuppressiveConditioning' => ['Neoral', 'Imurel', 'Methylprednisolone'],
                 'dialysis' => true,
@@ -1129,8 +1655,8 @@ class AppFixtures extends Fixture
             $transplant->setPatient($patient);
             $transplant->setTransplantDate(new \DateTime($data['transplantDate']));
             $transplant->setRank($data['rank']);
-            $transplant->setDonorType($data['donorType']);
-            $transplant->setTransplantType($data['transplantType']);
+            $transplant->setDonorType($this->donorTypes[$data['donorType']]);
+            $transplant->setTransplantType($this->transplantTypes[$this->getTransplantTypeCode($data['transplantType'])]);
             $transplant->setIsGraftFunctional($data['isGraftFunctional']);
 
             if (isset($data['graftEndDate'])) {
@@ -1151,7 +1677,7 @@ class AppFixtures extends Fixture
 
             $transplant->setHarvestSide($data['harvestSide']);
             $transplant->setTransplantSide($data['transplantSide']);
-            $transplant->setPeritonealPosition($data['peritonealPosition']);
+            $transplant->setPeritonealPosition($this->peritonealPositions[$this->getPeritonealPositionCode($data['peritonealPosition'])]);
             $transplant->setTotalIschemiaMinutes($data['totalIschemiaMinutes']);
             $transplant->setAnastomosisDuration($data['anastomosisDuration']);
             $transplant->setJjProbe($data['jjProbe']);
@@ -1160,26 +1686,16 @@ class AppFixtures extends Fixture
                 $transplant->setComment($data['comment']);
             }
 
-            // Virological status
-            $transplant->setCmvStatus($data['cmvStatus']);
-            if (isset($data['ebvStatus'])) {
-                $transplant->setEbvStatus($data['ebvStatus']);
-            }
-            if (isset($data['toxoplasmosisStatus'])) {
-                $transplant->setToxoplasmosisStatus($data['toxoplasmosisStatus']);
-            }
+            // Immunological risk (reference entity)
+            $transplant->setImmunologicalRisk($this->immunologicalRisks[$this->getImmunologicalRiskCode($data['immunologicalRisk'])]);
 
-            // HLA incompatibility
-            $transplant->setHlaA($data['hlaA']);
-            $transplant->setHlaB($data['hlaB']);
-            if (isset($data['hlaCw'])) { $transplant->setHlaCw($data['hlaCw']); }
-            $transplant->setHlaDR($data['hlaDR']);
-            $transplant->setHlaDQ($data['hlaDQ']);
-            if (isset($data['hlaDP'])) { $transplant->setHlaDP($data['hlaDP']); }
-
-            // Immunological risk & conditioning
-            $transplant->setImmunologicalRisk($data['immunologicalRisk']);
-            $transplant->setImmunosuppressiveConditioning($data['immunosuppressiveConditioning']);
+            // Immunosuppressive drugs (ManyToMany)
+            foreach ($data['immunosuppressiveConditioning'] as $drugLabel) {
+                $drugCode = $this->getDrugCode($drugLabel);
+                if (isset($this->immunosuppressiveDrugs[$drugCode])) {
+                    $transplant->addImmunosuppressiveDrug($this->immunosuppressiveDrugs[$drugCode]);
+                }
+            }
 
             // Dialysis
             $transplant->setDialysis($data['dialysis']);
@@ -1196,6 +1712,35 @@ class AppFixtures extends Fixture
             }
 
             $manager->persist($transplant);
+
+            // HLA incompatibilities (junction table)
+            if (isset($data['hla'])) {
+                foreach ($data['hla'] as $locusCode => $count) {
+                    if (isset($this->hlaLoci[$locusCode])) {
+                        $incompat = new TransplantHlaIncompatibility();
+                        $incompat->setTransplant($transplant);
+                        $incompat->setHlaLocus($this->hlaLoci[$locusCode]);
+                        $incompat->setIncompatibilityCount($count);
+                        $manager->persist($incompat);
+                    }
+                }
+            }
+
+            // Virological statuses (junction table)
+            $virologicalMap = [
+                'cmvStatus' => 'CMV',
+                'ebvStatus' => 'EBV',
+                'toxoplasmosisStatus' => 'toxoplasmosis',
+            ];
+            foreach ($virologicalMap as $dataKey => $markerCode) {
+                if (isset($data[$dataKey]) && isset($this->virologicalMarkers[$markerCode])) {
+                    $viroStatus = new TransplantVirologicalStatus();
+                    $viroStatus->setTransplant($transplant);
+                    $viroStatus->setVirologicalMarker($this->virologicalMarkers[$markerCode]);
+                    $viroStatus->setStatus($data[$dataKey]);
+                    $manager->persist($viroStatus);
+                }
+            }
         }
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Form;
 
 use App\Entity\Patient;
+use App\Entity\Reference\BloodGroup;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
@@ -60,16 +62,15 @@ class PatientType extends AbstractType
                     'Femme' => 'F',
                 ],
             ])
-            ->add('bloodGroup', ChoiceType::class, [
+            ->add('bloodGroup', EntityType::class, [
+                'class' => BloodGroup::class,
                 'label' => 'Groupe sanguin',
                 'required' => false,
                 'placeholder' => 'Sélectionner...',
-                'choices' => [
-                    'A' => 'A',
-                    'B' => 'B',
-                    'AB' => 'AB',
-                    'O' => 'O',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
             ->add('rhesus', ChoiceType::class, [
                 'label' => 'Rhésus',

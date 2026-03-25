@@ -108,4 +108,4 @@ Implemented automated incremental backup system using PostgreSQL WAL (Write-Ahea
 - User entity with email, name, surname, cristalId, roles
 - Basic authentication with form login
 - Home page and login page
-- Role-based access control (ROLE_USER, ROLE_NURSE, ROLE_DOCTOR, ROLE_TECH_ADMIN, ROLE_MEDICAL_ADMIN, ROLE_PATIENT)
+- Role-based access control (ROLE_USER, ROLE_NURSE, ROLE_DOCTOR, ROLE_TECH_ADMIN, ROLE_TRANSPLANT_COORDINATOR, ROLE_SUPER_ADMIN)

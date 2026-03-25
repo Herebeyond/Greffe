@@ -35,17 +35,21 @@ class WriteAccessVoter extends Voter
 
         $roles = $user->getRoles();
 
-        // Doctors can write and delete
-        if (in_array('ROLE_DOCTOR', $roles, true)) {
-            return true;
+        if ($attribute === self::CAN_WRITE) {
+            // Doctors can write (create/edit)
+            if (in_array('ROLE_DOCTOR', $roles, true)) {
+                return true;
+            }
         }
 
-        // Nurses have read-only access - cannot write or delete
-        if (in_array('ROLE_NURSE', $roles, true)) {
-            return false;
+        if ($attribute === self::CAN_DELETE) {
+            // Only admins can delete medical records
+            if (in_array('ROLE_SUPER_ADMIN', $roles, true)
+                || in_array('ROLE_TECH_ADMIN', $roles, true)) {
+                return true;
+            }
         }
 
-        // Default deny for other roles (ROLE_USER, ROLE_PATIENT, ROLE_TECH_ADMIN)
         return false;
     }
 }

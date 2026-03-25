@@ -186,6 +186,7 @@ class AuditLogController extends AbstractController
                 'uri' => $log->getUri(),
                 'ipAddress' => $log->getIpAddress(),
                 'details' => $log->getDetails(),
+                'changedFields' => $log->getChangedFields(),
             ];
         }
 

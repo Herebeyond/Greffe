@@ -3,10 +3,14 @@
 namespace App\Controller;
 
 use App\Entity\Transplant;
+use App\Entity\TransplantHlaIncompatibility;
+use App\Entity\TransplantVirologicalStatus;
 use App\Entity\Patient;
 use App\Form\TransplantType;
 use App\Form\DonorDataType;
 use App\Repository\TransplantRepository;
+use App\Repository\Reference\HlaLocusRepository;
+use App\Repository\Reference\VirologicalMarkerRepository;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,6 +24,8 @@ class TransplantController extends AbstractController
 {
     public function __construct(
         private TransplantRepository $transplantRepository,
+        private HlaLocusRepository $hlaLocusRepository,
+        private VirologicalMarkerRepository $virologicalMarkerRepository,
     ) {
     }
 
@@ -62,12 +68,12 @@ class TransplantController extends AbstractController
         $form->handleRequest($request);
 
         // Determine donor type for the donor sub-form
-        $donorType = $request->request->all('transplant')['donorType'] ?? $transplant->getDonorType();
+        $donorTypeCode = $request->request->all('transplant')['donorType'] ?? $transplant->getDonorType()?->getCode();
         $donorForm = null;
 
-        if ($donorType) {
+        if ($donorTypeCode) {
             $donorForm = $this->createForm(DonorDataType::class, $transplant->getDonorData(), [
-                'donor_type' => $donorType,
+                'donor_type' => $donorTypeCode,
             ]);
             $donorForm->handleRequest($request);
         }
@@ -76,6 +82,8 @@ class TransplantController extends AbstractController
             if ($donorForm && $donorForm->isSubmitted() && $donorForm->isValid()) {
                 $transplant->setDonorData($donorForm->getData());
             }
+            $this->handleHlaIncompatibilities($form, $transplant);
+            $this->handleVirologicalStatuses($form, $transplant);
             $this->transplantRepository->save($transplant);
             $this->addFlash('success', 'Greffe ajoutée avec succès');
 
@@ -86,7 +94,7 @@ class TransplantController extends AbstractController
             'patient' => $patient,
             'form' => $form,
             'donorForm' => $donorForm,
-            'donorType' => $donorType,
+            'donorType' => $donorTypeCode,
             'activeTab' => 'greffes',
         ]);
     }
@@ -98,14 +106,19 @@ class TransplantController extends AbstractController
         $this->denyAccessUnlessGranted('VIEW_PATIENT', $patient);
 
         $form = $this->createForm(TransplantType::class, $transplant);
+
+        // Pre-fill unmapped HLA and virological fields from junction entities
+        $this->prefillHlaFields($form, $transplant);
+        $this->prefillVirologicalFields($form, $transplant);
+
         $form->handleRequest($request);
 
-        $donorType = $request->request->all('transplant')['donorType'] ?? $transplant->getDonorType();
+        $donorTypeCode = $request->request->all('transplant')['donorType'] ?? $transplant->getDonorType()?->getCode();
         $donorForm = null;
 
-        if ($donorType) {
+        if ($donorTypeCode) {
             $donorForm = $this->createForm(DonorDataType::class, $transplant->getDonorData(), [
-                'donor_type' => $donorType,
+                'donor_type' => $donorTypeCode,
             ]);
             $donorForm->handleRequest($request);
         }
@@ -114,6 +127,8 @@ class TransplantController extends AbstractController
             if ($donorForm && $donorForm->isSubmitted() && $donorForm->isValid()) {
                 $transplant->setDonorData($donorForm->getData());
             }
+            $this->handleHlaIncompatibilities($form, $transplant);
+            $this->handleVirologicalStatuses($form, $transplant);
             $transplant->setUpdatedAt(new \DateTimeImmutable());
             $this->transplantRepository->save($transplant);
             $this->addFlash('success', 'Greffe modifiée avec succès');
@@ -126,7 +141,7 @@ class TransplantController extends AbstractController
             'transplant' => $transplant,
             'form' => $form,
             'donorForm' => $donorForm,
-            'donorType' => $donorType,
+            'donorType' => $donorTypeCode,
             'activeTab' => 'greffes',
         ]);
     }
@@ -143,5 +158,108 @@ class TransplantController extends AbstractController
         }
 
         return $this->redirectToRoute('app_transplant_index', ['patientId' => $patient->getId()]);
+    }
+
+    private function handleHlaIncompatibilities($form, Transplant $transplant): void
+    {
+        $hlaCodes = ['A', 'B', 'Cw', 'DR', 'DQ', 'DP'];
+
+        // Index existing incompatibilities by locus code for in-place updates
+        $existingByCode = [];
+        foreach ($transplant->getHlaIncompatibilities() as $incompat) {
+            $existingByCode[$incompat->getHlaLocus()->getCode()] = $incompat;
+        }
+
+        foreach ($hlaCodes as $code) {
+            $fieldName = 'hla' . $code;
+            $value = $form->get($fieldName)->getData();
+            if ($value !== null) {
+                if (isset($existingByCode[$code])) {
+                    // Update existing record in-place
+                    $existingByCode[$code]->setIncompatibilityCount((int) $value);
+                    unset($existingByCode[$code]);
+                } else {
+                    // Create new record
+                    $locus = $this->hlaLocusRepository->findOneByCode($code);
+                    if ($locus) {
+                        $incompat = new TransplantHlaIncompatibility();
+                        $incompat->setTransplant($transplant);
+                        $incompat->setHlaLocus($locus);
+                        $incompat->setIncompatibilityCount((int) $value);
+                        $transplant->addHlaIncompatibility($incompat);
+                    }
+                }
+            } elseif (isset($existingByCode[$code])) {
+                // Value cleared — remove the record
+                $transplant->removeHlaIncompatibility($existingByCode[$code]);
+                unset($existingByCode[$code]);
+            }
+        }
+    }
+
+    private function handleVirologicalStatuses($form, Transplant $transplant): void
+    {
+        $virologicalMap = [
+            'cmvStatus' => 'CMV',
+            'ebvStatus' => 'EBV',
+            'toxoplasmosisStatus' => 'toxoplasmosis',
+        ];
+
+        // Index existing statuses by marker code for in-place updates
+        $existingByCode = [];
+        foreach ($transplant->getVirologicalStatuses() as $status) {
+            $existingByCode[$status->getVirologicalMarker()->getCode()] = $status;
+        }
+
+        foreach ($virologicalMap as $fieldName => $markerCode) {
+            $value = $form->get($fieldName)->getData();
+            if ($value !== null) {
+                if (isset($existingByCode[$markerCode])) {
+                    // Update existing record in-place
+                    $existingByCode[$markerCode]->setStatus($value);
+                    unset($existingByCode[$markerCode]);
+                } else {
+                    // Create new record
+                    $marker = $this->virologicalMarkerRepository->findOneByCode($markerCode);
+                    if ($marker) {
+                        $viroStatus = new TransplantVirologicalStatus();
+                        $viroStatus->setTransplant($transplant);
+                        $viroStatus->setVirologicalMarker($marker);
+                        $viroStatus->setStatus($value);
+                        $transplant->addVirologicalStatus($viroStatus);
+                    }
+                }
+            } elseif (isset($existingByCode[$markerCode])) {
+                // Value cleared — remove the record
+                $transplant->removeVirologicalStatus($existingByCode[$markerCode]);
+                unset($existingByCode[$markerCode]);
+            }
+        }
+    }
+
+    private function prefillHlaFields($form, Transplant $transplant): void
+    {
+        $hlaCodes = ['A', 'B', 'Cw', 'DR', 'DQ', 'DP'];
+        foreach ($hlaCodes as $code) {
+            $value = $transplant->getHlaIncompatibilityByCode($code);
+            if ($value !== null) {
+                $form->get('hla' . $code)->setData($value);
+            }
+        }
+    }
+
+    private function prefillVirologicalFields($form, Transplant $transplant): void
+    {
+        $virologicalMap = [
+            'cmvStatus' => 'CMV',
+            'ebvStatus' => 'EBV',
+            'toxoplasmosisStatus' => 'toxoplasmosis',
+        ];
+        foreach ($virologicalMap as $fieldName => $markerCode) {
+            $value = $transplant->getVirologicalStatusByCode($markerCode);
+            if ($value !== null) {
+                $form->get($fieldName)->setData($value);
+            }
+        }
     }
 }

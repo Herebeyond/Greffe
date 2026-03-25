@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Reference\BloodGroup;
 use App\Repository\PatientRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -62,11 +63,11 @@ class Patient
     private ?\DateTimeInterface $birthDate = null;
 
     /**
-     * Blood group (A, B, AB, O).
+     * Blood group reference.
      */
-    #[ORM\Column(length: 3, nullable: true)]
-    #[Assert\Choice(choices: ['A', 'B', 'AB', 'O'], message: 'Groupe sanguin invalide')]
-    private ?string $bloodGroup = null;
+    #[ORM\ManyToOne(targetEntity: BloodGroup::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?BloodGroup $bloodGroup = null;
 
     /**
      * Rhesus factor (+, -).
@@ -193,12 +194,12 @@ class Patient
         return $this;
     }
 
-    public function getBloodGroup(): ?string
+    public function getBloodGroup(): ?BloodGroup
     {
         return $this->bloodGroup;
     }
 
-    public function setBloodGroup(?string $bloodGroup): static
+    public function setBloodGroup(?BloodGroup $bloodGroup): static
     {
         $this->bloodGroup = $bloodGroup;
 
@@ -226,7 +227,7 @@ class Patient
             return null;
         }
 
-        return $this->bloodGroup . ($this->rhesus ?? '');
+        return $this->bloodGroup->getCode() . ($this->rhesus ?? '');
     }
 
     public function getSex(): ?string

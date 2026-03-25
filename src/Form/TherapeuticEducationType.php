@@ -2,9 +2,11 @@
 
 namespace App\Form;
 
+use App\Entity\Reference\EducationTopic;
+use App\Entity\Reference\PatientProgress;
 use App\Entity\TherapeuticEducation;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -20,18 +22,14 @@ class TherapeuticEducationType extends AbstractType
                 'label' => 'Date de la séance',
                 'widget' => 'single_text',
             ])
-            ->add('topic', ChoiceType::class, [
+            ->add('topic', EntityType::class, [
+                'class' => EducationTopic::class,
                 'label' => 'Thème',
                 'placeholder' => 'Sélectionner...',
-                'choices' => [
-                    'Observance médicamenteuse' => 'Observance médicamenteuse',
-                    'Hygiène de vie' => 'Hygiène de vie',
-                    'Signes de rejet' => 'Signes de rejet',
-                    'Diététique' => 'Diététique',
-                    'Activité physique' => 'Activité physique',
-                    'Gestion du stress' => 'Gestion du stress',
-                    'Autre' => 'Autre',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
             ->add('educator', TextType::class, [
                 'label' => 'Éducateur',
@@ -55,15 +53,15 @@ class TherapeuticEducationType extends AbstractType
                     'placeholder' => 'Observations sur le déroulement...',
                 ],
             ])
-            ->add('patientProgress', ChoiceType::class, [
+            ->add('patientProgress', EntityType::class, [
+                'class' => PatientProgress::class,
                 'label' => 'Progression du patient',
                 'required' => false,
                 'placeholder' => 'Sélectionner...',
-                'choices' => [
-                    'Acquis' => 'Acquis',
-                    'En cours' => 'En cours',
-                    'Non acquis' => 'Non acquis',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
             ->add('nextSessionDate', DateType::class, [
                 'label' => 'Prochaine séance',

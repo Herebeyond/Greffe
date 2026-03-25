@@ -30,6 +30,14 @@
     - AccessDeniedHandler redirects medical personnel to BTG form
     - Audit log records all BTG events
 - [x] Split admin role: ROLE_TECH_ADMIN (system) — no medical admin role exists
+- [x] ROLE_SUPER_ADMIN: inherits ROLE_TECH_ADMIN, full user/role management, can assign
+      any role including ROLE_DOCTOR, ROLE_NURSE, ROLE_TECH_ADMIN, ROLE_TRANSPLANT_COORDINATOR
+- [x] ROLE_TRANSPLANT_COORDINATOR: inherits ROLE_USER, can create/edit/view donors,
+      link donors to patients, cannot create/edit/view patient data
+- [ ] Find a way for doctors and nurses to be given access to patients (and maybe donors) other than being the creator of the patient and the donor
+    - An idea is that a doctor can give and remove access to other doctors and nurses and those can't give access
+    - A doctor can change his access to give it to another doctor (not nurse) to give their patient, doing so will remove the access to the patient from the first doctor and the second doctor will have the right to give access to other doctors
+    - A super_admin (or normal admin, should check about it) should be able to give, move to someone else and remove full access and secondary access to users
 
 ## PATIENT MANAGEMENT (spec §2.2, §2.3)
 - [x] Patient entity (nom, prénom, numéro de dossier, ville de résidence)
@@ -96,6 +104,16 @@
 - [x] Donor audit logging (search, view, create, edit, delete)
 - [x] "Donneurs" navigation link in header
 - [x] Transplant->Donor ManyToOne relationship
+- [ ] Check how the donors should be viewed:
+    - What infos should be given to the doctors
+    - If the doctors should see all the donors or only the ones linked to one of their patients
+    - Decide on donor data access: should doctors browse all donors freely or only see
+      donors linked to their assigned patients?
+    - Living donor names are encrypted — only authorized users should see names
+- [ ] Make an easy access from a patient with a donor to the donor, and from the donor to the patient if he has one.
+    - take into account a donor can potentially have multiple patients (because 2 kidneys)
+- [ ] Find a way for transplant coordinators to inform doctors a donor was given to one
+      of their patients (notification system, flag, or message mechanism)
 
 ## CALCULATED FIELDS (spec §2.5.2.2, §2.5.2.3)
 # These are computed client-side (JS) or server-side and stored in the donor JSON.
@@ -145,13 +163,20 @@
 - [x] User profile page (view info, change password)
 - [x] Password history (prevent reuse of last 5 passwords)
 - [x] No self-service password reset (by design: login page shows admin contact info)
-- [ ] Restrict actions an admin can perform on another admin account
+- [x] Admin role hierarchy and privilege restrictions:
+    - ROLE_SUPER_ADMIN: can create any user profile and assign any role
+    - ROLE_TECH_ADMIN: can only create ROLE_USER profiles (no privileged role assignment)
+    - Only ROLE_SUPER_ADMIN can edit/delete users who hold privileged roles
+    - ROLE_TECH_ADMIN cannot edit/delete SUPER_ADMIN, TECH_ADMIN, DOCTOR, NURSE,
+      TRANSPLANT_COORDINATOR users — only ROLE_USER
+    - Self-deletion prevention for all admins
+    - UserType form dynamically filters available roles based on current admin's role
 
 ## ADMIN TOOLS
 - [x] Admin page to view audit logs (/admin/logs, ROLE_TECH_ADMIN)
     - Filters: user, action type, entity type, date range
     - Infinite scroll loading
-- [x] Admin page to manage users (/admin/users, ROLE_TECH_ADMIN)
+- [x] Admin page to manage users (/admin/users, ROLE_TECH_ADMIN or ROLE_SUPER_ADMIN)
 
 ## MOBILE APP & API (phone integration)
 - [ ] Build a REST/JSON API on the Symfony server (API Platform or custom controllers):

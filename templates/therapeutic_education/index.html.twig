@@ -38,7 +38,7 @@
                         <td>{{ session.educator }}</td>
                         <td>
                             {% if session.patientProgress %}
-                                <span class="progress-badge progress-{{ session.patientProgress|lower|replace({' ': '-'}) }}">{{ session.patientProgress }}</span>
+                                <span class="progress-badge progress-{{ session.patientProgress.code|lower|replace({' ': '-'}) }}">{{ session.patientProgress }}</span>
                             {% else %}
                                 —
                             {% endif %}

@@ -26,6 +26,7 @@
                         <th>Date</th>
                         <th>Type</th>
                         <th>Type de donneur</th>
+                        <th>Donneur</th>
                         <th>Greffon</th>
                         <th>Risque immunologique</th>
                         <th>Actions</th>
@@ -39,6 +40,13 @@
                         <td><span class="badge">{{ transplant.transplantType }}</span></td>
                         <td>{{ transplant.donorTypeLabel }}</td>
                         <td>
+                            {% if transplant.donor %}
+                                <a href="{{ path('app_donor_show', {id: transplant.donor.id}) }}" class="btn-small">{{ transplant.donor.cristalNumber }}</a>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
                             {% if transplant.isGraftFunctional %}
                                 <span class="graft-status graft-functional">Fonctionnel</span>
                             {% else %}
@@ -46,7 +54,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <span class="risk-badge {{ transplant.immunologicalRiskClass }}">{{ transplant.immunologicalRisk }}</span>
+                            <span class="risk-badge {{ transplant.immunologicalRiskClass }}">{{ transplant.immunologicalRisk.label }}</span>
                         </td>
                         <td class="actions-cell">
                             <a href="{{ path('app_transplant_show', {patientId: patient.id, id: transplant.id}) }}" class="btn-small">Voir</a>

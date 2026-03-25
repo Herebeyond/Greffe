@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Reference\MedicalHistoryType as MedicalHistoryTypeRef;
 use App\Repository\MedicalHistoryRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -20,13 +21,10 @@ class MedicalHistory
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Patient $patient = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\ManyToOne(targetEntity: MedicalHistoryTypeRef::class)]
+    #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le type d\'antécédent est obligatoire')]
-    #[Assert\Choice(
-        choices: ['Médical', 'Chirurgical', 'Familial', 'Allergique', 'Autre'],
-        message: 'Type d\'antécédent invalide'
-    )]
-    private ?string $type = null;
+    private ?MedicalHistoryTypeRef $type = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'La description est obligatoire')]
@@ -63,12 +61,12 @@ class MedicalHistory
         return $this;
     }
 
-    public function getType(): ?string
+    public function getType(): ?MedicalHistoryTypeRef
     {
         return $this->type;
     }
 
-    public function setType(string $type): static
+    public function setType(?MedicalHistoryTypeRef $type): static
     {
         $this->type = $type;
 

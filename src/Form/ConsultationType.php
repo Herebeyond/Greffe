@@ -3,8 +3,9 @@
 namespace App\Form;
 
 use App\Entity\Consultation;
+use App\Entity\Reference\ConsultationType as ConsultationTypeRef;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -26,16 +27,14 @@ class ConsultationType extends AbstractType
                     'placeholder' => 'Nom du praticien',
                 ],
             ])
-            ->add('type', ChoiceType::class, [
+            ->add('type', EntityType::class, [
+                'class' => ConsultationTypeRef::class,
                 'label' => 'Type de consultation',
                 'placeholder' => 'Sélectionner...',
-                'choices' => [
-                    'Suivi post-greffe' => 'Suivi post-greffe',
-                    'Bilan pré-greffe' => 'Bilan pré-greffe',
-                    'Urgence' => 'Urgence',
-                    'Contrôle' => 'Contrôle',
-                    'Autre' => 'Autre',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
             ->add('observations', TextareaType::class, [
                 'label' => 'Observations',

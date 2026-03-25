@@ -32,7 +32,7 @@
                 <tbody>
                     {% for history in histories %}
                     <tr>
-                        <td><span class="badge badge-{{ history.type|lower }}">{{ history.type }}</span></td>
+                        <td><span class="badge badge-{{ history.type.code|lower }}">{{ history.type }}</span></td>
                         <td>{{ history.description|length > 80 ? history.description|slice(0, 80) ~ '...' : history.description }}</td>
                         <td>{{ history.diagnosisDate ? history.diagnosisDate|date('d/m/Y') : '—' }}</td>
                         <td>{{ history.comment ? (history.comment|length > 50 ? history.comment|slice(0, 50) ~ '...' : history.comment) : '—' }}</td>

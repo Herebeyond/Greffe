@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Patient;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -162,5 +163,30 @@ class PatientRepository extends ServiceEntityRepository
     public function findByFileNumber(string $fileNumber): ?Patient
     {
         return $this->findOneBy(['fileNumber' => $fileNumber]);
+    }
+
+    /**
+     * Find all patients assigned to a given practitioner.
+     *
+     * @return Patient[]
+     */
+    public function findByPractitioner(User $user): array
+    {
+        $patients = $this->createQueryBuilder('p')
+            ->join('p.authorizedPractitioners', 'u')
+            ->where('u = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult();
+
+        usort($patients, function (Patient $a, Patient $b) {
+            $lastNameCompare = strcasecmp($a->getLastName() ?? '', $b->getLastName() ?? '');
+            if ($lastNameCompare !== 0) {
+                return $lastNameCompare;
+            }
+            return strcasecmp($a->getFirstName() ?? '', $b->getFirstName() ?? '');
+        });
+
+        return $patients;
     }
 }

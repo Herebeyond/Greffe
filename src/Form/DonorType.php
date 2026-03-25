@@ -3,6 +3,13 @@
 namespace App\Form;
 
 use App\Entity\Donor;
+use App\Entity\Reference\BloodGroup;
+use App\Entity\Reference\DeathCause;
+use App\Entity\Reference\DonorType as DonorTypeRef;
+use App\Entity\Reference\PerfusionLiquid;
+use App\Entity\Reference\RelationshipType;
+use App\Entity\Reference\SurgicalApproach;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -21,14 +28,14 @@ class DonorType extends AbstractType
     {
         $builder
             // ===== Donor type =====
-            ->add('donorType', ChoiceType::class, [
+            ->add('donorType', EntityType::class, [
+                'class' => DonorTypeRef::class,
                 'label' => 'Type de donneur',
                 'placeholder' => 'Sélectionner...',
-                'choices' => [
-                    'Donneur vivant' => Donor::TYPE_LIVING,
-                    'Donneur décédé (mort encéphalique)' => Donor::TYPE_DECEASED_ENCEPHALIC,
-                    'Donneur décédé (arrêt cardiaque)' => Donor::TYPE_DECEASED_CARDIAC_ARREST,
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
 
             // ===== Common identification =====
@@ -36,15 +43,14 @@ class DonorType extends AbstractType
                 'label' => 'Numéro CRISTAL',
                 'attr' => ['placeholder' => 'Ex: CRI-2026-0001'],
             ])
-            ->add('bloodGroup', ChoiceType::class, [
+            ->add('bloodGroup', EntityType::class, [
+                'class' => BloodGroup::class,
                 'label' => 'Groupe sanguin',
                 'placeholder' => 'Sélectionner...',
-                'choices' => [
-                    'A' => 'A',
-                    'B' => 'B',
-                    'AB' => 'AB',
-                    'O' => 'O',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
             ->add('rhesus', ChoiceType::class, [
                 'label' => 'Rhésus',
@@ -82,95 +88,113 @@ class DonorType extends AbstractType
                 'attr' => ['rows' => 2],
             ])
 
-            // ===== HLA Grouping =====
+            // ===== HLA Grouping (unmapped — handled by controller) =====
             ->add('hlaA', IntegerType::class, [
                 'label' => 'HLA-A',
+                'mapped' => false,
                 'attr' => ['min' => 0, 'max' => 99],
             ])
             ->add('hlaB', IntegerType::class, [
                 'label' => 'HLA-B',
+                'mapped' => false,
                 'attr' => ['min' => 0, 'max' => 99],
             ])
             ->add('hlaCw', IntegerType::class, [
                 'label' => 'HLA-Cw',
+                'mapped' => false,
                 'required' => false,
                 'attr' => ['min' => 0, 'max' => 99],
             ])
             ->add('hlaDR', IntegerType::class, [
                 'label' => 'HLA-DR',
+                'mapped' => false,
                 'attr' => ['min' => 0, 'max' => 99],
             ])
             ->add('hlaDQ', IntegerType::class, [
                 'label' => 'HLA-DQ',
+                'mapped' => false,
                 'attr' => ['min' => 0, 'max' => 99],
             ])
             ->add('hlaDP', IntegerType::class, [
                 'label' => 'HLA-DP',
+                'mapped' => false,
                 'required' => false,
                 'attr' => ['min' => 0, 'max' => 99],
             ])
 
-            // ===== Serology =====
+            // ===== Serology (unmapped — handled by controller) =====
             ->add('cmv', ChoiceType::class, [
                 'label' => 'CMV',
                 'placeholder' => '...',
+                'mapped' => false,
                 'choices' => ['+' => '+', '-' => '-'],
             ])
             ->add('ebv', ChoiceType::class, [
                 'label' => 'EBV',
                 'placeholder' => '...',
+                'mapped' => false,
                 'choices' => ['+' => '+', '-' => '-'],
             ])
             ->add('hiv', ChoiceType::class, [
                 'label' => 'HIV',
                 'placeholder' => '...',
+                'mapped' => false,
                 'choices' => ['+' => '+', '-' => '-'],
             ])
             ->add('htlv', ChoiceType::class, [
                 'label' => 'HTLV',
                 'placeholder' => '...',
+                'mapped' => false,
                 'choices' => ['+' => '+', '-' => '-'],
             ])
             ->add('syphilis', ChoiceType::class, [
                 'label' => 'Syphilis',
                 'placeholder' => '...',
+                'mapped' => false,
                 'choices' => ['+' => '+', '-' => '-'],
             ])
             ->add('hcv', ChoiceType::class, [
                 'label' => 'HCV',
                 'placeholder' => '...',
+                'mapped' => false,
                 'choices' => ['+' => '+', '-' => '-'],
             ])
             ->add('agHbs', ChoiceType::class, [
                 'label' => 'Ag HBs',
                 'placeholder' => '...',
+                'mapped' => false,
                 'choices' => ['+' => '+', '-' => '-'],
             ])
             ->add('acHbs', ChoiceType::class, [
                 'label' => 'Ac HBs',
                 'placeholder' => '...',
+                'mapped' => false,
                 'choices' => ['+' => '+', '-' => '-'],
             ])
             ->add('acHbc', ChoiceType::class, [
                 'label' => 'Ac HBc',
                 'placeholder' => '...',
+                'mapped' => false,
                 'choices' => ['+' => '+', '-' => '-'],
             ])
             ->add('toxoplasmosis', ChoiceType::class, [
                 'label' => 'Toxoplasmose',
                 'placeholder' => '...',
+                'mapped' => false,
                 'required' => false,
                 'choices' => ['+' => '+', '-' => '-', 'ND' => 'ND'],
             ])
             ->add('arnc', ChoiceType::class, [
                 'label' => 'ARNc',
                 'placeholder' => '...',
+                'mapped' => false,
                 'required' => false,
                 'choices' => ['+' => '+', '-' => '-'],
             ])
             ->add('dnaB', ChoiceType::class, [
                 'label' => 'DNA B',
                 'placeholder' => '...',
+                'mapped' => false,
                 'required' => false,
                 'choices' => ['+' => '+', '-' => '-'],
             ])
@@ -228,16 +252,15 @@ class DonorType extends AbstractType
                     'Non' => 'Non',
                 ],
             ])
-            ->add('perfusionLiquid', ChoiceType::class, [
+            ->add('perfusionLiquid', EntityType::class, [
+                'class' => PerfusionLiquid::class,
                 'label' => 'Liquide de perfusion',
                 'placeholder' => 'Sélectionner...',
                 'required' => false,
-                'choices' => [
-                    'Viaspan' => 'Viaspan',
-                    'Celsior' => 'Celsior',
-                    'IGL' => 'IGL',
-                    'Scott' => 'Scott',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
 
             // ===== Living donor specific fields =====
@@ -249,18 +272,15 @@ class DonorType extends AbstractType
                 'label' => 'Prénom du donneur',
                 'required' => false,
             ])
-            ->add('relationshipType', ChoiceType::class, [
+            ->add('relationshipType', EntityType::class, [
+                'class' => RelationshipType::class,
                 'label' => 'Type de lien',
                 'placeholder' => 'Sélectionner...',
                 'required' => false,
-                'choices' => [
-                    'Parent' => 'Parent',
-                    'Enfant' => 'Enfant',
-                    '2ème degré' => '2ème degré',
-                    'Conjoint' => 'Conjoint',
-                    'Non apparenté' => 'Non apparenté',
-                    'Autre' => 'Autre',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
             ->add('relationshipComment', TextType::class, [
                 'label' => 'Commentaire lien',
@@ -284,14 +304,15 @@ class DonorType extends AbstractType
                 'scale' => 2,
                 'attr' => ['placeholder' => 'g/24h'],
             ])
-            ->add('approach', ChoiceType::class, [
+            ->add('approach', EntityType::class, [
+                'class' => SurgicalApproach::class,
                 'label' => 'Voie d\'abord',
                 'placeholder' => 'Sélectionner...',
                 'required' => false,
-                'choices' => [
-                    'Lombotomie' => 'Lombotomie',
-                    'Cœlioscopie' => 'Cœlioscopie',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
             ->add('robot', CheckboxType::class, [
                 'label' => 'Robot',
@@ -303,18 +324,15 @@ class DonorType extends AbstractType
                 'label' => 'Ville d\'origine',
                 'required' => false,
             ])
-            ->add('deathCause', ChoiceType::class, [
+            ->add('deathCause', EntityType::class, [
+                'class' => DeathCause::class,
                 'label' => 'Cause du décès',
                 'placeholder' => 'Sélectionner...',
                 'required' => false,
-                'choices' => [
-                    'AVC hémorragique' => 'AVC hémorragique',
-                    'AVC ischémique' => 'AVC ischémique',
-                    'AVP' => 'AVP',
-                    'TC non AVP' => 'TC non AVP',
-                    'Anoxie' => 'Anoxie',
-                    'Autre' => 'Autre',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
             ->add('deathCauseComment', TextareaType::class, [
                 'label' => 'Commentaire cause décès',
@@ -381,16 +399,15 @@ class DonorType extends AbstractType
                     '2' => '2',
                 ],
             ])
-            ->add('conservationLiquid', ChoiceType::class, [
+            ->add('conservationLiquid', EntityType::class, [
+                'class' => PerfusionLiquid::class,
                 'label' => 'Liquide de conservation',
                 'placeholder' => 'Sélectionner...',
                 'required' => false,
-                'choices' => [
-                    'Viaspan' => 'Viaspan',
-                    'Celsior' => 'Celsior',
-                    'IGL' => 'IGL',
-                    'Scott' => 'Scott',
-                ],
+                'choice_label' => 'label',
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
+                    ->where('r.isActive = true')
+                    ->orderBy('r.displayOrder', 'ASC'),
             ])
 
             // ===== Atheroma =====

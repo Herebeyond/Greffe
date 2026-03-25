@@ -413,15 +413,31 @@ The application implements the following roles:
 - `ROLE_USER`: Basic access, view-only for medical data
 - `ROLE_NURSE`: Same as ROLE_USER (read-only)
 - `ROLE_DOCTOR`: Can create, modify, and delete medical records
-- `ROLE_TECH_ADMIN`: System/user management, NO access to patient medical data
-- `ROLE_PATIENT`: Patient-specific access
+- `ROLE_TRANSPLANT_COORDINATOR`: Can create/edit/view donors, link donors to patients, NO patient data access
+- `ROLE_TECH_ADMIN`: System/user management, can only create ROLE_USER profiles, NO access to patient medical data
+- `ROLE_SUPER_ADMIN`: Inherits ROLE_TECH_ADMIN, full user/role management, can assign any role
+
+### Role Hierarchy
+
+```
+ROLE_SUPER_ADMIN → ROLE_TECH_ADMIN → ROLE_USER
+ROLE_DOCTOR → ROLE_USER
+ROLE_NURSE → ROLE_USER
+ROLE_TRANSPLANT_COORDINATOR → ROLE_USER
+```
+
+### Admin Privilege Restrictions
+
+- **ROLE_SUPER_ADMIN**: Can create any user with any role, edit/delete all users
+- **ROLE_TECH_ADMIN**: Can only create ROLE_USER profiles (no role checkboxes in form). Cannot edit/delete users with privileged roles (SUPER_ADMIN, TECH_ADMIN, DOCTOR, NURSE, TRANSPLANT_COORDINATOR)
+- UserType form uses `is_super_admin` option to dynamically show/hide role selection
 
 > **⚠️ Legal note (Art. L1110-4 CSP):** Technical administrators must NOT have access
 > to patient medical data. Only healthcare professionals in the care team may view
 > patient files. No role has blanket access to all patients.
 
 Use `#[IsGranted('ROLE_DOCTOR')]` attributes on controller methods for protection.
-Use `#[IsGranted('ROLE_TECH_ADMIN')]` for admin panel access.
+Use `#[IsGranted('ROLE_TECH_ADMIN')]` for admin panel access (ROLE_SUPER_ADMIN inherits this).
 
 ### Patient Access Control
 
@@ -431,7 +447,8 @@ Per-patient access is enforced by `PatientAccessVoter` (attribute: `VIEW_PATIENT
 |-----------|-------------|
 | Any practitioner (doctor, nurse) | Only assigned patients (via `patient_authorized_user` join table) |
 | Any practitioner with active BTG | Temporary emergency access (3h, justified, audited) |
-| `ROLE_TECH_ADMIN` | **No patient access** (system management only) |
+| `ROLE_TECH_ADMIN` / `ROLE_SUPER_ADMIN` | **No patient access** (system management only) |
+| `ROLE_TRANSPLANT_COORDINATOR` | **No patient access** (donor management only) |
 
 > **Note:** The `isChuPractitioner` field is deprecated and no longer used for access control.
 > All practitioners must be explicitly assigned to patients they need to access.

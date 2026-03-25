@@ -96,7 +96,17 @@
                     <td><span class="http-method http-{{ log.httpMethod|lower }}">{{ log.httpMethod }}</span></td>
                     <td class="audit-uri" title="{{ log.uri }}">{{ log.uri }}</td>
                     <td>{{ log.ipAddress ?? '-' }}</td>
-                    <td class="audit-details" title="{{ log.details }}">{{ log.details ?? '-' }}</td>
+                    <td class="audit-details">
+                        {% if log.changedFields is not null and log.changedFields|length > 0 %}
+                            {% for field in log.changedFields %}
+                                <span class="audit-field-badge">{{ field }}</span>
+                            {% endfor %}
+                        {% elseif log.details %}
+                            <span title="{{ log.details }}">{{ log.details }}</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                 </tr>
                 {% else %}
                 <tr>
@@ -141,6 +151,15 @@
         return div.innerHTML;
     }
 
+    function renderDetails(log) {
+        if (log.changedFields && log.changedFields.length > 0) {
+            return '<td class="audit-details">' + log.changedFields.map(function(f) {
+                return '<span class="audit-field-badge">' + escapeHtml(f) + '</span>';
+            }).join(' ') + '</td>';
+        }
+        return '<td class="audit-details">' + escapeHtml(log.details) + '</td>';
+    }
+
     function loadMore() {
         if (loading || !hasMore) return;
         loading = true;
@@ -171,7 +190,7 @@
                         '<td><span class="http-method http-' + escapeHtml(log.httpMethod).toLowerCase() + '">' + escapeHtml(log.httpMethod) + '</span></td>' +
                         '<td class="audit-uri" title="' + escapeHtml(log.uri) + '">' + escapeHtml(log.uri) + '</td>' +
                         '<td>' + escapeHtml(log.ipAddress) + '</td>' +
-                        '<td class="audit-details" title="' + escapeHtml(log.details) + '">' + escapeHtml(log.details) + '</td>';
+                        renderDetails(log);
                     tbody.appendChild(tr);
                 });
                 hasMore = data.hasMore;

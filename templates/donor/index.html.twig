@@ -6,7 +6,7 @@
 <div class="page-container">
     <div class="section-header">
         <h2>Registre des donneurs</h2>
-        {% if is_granted('CAN_WRITE') %}
+        {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
         <a href="{{ path('app_donor_new') }}" class="btn btn-primary">Ajouter un donneur</a>
         {% endif %}
     </div>
@@ -31,18 +31,34 @@
                 </div>
                 <div class="form-group">
                     <label>Groupe sanguin</label>
-                    <div class="multiselect-dropdown">
-                        <div class="multiselect-toggle form-control" id="bloodTypeToggle">
-                            <span class="multiselect-label">{{ bloodTypes|length > 0 ? bloodTypes|join(', ') : 'Tous' }}</span>
-                            <span class="multiselect-arrow">&#9662;</span>
+                    <div class="blood-dropdown">
+                        <div class="blood-dropdown-toggle" id="bloodTypeToggle">
+                            <span class="blood-dropdown-selection" id="bloodTypeSelection">
+                                {% if bloodTypes|length > 0 %}
+                                    {% for type in bloodTypes %}
+                                        <span class="blood-pill blood-pill-{{ type|replace({'+': 'pos', '-': 'neg'})|slice(0, -3) }}">{{ type }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="blood-dropdown-placeholder">Tous les groupes</span>
+                                {% endif %}
+                            </span>
+                            <svg class="blood-dropdown-chevron" id="bloodTypeChevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
                         </div>
-                        <div class="multiselect-menu" id="bloodTypeMenu">
-                            {% for type in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
-                            <label class="multiselect-item">
-                                <input type="checkbox" name="bloodTypes[]" value="{{ type }}" {{ type in bloodTypes ? 'checked' }}>
-                                {{ type }}
-                            </label>
-                            {% endfor %}
+                        <div class="blood-dropdown-menu" id="bloodTypeMenu">
+                            <div class="blood-dropdown-header">Sélectionner les groupes</div>
+                            <div class="blood-dropdown-grid">
+                                {% for type in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                                <div class="blood-dropdown-option {{ type in bloodTypes ? 'selected' }}" data-group="{{ type|replace({'+': 'pos', '-': 'neg'})|slice(0, -3) }}">
+                                    <input type="checkbox" name="bloodTypes[]" value="{{ type }}" {{ type in bloodTypes ? 'checked' }}>
+                                    <span class="blood-dropdown-chip">{{ type }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="blood-dropdown-footer">
+                                <button type="button" class="blood-dropdown-clear" id="bloodTypeClear">Effacer</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -65,33 +81,44 @@
             <table class="data-table">
                 <thead>
                     <tr>
+                        <th>ID</th>
                         <th>CRISTAL</th>
                         <th>Type</th>
+                        {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
                         <th>Identité</th>
+                        {% endif %}
                         <th>Âge</th>
                         <th>Sexe</th>
                         <th>Groupe sanguin</th>
                         <th>Sérologie HIV</th>
+                        {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
                         <th>Date d'enregistrement</th>
+                        {% endif %}
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for donor in donors %}
                     <tr>
+                        <td>{{ donor.id }}</td>
                         <td><strong>{{ donor.cristalNumber }}</strong></td>
-                        <td><span class="badge badge-donor-{{ donor.donorType }}">{{ donor.donorTypeLabel }}</span></td>
+                        <td><span class="badge badge-donor-{{ donor.donorType.code }}">{{ donor.donorTypeLabel }}</span></td>
+                        {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
                         <td>{{ donor.displayName }}</td>
+                        {% endif %}
                         <td>{{ donor.age }} ans</td>
                         <td>{{ donor.sex == 'M' ? 'Masculin' : 'Féminin' }}</td>
-                        <td><span class="blood-group blood-group-{{ donor.bloodGroup }}">{{ donor.fullBloodGroup }}</span></td>
+                        <td><span class="blood-group blood-group-{{ donor.bloodGroup.code }}">{{ donor.fullBloodGroup }}</span></td>
                         <td>
-                            <span class="serology-badge serology-{{ donor.hiv == '+' ? 'positive' : 'negative' }}">{{ donor.hiv }}</span>
+                            {% set hivResult = donor.serologyResultByCode('hiv') %}
+                            <span class="serology-badge serology-{{ hivResult == '+' ? 'positive' : 'negative' }}">{{ hivResult ?? '—' }}</span>
                         </td>
+                        {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
                         <td>{{ donor.createdAt|date('d/m/Y') }}</td>
+                        {% endif %}
                         <td class="actions-cell">
                             <a href="{{ path('app_donor_show', {id: donor.id}) }}" class="btn-small">Voir</a>
-                            {% if is_granted('CAN_WRITE') %}
+                            {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
                             <a href="{{ path('app_donor_edit', {id: donor.id}) }}" class="btn-small">Modifier</a>
                             {% endif %}
                         </td>
@@ -109,8 +136,35 @@
 document.addEventListener('DOMContentLoaded', function () {
     const toggle = document.getElementById('bloodTypeToggle');
     const menu = document.getElementById('bloodTypeMenu');
-    const label = toggle.querySelector('.multiselect-label');
+    const chevron = document.getElementById('bloodTypeChevron');
+    const selection = document.getElementById('bloodTypeSelection');
+    const clearBtn = document.getElementById('bloodTypeClear');
     const checkboxes = menu.querySelectorAll('input[type="checkbox"]');
+    const options = menu.querySelectorAll('.blood-dropdown-option');
+
+    var pillColors = { 'A': 'A', 'B': 'B', 'AB': 'AB', 'O': 'O' };
+
+    function getGroup(value) {
+        return value.replace(/[+-]$/, '');
+    }
+
+    function updateSelection() {
+        var checked = Array.from(checkboxes).filter(function (c) { return c.checked; });
+        selection.innerHTML = '';
+        if (checked.length === 0) {
+            var placeholder = document.createElement('span');
+            placeholder.className = 'blood-dropdown-placeholder';
+            placeholder.textContent = 'Tous les groupes';
+            selection.appendChild(placeholder);
+        } else {
+            checked.forEach(function (c) {
+                var pill = document.createElement('span');
+                pill.className = 'blood-pill blood-pill-' + getGroup(c.value);
+                pill.textContent = c.value;
+                selection.appendChild(pill);
+            });
+        }
+    }
 
     toggle.addEventListener('click', function () {
         menu.classList.toggle('open');
@@ -124,13 +178,22 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    checkboxes.forEach(function (cb) {
-        cb.addEventListener('change', function () {
-            const checked = Array.from(checkboxes).filter(function (c) { return c.checked; });
-            label.textContent = checked.length > 0
-                ? checked.map(function (c) { return c.value; }).join(', ')
-                : 'Tous';
+    options.forEach(function (option) {
+        var cb = option.querySelector('input[type="checkbox"]');
+        option.addEventListener('click', function (e) {
+            if (e.target !== cb) {
+                cb.checked = !cb.checked;
+            }
+            option.classList.toggle('selected', cb.checked);
+            updateSelection();
         });
+    });
+
+    clearBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        checkboxes.forEach(function (cb) { cb.checked = false; });
+        options.forEach(function (opt) { opt.classList.remove('selected'); });
+        updateSelection();
     });
 });
 </script>

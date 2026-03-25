@@ -11,7 +11,7 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 /**
  * Custom user provider that allows login with email or CRISTAL ID.
- * Also checks if the user account is active.
+ * Account status checks (disabled) are handled by UserChecker.
  *
  * @implements UserProviderInterface<User>
  */
@@ -32,13 +32,6 @@ class UserProvider implements UserProviderInterface
             throw $exception;
         }
 
-        // Check if account is active
-        if (!$user->isActive()) {
-            throw new CustomUserMessageAccountStatusException(
-                'Votre compte a été désactivé. Veuillez contacter un administrateur.'
-            );
-        }
-
         return $user;
     }
 
@@ -56,7 +49,7 @@ class UserProvider implements UserProviderInterface
             throw $exception;
         }
 
-        // Check if account is still active during session
+        // Check if account was disabled during active session (no info leak: user already authenticated)
         if (!$refreshedUser->isActive()) {
             throw new CustomUserMessageAccountStatusException(
                 'Votre compte a été désactivé.'

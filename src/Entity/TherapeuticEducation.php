@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use App\Entity\Reference\EducationTopic;
+use App\Entity\Reference\PatientProgress as PatientProgressRef;
 use App\Repository\TherapeuticEducationRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -24,21 +26,10 @@ class TherapeuticEducation
     #[Assert\NotBlank(message: 'La date de la séance est obligatoire')]
     private ?\DateTimeInterface $sessionDate = null;
 
-    #[ORM\Column(length: 100)]
+    #[ORM\ManyToOne(targetEntity: EducationTopic::class)]
+    #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le thème est obligatoire')]
-    #[Assert\Choice(
-        choices: [
-            'Observance médicamenteuse',
-            'Hygiène de vie',
-            'Signes de rejet',
-            'Diététique',
-            'Activité physique',
-            'Gestion du stress',
-            'Autre',
-        ],
-        message: 'Thème invalide'
-    )]
-    private ?string $topic = null;
+    private ?EducationTopic $topic = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'Le nom de l\'éducateur est obligatoire')]
@@ -50,12 +41,9 @@ class TherapeuticEducation
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $observations = null;
 
-    #[ORM\Column(length: 20, nullable: true)]
-    #[Assert\Choice(
-        choices: ['Acquis', 'En cours', 'Non acquis'],
-        message: 'Niveau de progression invalide'
-    )]
-    private ?string $patientProgress = null;
+    #[ORM\ManyToOne(targetEntity: PatientProgressRef::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?PatientProgressRef $patientProgress = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $nextSessionDate = null;
@@ -97,12 +85,12 @@ class TherapeuticEducation
         return $this;
     }
 
-    public function getTopic(): ?string
+    public function getTopic(): ?EducationTopic
     {
         return $this->topic;
     }
 
-    public function setTopic(string $topic): static
+    public function setTopic(?EducationTopic $topic): static
     {
         $this->topic = $topic;
 
@@ -145,12 +133,12 @@ class TherapeuticEducation
         return $this;
     }
 
-    public function getPatientProgress(): ?string
+    public function getPatientProgress(): ?PatientProgressRef
     {
         return $this->patientProgress;
     }
 
-    public function setPatientProgress(?string $patientProgress): static
+    public function setPatientProgress(?PatientProgressRef $patientProgress): static
     {
         $this->patientProgress = $patientProgress;
 
