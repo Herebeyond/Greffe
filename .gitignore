@@ -14,3 +14,27 @@
 *.key
 encryption.key
 ###< app/encryption ###
+
+###> docs ###
+# Symfony-docker template docs (not project-specific)
+/docs/alpine.md
+/docs/existing-project.md
+/docs/extra-services.md
+/docs/makefile.md
+/docs/mysql.md
+/docs/options.md
+/docs/production.md
+/docs/tls.md
+/docs/troubleshooting.md
+/docs/updating.md
+/docs/xdebug.md
+/docs/digitalocean-dns.png
+/docs/digitalocean-droplet.png
+# Internal planning & operational docs
+/docs/TODO.txt
+/docs/specifications.txt
+/docs/specifications.pdf
+/docs/connexion_VPN.txt
+/docs/PRODUCTION_CHECKLIST.md
+# Keep: CHANGELOG.md, BACKUP.md, PATIENT_ACCESS_LEGAL.md
+###< docs ###
