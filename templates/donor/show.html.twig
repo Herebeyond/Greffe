@@ -344,8 +344,15 @@
                     </thead>
                     <tbody>
                         {% for transplant in donor.transplants %}
+                        {% set has_access = transplant.patient and transplant.patient.id in accessiblePatientIds %}
                         <tr>
-                            <td>{{ transplant.patient.fullName }} ({{ transplant.patient.fileNumber }})</td>
+                            <td>
+                                {% if has_access %}
+                                    {{ transplant.patient.fullName }} ({{ transplant.patient.fileNumber }})
+                                {% else %}
+                                    <span class="restricted-info">Patient non accessible</span>
+                                {% endif %}
+                            </td>
                             <td>{{ transplant.transplantDate|date('d/m/Y') }}</td>
                             <td><span class="badge">{{ transplant.transplantType }}</span></td>
                             <td>{{ transplant.rank }}</td>
@@ -357,8 +364,12 @@
                                 {% endif %}
                             </td>
                             <td class="actions-cell">
-                                <a href="{{ path('app_transplant_show', {patientId: transplant.patient.id, id: transplant.id}) }}" class="btn-small">Voir greffe</a>
-                                <a href="{{ path('app_patient_show', {id: transplant.patient.id}) }}" class="btn-small">Voir patient</a>
+                                {% if has_access %}
+                                    <a href="{{ path('app_transplant_show', {patientId: transplant.patient.id, id: transplant.id}) }}" class="btn-small">Voir greffe</a>
+                                    <a href="{{ path('app_patient_show', {id: transplant.patient.id}) }}" class="btn-small">Voir patient</a>
+                                {% else %}
+                                    <span class="detail-empty">—</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}

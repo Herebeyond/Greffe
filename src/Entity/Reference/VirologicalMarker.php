@@ -4,6 +4,7 @@ namespace App\Entity\Reference;
 
 use App\Repository\Reference\VirologicalMarkerRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: VirologicalMarkerRepository::class)]
 #[ORM\Table(name: 'ref_virological_marker')]
@@ -12,12 +13,15 @@ class VirologicalMarker
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['transplant:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 30, unique: true)]
+    #[Groups(['transplant:read'])]
     private string $code;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['transplant:read'])]
     private string $label;
 
     /** @var string[] Possible status values for this marker */

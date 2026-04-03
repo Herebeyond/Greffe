@@ -4,6 +4,7 @@ namespace App\Entity\Reference;
 
 use App\Repository\Reference\MedicalHistoryTypeRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: MedicalHistoryTypeRepository::class)]
 #[ORM\Table(name: 'ref_medical_history_type')]
@@ -12,12 +13,15 @@ class MedicalHistoryType
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['medical_history:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
+    #[Groups(['medical_history:read'])]
     private string $code;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['medical_history:read'])]
     private string $label;
 
     #[ORM\Column]

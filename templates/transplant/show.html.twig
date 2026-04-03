@@ -191,7 +191,54 @@
                     <span class="detail-label">Protocole</span>
                     <span class="detail-value">{{ transplant.hasProtocol ? 'Oui' : 'Non' }}</span>
                 </div>
+                {% if transplant.protocolFilenames is not empty %}
+                <div class="detail-item">
+                    <span class="detail-label">Fichiers protocole</span>
+                    <span class="detail-value">
+                        {% for filename in transplant.protocolFilenames %}
+                        <div class="existing-file">
+                            <a href="{{ path('app_transplant_download', {patientId: patient.id, id: transplant.id, type: 'protocol', filename: filename}) }}" class="file-link" target="_blank">{{ filename }}</a>
+                            {% if is_granted('CAN_WRITE') %}
+                            <form action="{{ path('app_transplant_delete_file', {patientId: patient.id, id: transplant.id, type: 'protocol', filename: filename}) }}" method="post" class="inline-form"
+                                  onsubmit="return confirm('Supprimer ce fichier ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete-file' ~ transplant.id) }}">
+                                <button type="submit" class="btn-small btn-small-danger">Supprimer</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </span>
+                </div>
+                {% endif %}
             </div>
+        </section>
+
+        {# ===== Operative Report ===== #}
+        <section class="detail-section">
+            <h2>Compte-rendu opératoire</h2>
+            {% if transplant.operativeReportFilenames is not empty %}
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Fichiers</span>
+                    <span class="detail-value">
+                        {% for filename in transplant.operativeReportFilenames %}
+                        <div class="existing-file">
+                            <a href="{{ path('app_transplant_download', {patientId: patient.id, id: transplant.id, type: 'operative-report', filename: filename}) }}" class="file-link" target="_blank">{{ filename }}</a>
+                            {% if is_granted('CAN_WRITE') %}
+                            <form action="{{ path('app_transplant_delete_file', {patientId: patient.id, id: transplant.id, type: 'operative-report', filename: filename}) }}" method="post" class="inline-form"
+                                  onsubmit="return confirm('Supprimer ce fichier ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete-file' ~ transplant.id) }}">
+                                <button type="submit" class="btn-small btn-small-danger">Supprimer</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </span>
+                </div>
+            </div>
+            {% else %}
+            <p class="detail-empty">Aucun compte-rendu opératoire joint</p>
+            {% endif %}
         </section>
 
         {# ===== Comment ===== #}

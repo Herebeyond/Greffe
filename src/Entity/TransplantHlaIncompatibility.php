@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Entity\Reference\HlaLocus;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
@@ -22,11 +23,13 @@ class TransplantHlaIncompatibility
 
     #[ORM\ManyToOne(targetEntity: HlaLocus::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['transplant:read'])]
     private ?HlaLocus $hlaLocus = null;
 
     #[ORM\Column(type: 'smallint')]
     #[Assert\NotBlank(message: "Le nombre d'incompatibilités est obligatoire")]
     #[Assert\Choice(choices: [0, 1, 2], message: 'Valeur invalide (0, 1 ou 2)')]
+    #[Groups(['transplant:read'])]
     private ?int $incompatibilityCount = null;
 
     public function getId(): ?int { return $this->id; }

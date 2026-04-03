@@ -7,10 +7,12 @@ use App\Entity\Reference\ConsultationType as ConsultationTypeRef;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\All;
+use Symfony\Component\Validator\Constraints\File;
 
 class ConsultationType extends AbstractType
 {
@@ -20,12 +22,6 @@ class ConsultationType extends AbstractType
             ->add('date', DateType::class, [
                 'label' => 'Date de consultation',
                 'widget' => 'single_text',
-            ])
-            ->add('practitionerName', TextType::class, [
-                'label' => 'Praticien',
-                'attr' => [
-                    'placeholder' => 'Nom du praticien',
-                ],
             ])
             ->add('type', EntityType::class, [
                 'class' => ConsultationTypeRef::class,
@@ -55,6 +51,25 @@ class ConsultationType extends AbstractType
                 'label' => 'Prochain rendez-vous',
                 'widget' => 'single_text',
                 'required' => false,
+            ])
+            ->add('attachmentFiles', FileType::class, [
+                'label' => 'Pièces jointes',
+                'mapped' => false,
+                'required' => false,
+                'multiple' => true,
+                'constraints' => [
+                    new All([
+                        new File(
+                            maxSize: '10M',
+                            mimeTypes: [
+                                'application/pdf',
+                                'image/jpeg',
+                                'image/png',
+                            ],
+                            mimeTypesMessage: 'Veuillez envoyer un fichier PDF, JPEG ou PNG.',
+                        ),
+                    ]),
+                ],
             ]);
     }
 

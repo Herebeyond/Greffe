@@ -2,6 +2,11 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Reference\DonorType as DonorTypeRef;
 use App\Entity\Reference\ImmunologicalRisk;
 use App\Entity\Reference\ImmunosuppressiveDrug;
@@ -12,12 +17,22 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Transplant entity - represents a kidney transplant (greffe rénale).
  * Links a patient (recipient) to a graft from a donor.
  */
+#[ApiFilter(SearchFilter::class, properties: ['patient' => 'exact'])]
+#[ApiResource(
+    operations: [
+        new GetCollection(security: "is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE')"),
+        new Get(security: "is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE')"),
+    ],
+    normalizationContext: ['groups' => ['transplant:read']],
+    paginationItemsPerPage: 20,
+)]
 #[ORM\Entity(repositoryClass: TransplantRepository::class)]
 #[ORM\Table(name: 'transplant')]
 #[ORM\Index(columns: ['patient_id'], name: 'idx_transplant_patient')]
@@ -26,98 +41,120 @@ class Transplant
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['transplant:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Patient::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['transplant:read'])]
     private ?Patient $patient = null;
 
     // ===== Essential information =====
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Assert\NotBlank(message: 'La date de greffe est obligatoire')]
+    #[Groups(['transplant:read'])]
     private ?\DateTimeInterface $transplantDate = null;
 
     #[ORM\Column(type: Types::SMALLINT)]
     #[Assert\NotBlank(message: 'Le rang de greffe est obligatoire')]
     #[Assert\Positive(message: 'Le rang doit être un nombre positif')]
+    #[Groups(['transplant:read'])]
     private ?int $rank = null;
 
     #[ORM\ManyToOne(targetEntity: DonorTypeRef::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le type de donneur est obligatoire')]
+    #[Groups(['transplant:read'])]
     private ?DonorTypeRef $donorType = null;
 
     // ===== Graft details =====
 
     #[ORM\Column]
+    #[Groups(['transplant:read'])]
     private bool $isGraftFunctional = true;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['transplant:read'])]
     private ?\DateTimeInterface $graftEndDate = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['transplant:read'])]
     private ?string $graftEndCause = null;
 
     #[ORM\ManyToOne(targetEntity: TransplantTypeRef::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le type de transplantation est obligatoire')]
+    #[Groups(['transplant:read'])]
     private ?TransplantTypeRef $transplantType = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['transplant:read'])]
     private ?string $surgeonName = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['transplant:read'])]
     private ?\DateTimeInterface $declampingDate = null;
 
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
+    #[Groups(['transplant:read'])]
     private ?\DateTimeInterface $declampingTime = null;
 
     #[ORM\Column(length: 10)]
     #[Assert\NotBlank(message: 'Le côté de prélèvement est obligatoire')]
     #[Assert\Choice(choices: ['droit', 'gauche'], message: 'Côté de prélèvement invalide')]
+    #[Groups(['transplant:read'])]
     private ?string $harvestSide = null;
 
     #[ORM\Column(length: 10)]
     #[Assert\NotBlank(message: 'Le côté de transplantation est obligatoire')]
     #[Assert\Choice(choices: ['droit', 'gauche'], message: 'Côté de transplantation invalide')]
+    #[Groups(['transplant:read'])]
     private ?string $transplantSide = null;
 
     #[ORM\ManyToOne(targetEntity: PeritonealPosition::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'La position péritonéale est obligatoire')]
+    #[Groups(['transplant:read'])]
     private ?PeritonealPosition $peritonealPosition = null;
 
     /** Total ischemia in minutes (stored as integer, displayed as HH:MM). */
     #[ORM\Column]
     #[Assert\NotBlank(message: "La durée d'ischémie totale est obligatoire")]
     #[Assert\Positive(message: "La durée d'ischémie doit être positive")]
+    #[Groups(['transplant:read'])]
     private ?int $totalIschemiaMinutes = null;
 
     #[ORM\Column]
     #[Assert\NotBlank(message: "La durée d'anastomose est obligatoire")]
     #[Assert\Positive(message: "La durée d'anastomose doit être positive")]
+    #[Groups(['transplant:read'])]
     private ?int $anastomosisDuration = null;
 
     #[ORM\Column]
+    #[Groups(['transplant:read'])]
     private bool $jjProbe = false;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['transplant:read'])]
     private ?string $comment = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $operativeReportFilename = null;
+    #[ORM\Column(type: Types::JSON)]
+    #[Groups(['transplant:read'])]
+    private array $operativeReportFilenames = [];
 
     // ===== Virological status (junction table) =====
 
     /** @var Collection<int, TransplantVirologicalStatus> */
     #[ORM\OneToMany(targetEntity: TransplantVirologicalStatus::class, mappedBy: 'transplant', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[Groups(['transplant:read'])]
     private Collection $virologicalStatuses;
 
     // ===== HLA incompatibility (junction table) =====
 
     /** @var Collection<int, TransplantHlaIncompatibility> */
     #[ORM\OneToMany(targetEntity: TransplantHlaIncompatibility::class, mappedBy: 'transplant', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[Groups(['transplant:read'])]
     private Collection $hlaIncompatibilities;
 
     // ===== Immunological risk =====
@@ -125,6 +162,7 @@ class Transplant
     #[ORM\ManyToOne(targetEntity: ImmunologicalRisk::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le risque immunologique est obligatoire')]
+    #[Groups(['transplant:read'])]
     private ?ImmunologicalRisk $immunologicalRisk = null;
 
     // ===== Immunosuppressive conditioning (ManyToMany) =====
@@ -132,23 +170,28 @@ class Transplant
     /** @var Collection<int, ImmunosuppressiveDrug> */
     #[ORM\ManyToMany(targetEntity: ImmunosuppressiveDrug::class)]
     #[ORM\JoinTable(name: 'transplant_immunosuppressive_drug')]
+    #[Groups(['transplant:read'])]
     private Collection $immunosuppressiveDrugs;
 
     // ===== Dialysis =====
 
     #[ORM\Column]
+    #[Groups(['transplant:read'])]
     private bool $dialysis = false;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['transplant:read'])]
     private ?\DateTimeInterface $lastDialysisDate = null;
 
     // ===== Protocol =====
 
     #[ORM\Column]
+    #[Groups(['transplant:read'])]
     private bool $hasProtocol = false;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $protocolFilename = null;
+    #[ORM\Column(type: Types::JSON)]
+    #[Groups(['transplant:read'])]
+    private array $protocolFilenames = [];
 
     // ===== Donor data (JSON - legacy) =====
 
@@ -159,11 +202,13 @@ class Transplant
 
     #[ORM\ManyToOne(targetEntity: Donor::class, inversedBy: 'transplants')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['transplant:read'])]
     private ?Donor $donor = null;
 
     // ===== Timestamps =====
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    #[Groups(['transplant:read'])]
     private \DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
@@ -420,15 +465,31 @@ class Transplant
         return $this;
     }
 
-    public function getOperativeReportFilename(): ?string
+    public function getOperativeReportFilenames(): array
     {
-        return $this->operativeReportFilename;
+        return $this->operativeReportFilenames;
     }
 
-    public function setOperativeReportFilename(?string $operativeReportFilename): static
+    public function setOperativeReportFilenames(array $operativeReportFilenames): static
     {
-        $this->operativeReportFilename = $operativeReportFilename;
+        $this->operativeReportFilenames = $operativeReportFilenames;
+        return $this;
+    }
 
+    public function addOperativeReportFilename(string $filename): static
+    {
+        if (!in_array($filename, $this->operativeReportFilenames, true)) {
+            $this->operativeReportFilenames[] = $filename;
+        }
+        return $this;
+    }
+
+    public function removeOperativeReportFilename(string $filename): static
+    {
+        $this->operativeReportFilenames = array_values(array_filter(
+            $this->operativeReportFilenames,
+            fn (string $f) => $f !== $filename
+        ));
         return $this;
     }
 
@@ -581,15 +642,31 @@ class Transplant
         return $this;
     }
 
-    public function getProtocolFilename(): ?string
+    public function getProtocolFilenames(): array
     {
-        return $this->protocolFilename;
+        return $this->protocolFilenames;
     }
 
-    public function setProtocolFilename(?string $protocolFilename): static
+    public function setProtocolFilenames(array $protocolFilenames): static
     {
-        $this->protocolFilename = $protocolFilename;
+        $this->protocolFilenames = $protocolFilenames;
+        return $this;
+    }
 
+    public function addProtocolFilename(string $filename): static
+    {
+        if (!in_array($filename, $this->protocolFilenames, true)) {
+            $this->protocolFilenames[] = $filename;
+        }
+        return $this;
+    }
+
+    public function removeProtocolFilename(string $filename): static
+    {
+        $this->protocolFilenames = array_values(array_filter(
+            $this->protocolFilenames,
+            fn (string $f) => $f !== $filename
+        ));
         return $this;
     }
 

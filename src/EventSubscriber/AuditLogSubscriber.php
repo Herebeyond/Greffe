@@ -75,6 +75,17 @@ class AuditLogSubscriber implements EventSubscriberInterface
 
         // Break-the-glass
         'app_break_the_glass' => [AuditLog::ACTION_BREAK_THE_GLASS, 'Patient'],
+
+        // Patient access management
+        'app_patient_access' => [AuditLog::ACTION_VIEW, 'PatientAccess'],
+        'app_patient_access_grant' => [AuditLog::ACTION_CREATE, 'PatientAccess'],
+        'app_patient_access_revoke' => [AuditLog::ACTION_DELETE, 'PatientAccess'],
+        'app_patient_access_transfer' => [AuditLog::ACTION_EDIT, 'PatientAccess'],
+
+        // Notifications
+        'app_notification_index' => [AuditLog::ACTION_VIEW, 'Notification'],
+        'app_notification_read' => [AuditLog::ACTION_EDIT, 'Notification'],
+        'app_notification_read_all' => [AuditLog::ACTION_EDIT, 'Notification'],
     ];
 
     public function __construct(

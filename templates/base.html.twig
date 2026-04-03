@@ -31,6 +31,9 @@
                     <a href="{{ path('app_admin_users') }}" class="header-link header-admin">Administration</a>
                     <a href="{{ path('app_admin_audit_logs') }}" class="header-link header-admin">Journal d'audit</a>
                     {% endif %}
+                    <a href="{{ path('app_notification_index') }}" class="header-link header-notification" title="Notifications">
+                        🔔{% if unread_notification_count > 0 %}<span class="notification-badge">{{ unread_notification_count }}</span>{% endif %}
+                    </a>
                     <a href="{{ path('app_profile') }}" class="header-link header-profile">{{ app.user.fullName }}</a>
                     <a href="{{ path('app_logout') }}" class="header-link">Déconnexion</a>
                 </nav>
@@ -38,6 +41,13 @@
             </div>
             {% block header %}{% endblock %}
         </header>
+
+        {% if app.user and unread_notification_count > 0 %}
+        <div class="notification-banner">
+            <span>🔔 Vous avez {{ unread_notification_count }} notification{{ unread_notification_count > 1 ? 's' : '' }} non lue{{ unread_notification_count > 1 ? 's' : '' }}.</span>
+            <a href="{{ path('app_notification_index') }}">Voir les notifications</a>
+        </div>
+        {% endif %}
 
         <main>
             {% block body %}{% endblock %}

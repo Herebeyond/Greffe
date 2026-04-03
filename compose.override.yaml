@@ -16,6 +16,7 @@ services:
       # creates an anonymous volume that is lost on rebuild)
       - encryption-key:/app/var/encryption
     environment:
+      SERVER_NAME: "localhost, 192.168.137.1, php:80"
       FRANKENPHP_WORKER_CONFIG: watch
       MERCURE_EXTRA_DIRECTIVES: demo
       # See https://xdebug.org/docs/all_settings#mode
@@ -25,6 +26,18 @@ services:
       # Ensure that host.docker.internal is correctly defined on Linux
       - host.docker.internal:host-gateway
     tty: true
+
+  # Flutter mobile APK — download page at http://localhost:3000 or http://192.168.137.1:3000
+  mobile:
+    build:
+      context: ../greffe_renale_mobile
+      args:
+        API_BASE_URL: https://192.168.137.1
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - php
 ###> symfony/mercure-bundle ###
 ###< symfony/mercure-bundle ###
 

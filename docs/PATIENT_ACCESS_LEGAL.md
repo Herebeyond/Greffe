@@ -3,9 +3,9 @@
 ## Context
 
 This document records the legal analysis for the patient file access model
-implemented in this application. The chosen model is a **hybrid approach**:
-CHU service practitioners access all patients, external city nephrologists
-access only their assigned patients.
+implemented in this application. The chosen model requires **explicit assignment**:
+all practitioners must be assigned to patients via the `patient_access` table,
+with primary and secondary access levels.
 
 ---
 
@@ -49,8 +49,8 @@ information for care coordination **without explicit patient consent**, provided
 ### 1. "Need to Know" Principle (principe du besoin d'en connaître)
 
 Access is limited to practitioners who are **explicitly assigned** to a patient.
-Even within the CHU, a doctor cannot access a patient's file unless they are
-in the `patient_authorized_user` join table.
+Even within the CHU, a doctor cannot access a patient's file unless they have
+a record in the `patient_access` table (primary or secondary level).
 
 When emergency access is needed for an unassigned patient, healthcare
 professionals can use the **break-the-glass** mechanism (see §5 below),
@@ -84,16 +84,25 @@ the sharing is for care coordination within the extended care team.
 
 ### Technical Design
 
-1. **Patient.authorizedPractitioners** (ManyToMany → User): Join table
-   `patient_authorized_user` linking specific patients to their practitioners.
+1. **PatientAccess entity** (`patient_access` table): Links patients to
+   practitioners with access levels:
+   - **Primary**: Doctor who manages the patient. Can grant/revoke secondary
+     access and transfer primary to another doctor (loses own access).
+   - **Secondary**: Other doctors or nurses on the care team. View/edit
+     based on role but cannot manage access assignments.
+   - `ROLE_SUPER_ADMIN` can manage all access assignments without having
+     patient data access themselves.
 
 2. **PatientAccessVoter**: Symfony Voter checking access with this logic:
    - `ROLE_TECH_ADMIN` → denied (no patient data access)
-   - User in `patient.authorizedPractitioners` → granted (assigned)
+   - User has a `PatientAccess` record for this patient → granted (assigned)
    - Active `BreakTheGlassAccess` for this user+patient → granted (emergency)
    - Otherwise → denied
 
-3. **AccessDeniedHandler**: When a medical professional (ROLE_DOCTOR, ROLE_NURSE)
+3. **PatientAccessController**: Manages grant, revoke, and transfer
+   operations at `/patients/{patientId}/access`.
+
+4. **AccessDeniedHandler**: When a medical professional (ROLE_DOCTOR, ROLE_NURSE)
    is denied access to a patient, they are redirected to the break-the-glass
    form instead of seeing a 403 error.
 

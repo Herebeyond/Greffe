@@ -4,6 +4,7 @@ namespace App\Entity\Reference;
 
 use App\Repository\Reference\DeathCauseRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: DeathCauseRepository::class)]
 #[ORM\Table(name: 'ref_death_cause')]
@@ -12,12 +13,15 @@ class DeathCause
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['donor:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
+    #[Groups(['donor:read'])]
     private string $code;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['donor:read'])]
     private string $label;
 
     #[ORM\Column]

@@ -165,6 +165,35 @@
             <div class="form-group">
                 {{ form_row(form.hasProtocol) }}
             </div>
+            <div class="form-group">
+                {% if transplant.protocolFilenames is not empty %}
+                <div class="existing-files-list">
+                    {% for filename in transplant.protocolFilenames %}
+                    <div class="existing-file">
+                        <a href="{{ path('app_transplant_download', {patientId: patient.id, id: transplant.id, type: 'protocol', filename: filename}) }}" class="file-link" target="_blank">{{ filename }}</a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {{ form_row(form.protocolFiles) }}
+            </div>
+        </fieldset>
+
+        {# File uploads #}
+        <fieldset class="form-fieldset">
+            <legend>Documents joints</legend>
+            <div class="form-group">
+                {% if transplant.operativeReportFilenames is not empty %}
+                <div class="existing-files-list">
+                    {% for filename in transplant.operativeReportFilenames %}
+                    <div class="existing-file">
+                        <a href="{{ path('app_transplant_download', {patientId: patient.id, id: transplant.id, type: 'operative-report', filename: filename}) }}" class="file-link" target="_blank">{{ filename }}</a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {{ form_row(form.operativeReportFiles) }}
+            </div>
         </fieldset>
 
         {# Comment #}

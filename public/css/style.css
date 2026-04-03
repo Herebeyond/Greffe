@@ -990,9 +990,10 @@ main {
     padding: 0.75rem 1rem;
     text-align: left;
     border-bottom: 1px solid #eee;
-    hyphens: none;
-    overflow-wrap: normal;
-    word-break: keep-all;
+}
+
+.data-table td .badge {
+    white-space: normal;
 }
 
 .data-table th {
@@ -1126,6 +1127,7 @@ main {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    min-width: 0;
 }
 
 .detail-label {
@@ -1138,6 +1140,11 @@ main {
 .detail-value {
     font-size: 1rem;
     color: #333;
+    overflow-wrap: anywhere;
+}
+
+.detail-value .badge {
+    white-space: normal;
 }
 
 .detail-value a {
@@ -1889,6 +1896,216 @@ main {
     color: #27ae60;
 }
 
+/* ===== Notification System ===== */
+
+/* Header notification link & badge */
+.header-notification {
+    position: relative;
+    font-size: 1.1rem;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -6px;
+    right: -10px;
+    background-color: #e74c3c;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* Notification banner (headband) */
+.notification-banner {
+    background-color: #3498db;
+    color: white;
+    padding: 0.6rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.notification-banner a {
+    color: white;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.notification-banner a:hover {
+    opacity: 0.9;
+}
+
+/* Notification page */
+.notification-page {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.notification-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.notification-badge-large {
+    background-color: #e74c3c;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    vertical-align: middle;
+}
+
+/* Notification list */
+.notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 1rem;
+    transition: background-color 0.2s;
+}
+
+.notification-unread {
+    background-color: #eaf4fd;
+    border-left: 4px solid #3498db;
+}
+
+.notification-read {
+    opacity: 0.7;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.4rem;
+}
+
+.notification-type {
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.notification-type-access_granted {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.notification-type-access_revoked {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.notification-type-access_transferred {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.notification-type-donor_linked {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.notification-type-patient_edited {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+
+.notification-date {
+    color: #888;
+    font-size: 0.8rem;
+}
+
+.notification-message {
+    margin: 0.3rem 0;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.notification-meta {
+    display: block;
+    color: #888;
+    font-size: 0.8rem;
+    margin-top: 0.2rem;
+}
+
+.notification-action {
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+.notification-action .btn-small {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.85rem;
+    border: 1px solid #3498db;
+    background: white;
+    color: #3498db;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.notification-action .btn-small:hover {
+    background: #3498db;
+    color: white;
+}
+
+.notification-read-indicator {
+    color: #27ae60;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    margin-left: 1rem;
+    align-self: center;
+}
+
+.btn-secondary {
+    padding: 0.5rem 1rem;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #888;
+    font-size: 1.1rem;
+}
+
 .password-rules li.rule-invalid {
     color: #e74c3c;
 }
@@ -2149,4 +2366,113 @@ main:has(.audit-container) {
 .badge-donor-deceased_cardiac_arrest {
     background: #fdebd0;
     color: #b9770e;
+}
+
+/* ============================================================
+   PATIENT ACCESS MANAGEMENT
+   ============================================================ */
+
+.badge-access-primary {
+    background: #1a5276;
+    color: #fff;
+}
+
+.badge-access-secondary {
+    background: #d5e8f9;
+    color: #1a5276;
+}
+
+.access-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.access-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.access-item:last-child {
+    border-bottom: none;
+}
+
+.access-user {
+    font-weight: 500;
+}
+
+.access-grant-form .form-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.access-grant-form label {
+    font-weight: 500;
+}
+
+.access-grant-form select {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    min-width: 300px;
+}
+
+.inline-form {
+    display: inline;
+}
+
+.section-actions {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.empty-message {
+    color: #888;
+    font-style: italic;
+}
+
+.restricted-info {
+    color: #888;
+    font-style: italic;
+}
+
+/* File upload & display */
+.file-link {
+    color: #2980b9;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.file-link:hover {
+    text-decoration: underline;
+}
+
+.existing-file {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: #f0f7ff;
+    border: 1px solid #b8d4f0;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.existing-files-list {
+    margin-bottom: 1rem;
+}
+
+.existing-files-title {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #2c3e50;
 }

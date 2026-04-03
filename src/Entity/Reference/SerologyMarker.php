@@ -4,6 +4,7 @@ namespace App\Entity\Reference;
 
 use App\Repository\Reference\SerologyMarkerRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: SerologyMarkerRepository::class)]
 #[ORM\Table(name: 'ref_serology_marker')]
@@ -12,12 +13,15 @@ class SerologyMarker
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['donor:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 20, unique: true)]
+    #[Groups(['donor:read'])]
     private string $code;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['donor:read'])]
     private string $label;
 
     #[ORM\Column]

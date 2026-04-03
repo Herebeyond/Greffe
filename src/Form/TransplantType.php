@@ -13,12 +13,15 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\All;
+use Symfony\Component\Validator\Constraints\File;
 
 class TransplantType extends AbstractType
 {
@@ -240,6 +243,46 @@ class TransplantType extends AbstractType
             ->add('hasProtocol', CheckboxType::class, [
                 'label' => 'Protocole',
                 'required' => false,
+            ])
+
+            // ===== File uploads (unmapped) =====
+            ->add('operativeReportFiles', FileType::class, [
+                'label' => 'Compte-rendu opératoire',
+                'mapped' => false,
+                'required' => false,
+                'multiple' => true,
+                'constraints' => [
+                    new All([
+                        new File(
+                            maxSize: '10M',
+                            mimeTypes: [
+                                'application/pdf',
+                                'image/jpeg',
+                                'image/png',
+                            ],
+                            mimeTypesMessage: 'Veuillez envoyer un fichier PDF, JPEG ou PNG.',
+                        ),
+                    ]),
+                ],
+            ])
+            ->add('protocolFiles', FileType::class, [
+                'label' => 'Fichier protocole',
+                'mapped' => false,
+                'required' => false,
+                'multiple' => true,
+                'constraints' => [
+                    new All([
+                        new File(
+                            maxSize: '10M',
+                            mimeTypes: [
+                                'application/pdf',
+                                'image/jpeg',
+                                'image/png',
+                            ],
+                            mimeTypesMessage: 'Veuillez envoyer un fichier PDF, JPEG ou PNG.',
+                        ),
+                    ]),
+                ],
             ])
         ;
     }

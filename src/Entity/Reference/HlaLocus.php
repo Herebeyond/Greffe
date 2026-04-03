@@ -4,6 +4,7 @@ namespace App\Entity\Reference;
 
 use App\Repository\Reference\HlaLocusRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: HlaLocusRepository::class)]
 #[ORM\Table(name: 'ref_hla_locus')]
@@ -12,12 +13,15 @@ class HlaLocus
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['donor:read', 'transplant:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 10, unique: true)]
+    #[Groups(['donor:read', 'transplant:read'])]
     private string $code;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['donor:read', 'transplant:read'])]
     private string $label;
 
     #[ORM\Column]

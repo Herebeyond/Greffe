@@ -2,13 +2,28 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Reference\EducationTopic;
 use App\Entity\Reference\PatientProgress as PatientProgressRef;
 use App\Repository\TherapeuticEducationRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ApiFilter(SearchFilter::class, properties: ['patient' => 'exact'])]
+#[ApiResource(
+    operations: [
+        new GetCollection(security: "is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE')"),
+        new Get(security: "is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE')"),
+    ],
+    normalizationContext: ['groups' => ['etp:read']],
+    paginationItemsPerPage: 20,
+)]
 #[ORM\Entity(repositoryClass: TherapeuticEducationRepository::class)]
 #[ORM\Table(name: 'therapeutic_education')]
 class TherapeuticEducation
@@ -16,39 +31,49 @@ class TherapeuticEducation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['etp:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Patient::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['etp:read'])]
     private ?Patient $patient = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Assert\NotBlank(message: 'La date de la séance est obligatoire')]
+    #[Groups(['etp:read'])]
     private ?\DateTimeInterface $sessionDate = null;
 
     #[ORM\ManyToOne(targetEntity: EducationTopic::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le thème est obligatoire')]
+    #[Groups(['etp:read'])]
     private ?EducationTopic $topic = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'Le nom de l\'éducateur est obligatoire')]
+    #[Groups(['etp:read'])]
     private ?string $educator = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['etp:read'])]
     private ?string $objectives = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['etp:read'])]
     private ?string $observations = null;
 
     #[ORM\ManyToOne(targetEntity: PatientProgressRef::class)]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['etp:read'])]
     private ?PatientProgressRef $patientProgress = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['etp:read'])]
     private ?\DateTimeInterface $nextSessionDate = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    #[Groups(['etp:read'])]
     private \DateTimeImmutable $createdAt;
 
     public function __construct()

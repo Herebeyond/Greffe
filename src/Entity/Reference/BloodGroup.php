@@ -4,6 +4,7 @@ namespace App\Entity\Reference;
 
 use App\Repository\Reference\BloodGroupRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: BloodGroupRepository::class)]
 #[ORM\Table(name: 'ref_blood_group')]
@@ -12,12 +13,15 @@ class BloodGroup
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['patient:read', 'donor:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 5, unique: true)]
+    #[Groups(['patient:read', 'donor:read'])]
     private string $code;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['patient:read', 'donor:read'])]
     private string $label;
 
     #[ORM\Column]

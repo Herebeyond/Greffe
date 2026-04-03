@@ -4,6 +4,7 @@ namespace App\Entity\Reference;
 
 use App\Repository\Reference\SurgicalApproachRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: SurgicalApproachRepository::class)]
 #[ORM\Table(name: 'ref_surgical_approach')]
@@ -12,12 +13,15 @@ class SurgicalApproach
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['donor:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 30, unique: true)]
+    #[Groups(['donor:read'])]
     private string $code;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['donor:read'])]
     private string $label;
 
     #[ORM\Column]

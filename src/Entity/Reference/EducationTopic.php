@@ -4,6 +4,7 @@ namespace App\Entity\Reference;
 
 use App\Repository\Reference\EducationTopicRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: EducationTopicRepository::class)]
 #[ORM\Table(name: 'ref_education_topic')]
@@ -12,12 +13,15 @@ class EducationTopic
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['etp:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
+    #[Groups(['etp:read'])]
     private string $code;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['etp:read'])]
     private string $label;
 
     #[ORM\Column]

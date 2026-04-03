@@ -9,6 +9,7 @@ use App\Entity\DonorHlaTyping;
 use App\Entity\DonorSerology;
 use App\Entity\MedicalHistory;
 use App\Entity\Patient;
+use App\Entity\PatientAccess;
 use App\Entity\Transplant;
 use App\Entity\TransplantHlaIncompatibility;
 use App\Entity\TransplantVirologicalStatus;
@@ -685,40 +686,40 @@ class AppFixtures extends Fixture
         /** @var User $doctorMartin */
         $doctorMartin = $this->getReference('doctor-martin', User::class);
 
-        // External nephrologist: patients 2024-001 through 2024-005
+        // External nephrologist: patients 2024-001 through 2024-005 (secondary — not the primary doctor)
         $externalPatients = $manager->getRepository(Patient::class)->findBy(
             ['fileNumber' => ['2024-001', '2024-002', '2024-003', '2024-004', '2024-005']]
         );
         foreach ($externalPatients as $p) {
-            $p->addAuthorizedPractitioner($externalDoctor);
+            $this->grantAccess($manager, $p, $externalDoctor, PatientAccess::LEVEL_SECONDARY, $doctorDoe);
         }
 
-        // Dr. Doe: patients 2024-001 through 2024-015 (including 2024-008, 2024-009)
+        // Dr. Doe: patients 2024-001 through 2024-015 (primary)
         $doePatients = $manager->getRepository(Patient::class)->findBy(
             ['fileNumber' => ['2024-001', '2024-002', '2024-003', '2024-004', '2024-005',
                               '2024-006', '2024-007', '2024-008', '2024-009', '2024-010',
                               '2024-011', '2024-012', '2024-013', '2024-014', '2024-015']]
         );
         foreach ($doePatients as $p) {
-            $p->addAuthorizedPractitioner($doctorDoe);
+            $this->grantAccess($manager, $p, $doctorDoe, PatientAccess::LEVEL_PRIMARY);
         }
 
-        // Benjamin: patients 2024-016 through 2024-030
+        // Benjamin: patients 2024-016 through 2024-030 (primary)
         $benjaminPatients = $manager->getRepository(Patient::class)->findBy(
             ['fileNumber' => ['2024-016', '2024-017', '2024-018', '2024-019', '2024-020',
                               '2024-021', '2024-022', '2024-023', '2024-024', '2024-025',
                               '2024-026', '2024-027', '2024-028', '2024-029', '2024-030']]
         );
         foreach ($benjaminPatients as $p) {
-            $p->addAuthorizedPractitioner($doctorBenjamin);
+            $this->grantAccess($manager, $p, $doctorBenjamin, PatientAccess::LEVEL_PRIMARY);
         }
 
-        // Nurse Curie: same patients as Dr. Doe (read-only)
+        // Nurse Curie: same patients as Dr. Doe (secondary — read-only based on role)
         foreach ($doePatients as $p) {
-            $p->addAuthorizedPractitioner($nurseCurie);
+            $this->grantAccess($manager, $p, $nurseCurie, PatientAccess::LEVEL_SECONDARY, $doctorDoe);
         }
 
-        // Dr. Martin: patients 2024-031 through 2024-050 (senior doctor)
+        // Dr. Martin: patients 2024-031 through 2024-050 (primary — senior doctor)
         $martinPatients = $manager->getRepository(Patient::class)->findBy(
             ['fileNumber' => ['2024-031', '2024-032', '2024-033', '2024-034', '2024-035',
                               '2024-036', '2024-037', '2024-038', '2024-039', '2024-040',
@@ -726,10 +727,28 @@ class AppFixtures extends Fixture
                               '2024-046', '2024-047', '2024-048', '2024-049', '2024-050']]
         );
         foreach ($martinPatients as $p) {
-            $p->addAuthorizedPractitioner($doctorMartin);
+            $this->grantAccess($manager, $p, $doctorMartin, PatientAccess::LEVEL_PRIMARY);
         }
 
         $manager->flush();
+    }
+
+    /**
+     * Helper to create a PatientAccess record in fixtures.
+     */
+    private function grantAccess(
+        ObjectManager $manager,
+        Patient $patient,
+        User $user,
+        string $level,
+        ?User $grantedBy = null,
+    ): void {
+        $access = new PatientAccess();
+        $access->setPatient($patient);
+        $access->setUser($user);
+        $access->setAccessLevel($level);
+        $access->setGrantedBy($grantedBy);
+        $manager->persist($access);
     }
 
     // ===================================================================

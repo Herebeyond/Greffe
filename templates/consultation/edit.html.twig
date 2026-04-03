@@ -11,6 +11,24 @@
     </div>
 
     <div class="form-container">
+        {% if consultation.attachmentFilenames is not empty %}
+        <div class="existing-files-list">
+            <span class="existing-files-title">Fichiers joints :</span>
+            {% for filename in consultation.attachmentFilenames %}
+            <div class="existing-file">
+                <a href="{{ path('app_consultation_download', {patientId: patient.id, id: consultation.id, filename: filename}) }}" class="file-link" target="_blank">{{ filename }}</a>
+                {% if is_granted('CAN_WRITE') %}
+                <form action="{{ path('app_consultation_delete_file', {patientId: patient.id, id: consultation.id, filename: filename}) }}" method="post" class="inline-form"
+                      onsubmit="return confirm('Supprimer ce fichier ?');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete-file' ~ consultation.id) }}">
+                    <button type="submit" class="btn-small btn-small-danger">Supprimer</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         {{ form_start(form) }}
             <div class="form-grid">
                 <div class="form-group">
@@ -21,9 +39,6 @@
                 </div>
             </div>
             <div class="form-group">
-                {{ form_row(form.practitionerName) }}
-            </div>
-            <div class="form-group">
                 {{ form_row(form.observations) }}
             </div>
             <div class="form-group">
@@ -31,6 +46,9 @@
             </div>
             <div class="form-group">
                 {{ form_row(form.nextAppointmentDate) }}
+            </div>
+            <div class="form-group">
+                {{ form_row(form.attachmentFiles) }}
             </div>
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Enregistrer</button>

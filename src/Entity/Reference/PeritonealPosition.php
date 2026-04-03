@@ -4,6 +4,7 @@ namespace App\Entity\Reference;
 
 use App\Repository\Reference\PeritonealPositionRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: PeritonealPositionRepository::class)]
 #[ORM\Table(name: 'ref_peritoneal_position')]
@@ -12,12 +13,15 @@ class PeritonealPosition
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['transplant:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 30, unique: true)]
+    #[Groups(['transplant:read'])]
     private string $code;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['transplant:read'])]
     private string $label;
 
     #[ORM\Column]

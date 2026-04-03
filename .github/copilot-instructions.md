@@ -41,23 +41,31 @@ The platform will integrate with the French national organ allocation system (CR
 ├── public/                 # Web root
 ├── src/                    # Application source code
 │   ├── Command/            # Console commands (encryption key generation)
-│   ├── Controller/         # Controllers (Home, Login, Patient, Consultation,
+│   ├── Controller/         # Controllers (Home, Login, Patient, PatientAccess, Consultation,
 │   │                       #   BiologicalResult, MedicalHistory, TherapeuticEducation,
-│   │                       #   Transplant, Donor, Admin, Password, Profile, BreakTheGlass)
+│   │                       #   Transplant, Donor, Admin, Password, Profile, BreakTheGlass,
+│   │                       #   Notification)
+│   │   └── Api/            # API controllers (ApiLogin, FileUploadApi)
 │   ├── DataFixtures/       # Doctrine fixtures for test data
-│   ├── Doctrine/           # Custom Doctrine types (encrypted_string)
-│   ├── Entity/             # Doctrine entities (User, Patient, Consultation,
+│   ├── Doctrine/           # Custom Doctrine types (encrypted_string),
+│   │                       #   ApiPatientAccessExtension (API query filtering)
+│   ├── Entity/             # Doctrine entities (User, Patient, PatientAccess, Consultation,
 │   │                       #   BiologicalResult, MedicalHistory, TherapeuticEducation,
 │   │                       #   Transplant, Donor, AuditLog, LoginActivity, PasswordHistory,
-│   │                       #   BreakTheGlassAccess)
-│   ├── EventSubscriber/    # AuditLogSubscriber (route-based audit logging)
+│   │                       #   BreakTheGlassAccess, Notification)
+│   ├── EventSubscriber/    # AuditLogSubscriber (route-based audit logging),
+│   │                       #   ApiAccessSubscriber (blocks admin API access),
+│   │                       #   ApiLoginRateLimitSubscriber (rate limiting),
+│   │                       #   ConsultationSubscriber (auto-sets createdBy + practitionerName),
+│   │                       #   JWTAuthenticationSuccessSubscriber (adds fullName to login response)
 │   ├── Form/               # Form types (Patient, Consultation, BiologicalResult,
 │   │                       #   MedicalHistory, TherapeuticEducation, Transplant,
 │   │                       #   DonorData, Donor, User, Password, BreakTheGlass, etc.)
 │   ├── Repository/         # Doctrine repositories
 │   ├── Security/           # Voters (PatientAccessVoter, WriteAccessVoter),
 │   │                       #   LoginActivityListener
-│   ├── Service/            # EncryptionService
+│   ├── Service/            # EncryptionService, FileUploadService, NotificationService
+│   ├── Twig/               # Twig extensions (NotificationExtension for global unread count)
 │   └── Kernel.php          # Application kernel
 ├── templates/              # Twig templates organized by feature
 ├── translations/           # Translation files
@@ -97,7 +105,8 @@ This ensures Copilot always has accurate context about the project's current sta
 - **PHP Version**: 8.4+
 - **Database**: PostgreSQL 16 (via Doctrine ORM)
 - **Containerization**: Docker with FrankenPHP
-- **Authentication**: Symfony Security bundle with form login
+- **Authentication**: Symfony Security bundle with form login + JWT (API)
+- **API**: API Platform v4.3.2 with JWT authentication (Lexik)
 - **Encryption**: paragonie/halite (libsodium-based field-level encryption)
 
 #### Symfony Packages
@@ -108,6 +117,14 @@ This ensures Copilot always has accurate context about the project's current sta
   - `symfony/translation` - Internationalization
   - `symfony/property-info` - Property metadata
   - `symfony/cache` - Caching system
+  - `symfony/expression-language` (8.0.4) - Expression language for API Platform security
+  - `symfony/rate-limiter` (8.0.7) - Rate limiting for API login endpoint
+
+#### API & Authentication Packages
+  - `api-platform/symfony` (4.3.2) - API Platform core integration
+  - `api-platform/doctrine-orm` (4.3.2) - API Platform Doctrine ORM bridge
+  - `lexik/jwt-authentication-bundle` (3.2.0) - JWT authentication for API
+  - `nelmio/cors-bundle` (2.6.1) - CORS headers for mobile app API access
 
 #### Doctrine Packages (ORM & Database)
   - `doctrine/orm` (3.6.2) - Object-Relational Mapper
@@ -143,8 +160,53 @@ This ensures Copilot always has accurate context about the project's current sta
 ### Planned (To Be Installed)
 
 - **Frontend**: Bootstrap, Stimulus/Turbo
-- **API**: API Platform
 - **Admin**: EasyAdmin bundle
+- **Mobile**: Flutter (Dart) application consuming the API
+
+---
+
+## API (Mobile App Backend)
+
+The application exposes a REST/JSON-LD API via **API Platform** for a Flutter mobile app.
+
+### Authentication
+
+- **Endpoint**: `POST /api/login` with `{"email": "...", "password": "..."}` → returns `{"token": "..."}`
+- **JWT**: Lexik JWT Authentication Bundle, RSA keypair in `config/jwt/`, token TTL: 3600s
+- **Usage**: All API requests require `Authorization: Bearer <token>` header
+
+### Exposed Entities (API Resources)
+
+| Entity | Operations | Security |
+|--------|-----------|----------|
+| Patient | GetCollection, Get | ROLE_DOCTOR or ROLE_NURSE, filtered by PatientAccessVoter |
+| Consultation | GetCollection, Get, Post, Put | ROLE_DOCTOR or ROLE_NURSE (read), ROLE_DOCTOR (write, Put restricted to creator) |
+| BiologicalResult | GetCollection, Get | ROLE_DOCTOR or ROLE_NURSE |
+| MedicalHistory | GetCollection, Get | ROLE_DOCTOR or ROLE_NURSE |
+| TherapeuticEducation | GetCollection, Get | ROLE_DOCTOR or ROLE_NURSE |
+| Transplant | GetCollection, Get | ROLE_DOCTOR or ROLE_NURSE |
+| Donor | GetCollection, Get | ROLE_DOCTOR, ROLE_NURSE, or ROLE_TRANSPLANT_COORDINATOR |
+| Notification | GetCollection, Get, Patch | ROLE_USER (own only) |
+
+### Security Infrastructure
+
+- **ApiAccessSubscriber**: Blocks `ROLE_TECH_ADMIN` / `ROLE_SUPER_ADMIN` from all API endpoints (403)
+- **ApiPatientAccessExtension**: Doctrine query extension that filters collections by user's patient access (same as web PatientAccessVoter)
+- **ApiLoginRateLimitSubscriber**: Rate limits login to 5 attempts/minute per IP (429)
+- **CORS**: NelmioCorsBundle configured for `/api/` prefix, allows all origins (development)
+
+### File Upload
+
+- **Endpoint**: `POST /api/consultations/{id}/upload` (multipart/form-data)
+- **Controller**: `FileUploadApiController`
+- **Security**: ROLE_DOCTOR + VIEW_PATIENT voter check
+
+### Serialization Groups
+
+All entities use serialization groups to control output:
+- `patient:read`, `consultation:read`, `consultation:write`, `bio:read`, `medical_history:read`, `etp:read`, `transplant:read`, `donor:read`, `notification:read`, `notification:write`
+- Reference entities (BloodGroup, DonorType, etc.) include groups matching their parent entity
+- Junction entities (DonorHlaTyping, DonorSerology, etc.) include appropriate read groups
 
 ---
 
@@ -445,10 +507,28 @@ Per-patient access is enforced by `PatientAccessVoter` (attribute: `VIEW_PATIENT
 
 | User Type | Access Level |
 |-----------|-------------|
-| Any practitioner (doctor, nurse) | Only assigned patients (via `patient_authorized_user` join table) |
+| Any practitioner (doctor, nurse) | Only assigned patients (via `patient_access` table with access levels) |
 | Any practitioner with active BTG | Temporary emergency access (3h, justified, audited) |
-| `ROLE_TECH_ADMIN` / `ROLE_SUPER_ADMIN` | **No patient access** (system management only) |
+| `ROLE_TECH_ADMIN` / `ROLE_SUPER_ADMIN` | **No patient data access** (system management only, but SUPER_ADMIN can manage access assignments) |
 | `ROLE_TRANSPLANT_COORDINATOR` | **No patient access** (donor management only) |
+
+#### Access Levels (PatientAccess entity)
+
+The `patient_access` table replaces the old `patient_authorized_user` join table and supports two levels:
+
+| Level | Who | Can manage access | Notes |
+|-------|-----|-------------------|-------|
+| **Primary** | Doctors only | Yes (grant, revoke, transfer) | One per patient. Can transfer to another doctor (loses own access). |
+| **Secondary** | Doctors or nurses | No | View/edit based on role. Cannot manage access. |
+
+**Access management rules:**
+- **Primary holder** or **SUPER_ADMIN** can grant secondary access to other doctors/nurses
+- **Primary holder** can transfer primary to another doctor (loses all access, target becomes primary)
+- **SUPER_ADMIN** can grant, revoke any access, and transfer primary between doctors
+- **TECH_ADMIN** cannot manage patient access (no patient data access)
+- When a patient is created, the creating doctor automatically receives primary access
+
+**Routes:** `/patients/{patientId}/access` (managed by `PatientAccessController`)
 
 > **Note:** The `isChuPractitioner` field is deprecated and no longer used for access control.
 > All practitioners must be explicitly assigned to patients they need to access.
@@ -456,6 +536,7 @@ Per-patient access is enforced by `PatientAccessVoter` (attribute: `VIEW_PATIENT
 
 - **Voters**: `WriteAccessVoter` (CAN_WRITE, CAN_DELETE) + `PatientAccessVoter` (VIEW_PATIENT)
 - **Break-the-glass**: `BreakTheGlassAccess` entity + `BreakTheGlassController` for emergency access
+- **Access delegation**: `PatientAccess` entity + `PatientAccessController` for managing access levels
 - **Legal reference**: See `docs/PATIENT_ACCESS_LEGAL.md`
 
 ---

@@ -11,10 +11,13 @@ use App\Form\DonorDataType;
 use App\Repository\TransplantRepository;
 use App\Repository\Reference\HlaLocusRepository;
 use App\Repository\Reference\VirologicalMarkerRepository;
+use App\Service\FileUploadService;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -22,10 +25,13 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_USER')]
 class TransplantController extends AbstractController
 {
+    private const UPLOAD_DIR = 'transplants';
+
     public function __construct(
         private TransplantRepository $transplantRepository,
         private HlaLocusRepository $hlaLocusRepository,
         private VirologicalMarkerRepository $virologicalMarkerRepository,
+        private FileUploadService $fileUploadService,
     ) {
     }
 
@@ -84,6 +90,7 @@ class TransplantController extends AbstractController
             }
             $this->handleHlaIncompatibilities($form, $transplant);
             $this->handleVirologicalStatuses($form, $transplant);
+            $this->handleFileUploads($form, $transplant);
             $this->transplantRepository->save($transplant);
             $this->addFlash('success', 'Greffe ajoutée avec succès');
 
@@ -129,6 +136,7 @@ class TransplantController extends AbstractController
             }
             $this->handleHlaIncompatibilities($form, $transplant);
             $this->handleVirologicalStatuses($form, $transplant);
+            $this->handleFileUploads($form, $transplant);
             $transplant->setUpdatedAt(new \DateTimeImmutable());
             $this->transplantRepository->save($transplant);
             $this->addFlash('success', 'Greffe modifiée avec succès');
@@ -153,11 +161,66 @@ class TransplantController extends AbstractController
         $this->denyAccessUnlessGranted('VIEW_PATIENT', $patient);
 
         if ($this->isCsrfTokenValid('delete' . $transplant->getId(), $request->request->get('_token'))) {
+            // Clean up uploaded files
+            $this->fileUploadService->deleteMultiple($transplant->getOperativeReportFilenames(), self::UPLOAD_DIR);
+            $this->fileUploadService->deleteMultiple($transplant->getProtocolFilenames(), self::UPLOAD_DIR);
             $this->transplantRepository->remove($transplant);
             $this->addFlash('success', 'Greffe supprimée avec succès');
         }
 
         return $this->redirectToRoute('app_transplant_index', ['patientId' => $patient->getId()]);
+    }
+
+    #[Route('/{id}/download/{type}/{filename}', name: 'app_transplant_download', requirements: ['id' => '\d+', 'type' => 'operative-report|protocol'])]
+    public function download(#[MapEntity(id: 'patientId')] Patient $patient, Transplant $transplant, string $type, string $filename): BinaryFileResponse
+    {
+        $this->denyAccessUnlessGranted('VIEW_PATIENT', $patient);
+
+        $filenames = match ($type) {
+            'operative-report' => $transplant->getOperativeReportFilenames(),
+            'protocol' => $transplant->getProtocolFilenames(),
+        };
+
+        if (!in_array($filename, $filenames, true)) {
+            throw $this->createNotFoundException('Fichier non trouvé.');
+        }
+
+        $filePath = $this->fileUploadService->getFilePath($filename, self::UPLOAD_DIR);
+
+        if (!file_exists($filePath)) {
+            throw $this->createNotFoundException('Fichier non trouvé sur le serveur.');
+        }
+
+        return $this->file($filePath, $filename, ResponseHeaderBag::DISPOSITION_INLINE);
+    }
+
+    #[Route('/{id}/delete-file/{type}/{filename}', name: 'app_transplant_delete_file', methods: ['POST'], requirements: ['id' => '\d+', 'type' => 'operative-report|protocol'])]
+    #[IsGranted('CAN_WRITE')]
+    public function deleteFile(Request $request, #[MapEntity(id: 'patientId')] Patient $patient, Transplant $transplant, string $type, string $filename): Response
+    {
+        $this->denyAccessUnlessGranted('VIEW_PATIENT', $patient);
+
+        if ($this->isCsrfTokenValid('delete-file' . $transplant->getId(), $request->request->get('_token'))) {
+            match ($type) {
+                'operative-report' => (function () use ($transplant, $filename) {
+                    if (in_array($filename, $transplant->getOperativeReportFilenames(), true)) {
+                        $this->fileUploadService->delete($filename, self::UPLOAD_DIR);
+                        $transplant->removeOperativeReportFilename($filename);
+                    }
+                })(),
+                'protocol' => (function () use ($transplant, $filename) {
+                    if (in_array($filename, $transplant->getProtocolFilenames(), true)) {
+                        $this->fileUploadService->delete($filename, self::UPLOAD_DIR);
+                        $transplant->removeProtocolFilename($filename);
+                    }
+                })(),
+            };
+            $transplant->setUpdatedAt(new \DateTimeImmutable());
+            $this->transplantRepository->save($transplant);
+            $this->addFlash('success', 'Fichier supprimé avec succès');
+        }
+
+        return $this->redirectToRoute('app_transplant_show', ['patientId' => $patient->getId(), 'id' => $transplant->getId()]);
     }
 
     private function handleHlaIncompatibilities($form, Transplant $transplant): void
@@ -259,6 +322,25 @@ class TransplantController extends AbstractController
             $value = $transplant->getVirologicalStatusByCode($markerCode);
             if ($value !== null) {
                 $form->get($fieldName)->setData($value);
+            }
+        }
+    }
+
+    private function handleFileUploads($form, Transplant $transplant): void
+    {
+        $operativeReportFiles = $form->get('operativeReportFiles')->getData();
+        if ($operativeReportFiles) {
+            $newFilenames = $this->fileUploadService->uploadMultiple($operativeReportFiles, self::UPLOAD_DIR);
+            foreach ($newFilenames as $f) {
+                $transplant->addOperativeReportFilename($f);
+            }
+        }
+
+        $protocolFiles = $form->get('protocolFiles')->getData();
+        if ($protocolFiles) {
+            $newFilenames = $this->fileUploadService->uploadMultiple($protocolFiles, self::UPLOAD_DIR);
+            foreach ($newFilenames as $f) {
+                $transplant->addProtocolFilename($f);
             }
         }
     }

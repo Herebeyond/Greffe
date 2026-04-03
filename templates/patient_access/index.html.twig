@@ -1,0 +1,120 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des accès - {{ patient.fullName }}{% endblock %}
+
+{% block body %}
+<div class="patient-page">
+    <div class="page-header">
+        <div class="page-header-content">
+            <h1>Gestion des accès</h1>
+            <span class="patient-identifier">{{ patient.fullName }} — Dossier n° {{ patient.fileNumber }}</span>
+        </div>
+        <div class="page-header-actions">
+            <a href="{{ path('app_patient_show', {id: patient.id}) }}" class="btn btn-secondary">Retour au dossier</a>
+        </div>
+    </div>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-error">{{ message }}</div>
+    {% endfor %}
+
+    <div class="patient-details">
+        <section class="detail-section">
+            <h2>Accès actuels</h2>
+            {% if accessRecords|length > 0 %}
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Praticien</th>
+                        <th>Rôle</th>
+                        <th>Niveau d'accès</th>
+                        <th>Accordé par</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for access in accessRecords %}
+                    <tr>
+                        <td>{{ access.user.fullName }}</td>
+                        <td>
+                            {% for role in access.user.roles %}
+                                {% set role_labels = {
+                                    'ROLE_DOCTOR': 'Médecin',
+                                    'ROLE_NURSE': 'Infirmier(e)',
+                                } %}
+                                {% if role_labels[role] is defined %}
+                                    <span class="badge badge-{{ role|lower|replace({'role_': ''}) }}">{{ role_labels[role] }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% if access.isPrimary %}
+                                <span class="badge badge-access-primary">Principal</span>
+                            {% else %}
+                                <span class="badge badge-access-secondary">Secondaire</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ access.grantedBy ? access.grantedBy.fullName : '—' }}</td>
+                        <td>{{ access.grantedAt|date('d/m/Y à H:i') }}</td>
+                        <td class="actions">
+                            {# Transfer button: only for doctors who don't already have primary #}
+                            {% if not access.isPrimary and 'ROLE_DOCTOR' in access.user.roles %}
+                            <form action="{{ path('app_patient_access_transfer', {patientId: patient.id, userId: access.user.id}) }}" method="post" class="inline-form" onsubmit="return confirm('Transférer l\'accès principal à {{ access.user.fullName|e('js') }} ? Le titulaire actuel perdra son accès.');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('transfer_access' ~ patient.id ~ '_' ~ access.user.id) }}">
+                                <button type="submit" class="btn btn-small btn-primary">Transférer principal</button>
+                            </form>
+                            {% endif %}
+
+                            {# Revoke button: cannot revoke own access (non-admin), cannot revoke primary (non-admin) #}
+                            {% set can_revoke = true %}
+                            {% if access.user.id == app.user.id and not is_granted('ROLE_SUPER_ADMIN') %}
+                                {% set can_revoke = false %}
+                            {% endif %}
+                            {% if access.isPrimary and not is_granted('ROLE_SUPER_ADMIN') %}
+                                {% set can_revoke = false %}
+                            {% endif %}
+
+                            {% if can_revoke %}
+                            <form action="{{ path('app_patient_access_revoke', {patientId: patient.id, userId: access.user.id}) }}" method="post" class="inline-form" onsubmit="return confirm('Révoquer l\'accès de {{ access.user.fullName|e('js') }} ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('revoke_access' ~ patient.id ~ '_' ~ access.user.id) }}">
+                                <button type="submit" class="btn btn-small btn-danger">Révoquer</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-message">Aucun accès configuré pour ce patient.</p>
+            {% endif %}
+        </section>
+
+        {% if availableUsers|length > 0 %}
+        <section class="detail-section">
+            <h2>Accorder un accès</h2>
+            <form action="{{ path('app_patient_access_grant', {patientId: patient.id}) }}" method="post" class="access-grant-form">
+                <input type="hidden" name="_token" value="{{ csrf_token('grant_access' ~ patient.id) }}">
+                <div class="form-row">
+                    <label for="user_id">Praticien</label>
+                    <select name="user_id" id="user_id" required>
+                        <option value="">— Sélectionner un praticien —</option>
+                        {% for user in availableUsers %}
+                            <option value="{{ user.id }}">
+                                {{ user.fullName }}
+                                ({% for role in user.roles %}{% set role_labels = {'ROLE_DOCTOR': 'Médecin', 'ROLE_NURSE': 'Infirmier(e)'} %}{% if role_labels[role] is defined %}{{ role_labels[role] }}{% endif %}{% endfor %})
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary">Accorder l'accès</button>
+                </div>
+            </form>
+        </section>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

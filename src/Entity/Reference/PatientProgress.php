@@ -4,6 +4,7 @@ namespace App\Entity\Reference;
 
 use App\Repository\Reference\PatientProgressRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: PatientProgressRepository::class)]
 #[ORM\Table(name: 'ref_patient_progress')]
@@ -12,12 +13,15 @@ class PatientProgress
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['etp:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 30, unique: true)]
+    #[Groups(['etp:read'])]
     private string $code;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['etp:read'])]
     private string $label;
 
     #[ORM\Column]

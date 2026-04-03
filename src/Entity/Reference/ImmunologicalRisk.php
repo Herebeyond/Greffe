@@ -4,6 +4,7 @@ namespace App\Entity\Reference;
 
 use App\Repository\Reference\ImmunologicalRiskRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ImmunologicalRiskRepository::class)]
 #[ORM\Table(name: 'ref_immunological_risk')]
@@ -12,15 +13,19 @@ class ImmunologicalRisk
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['transplant:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
+    #[Groups(['transplant:read'])]
     private string $code;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['transplant:read'])]
     private string $label;
 
     #[ORM\Column(length: 30)]
+    #[Groups(['transplant:read'])]
     private string $colorClass;
 
     #[ORM\Column]

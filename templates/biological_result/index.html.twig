@@ -29,6 +29,7 @@
                         <th>Hb<br><small>(g/dL)</small></th>
                         <th>Tacro<br><small>(ng/mL)</small></th>
                         <th>CMV</th>
+                        <th>Rapport</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -46,6 +47,15 @@
                                 <span class="pcr-badge pcr-{{ result.cmvPcr|lower|replace({' ': '-'}) }}">{{ result.cmvPcr }}</span>
                             {% else %}
                                 —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if result.reportFilenames is not empty %}
+                            {% for filename in result.reportFilenames %}
+                            <a href="{{ path('app_biological_result_download', {patientId: patient.id, id: result.id, filename: filename}) }}" class="file-link" target="_blank" title="{{ filename }}">📎</a>
+                            {% endfor %}
+                            {% else %}
+                            —
                             {% endif %}
                         </td>
                         <td class="actions-cell">

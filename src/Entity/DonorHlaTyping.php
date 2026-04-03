@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Entity\Reference\HlaLocus;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
@@ -22,10 +23,12 @@ class DonorHlaTyping
 
     #[ORM\ManyToOne(targetEntity: HlaLocus::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['donor:read'])]
     private ?HlaLocus $hlaLocus = null;
 
     #[ORM\Column(type: 'smallint')]
     #[Assert\NotBlank(message: 'La valeur HLA est obligatoire')]
+    #[Groups(['donor:read'])]
     private ?int $value = null;
 
     public function getId(): ?int { return $this->id; }

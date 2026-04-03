@@ -2,6 +2,9 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Reference\BloodGroup;
 use App\Entity\Reference\DeathCause;
 use App\Entity\Reference\PerfusionLiquid;
@@ -13,12 +16,21 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Donor entity - represents a kidney donor (living or deceased).
  * Can be linked to one or more Transplant entities.
  */
+#[ApiResource(
+    operations: [
+        new GetCollection(security: "is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE') or is_granted('ROLE_TRANSPLANT_COORDINATOR')"),
+        new Get(security: "is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE') or is_granted('ROLE_TRANSPLANT_COORDINATOR')"),
+    ],
+    normalizationContext: ['groups' => ['donor:read']],
+    paginationItemsPerPage: 20,
+)]
 #[ORM\Entity(repositoryClass: DonorRepository::class)]
 #[ORM\Table(name: 'donor')]
 #[ORM\Index(columns: ['cristal_number'], name: 'idx_donor_cristal')]
@@ -27,6 +39,7 @@ class Donor
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['donor:read'])]
     private ?int $id = null;
 
     // ===== Transplant relationship (inverse side) =====
@@ -40,206 +53,262 @@ class Donor
     #[ORM\ManyToOne(targetEntity: DonorTypeRef::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le type de donneur est obligatoire')]
+    #[Groups(['donor:read'])]
     private ?DonorTypeRef $donorType = null;
 
     #[ORM\Column(length: 50)]
     #[Assert\NotBlank(message: 'Le numéro CRISTAL est obligatoire')]
+    #[Groups(['donor:read'])]
     private ?string $cristalNumber = null;
 
     #[ORM\ManyToOne(targetEntity: BloodGroup::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotBlank(message: 'Le groupe sanguin est obligatoire')]
+    #[Groups(['donor:read'])]
     private ?BloodGroup $bloodGroup = null;
 
     #[ORM\Column(length: 1)]
     #[Assert\NotBlank(message: 'Le rhésus est obligatoire')]
     #[Assert\Choice(choices: ['+', '-'], message: 'Rhésus invalide')]
+    #[Groups(['donor:read'])]
     private ?string $rhesus = null;
 
     #[ORM\Column(length: 1)]
     #[Assert\NotBlank(message: 'Le sexe est obligatoire')]
     #[Assert\Choice(choices: ['M', 'F'], message: 'Sexe invalide')]
+    #[Groups(['donor:read'])]
     private ?string $sex = null;
 
     #[ORM\Column(type: Types::SMALLINT)]
     #[Assert\NotBlank(message: "L'âge est obligatoire")]
     #[Assert\Range(min: 0, max: 120, notInRangeMessage: "L'âge doit être compris entre {{ min }} et {{ max }}")]
+    #[Groups(['donor:read'])]
     private ?int $age = null;
 
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
     #[Assert\Range(min: 50, max: 250, notInRangeMessage: 'La taille doit être comprise entre {{ min }} et {{ max }} cm')]
+    #[Groups(['donor:read'])]
     private ?int $height = null;
 
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
     #[Assert\Range(min: 10, max: 300, notInRangeMessage: 'Le poids doit être compris entre {{ min }} et {{ max }} kg')]
+    #[Groups(['donor:read'])]
     private ?int $weight = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $patientComment = null;
 
     // ===== HLA Grouping (junction table) =====
 
     /** @var Collection<int, DonorHlaTyping> */
     #[ORM\OneToMany(targetEntity: DonorHlaTyping::class, mappedBy: 'donor', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[Groups(['donor:read'])]
     private Collection $hlaTypings;
 
     // ===== Serology (junction table) =====
 
     /** @var Collection<int, DonorSerology> */
     #[ORM\OneToMany(targetEntity: DonorSerology::class, mappedBy: 'donor', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[Groups(['donor:read'])]
     private Collection $serologyResults;
 
     // ===== Surgical details =====
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $donorSurgeonName = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?\DateTimeInterface $clampingDate = null;
 
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?\DateTimeInterface $clampingTime = null;
 
     #[ORM\Column(length: 10, nullable: true)]
     #[Assert\Choice(choices: ['droit', 'gauche'], message: 'Côté de prélèvement invalide')]
+    #[Groups(['donor:read'])]
     private ?string $donorHarvestSide = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $mainArtery = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $upperPolarArtery = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $lowerPolarArtery = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $vein = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $veinComment = null;
 
     #[ORM\Column(length: 5, nullable: true)]
     #[Assert\Choice(choices: ['Oui', 'Non'], message: 'Valeur machine de perfusion invalide')]
+    #[Groups(['donor:read'])]
     private ?string $perfusionMachine = null;
 
     #[ORM\ManyToOne(targetEntity: PerfusionLiquid::class)]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?PerfusionLiquid $perfusionLiquid = null;
 
     // ===== Living donor specific =====
 
     #[ORM\Column(type: 'encrypted_string', nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $lastName = null;
 
     #[ORM\Column(type: 'encrypted_string', nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $firstName = null;
 
     #[ORM\ManyToOne(targetEntity: RelationshipType::class)]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?RelationshipType $relationshipType = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $relationshipComment = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 8, scale: 2, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $creatinine = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 8, scale: 2, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $isotopicClearance = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 8, scale: 2, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $proteinuria = null;
 
     #[ORM\ManyToOne(targetEntity: SurgicalApproach::class)]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?SurgicalApproach $approach = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?bool $robot = null;
 
     // ===== Deceased donor specific =====
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $originCity = null;
 
     #[ORM\ManyToOne(targetEntity: DeathCause::class)]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?DeathCause $deathCause = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $deathCauseComment = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?bool $extendedCriteriaDonor = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?bool $cardiacArrest = null;
 
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?int $cardiacArrestDuration = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 6, scale: 1, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $meanArterialPressure = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?bool $amines = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?bool $transfusion = null;
 
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?int $cgr = null;
 
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?int $cpa = null;
 
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?int $pfc = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 8, scale: 2, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $creatinineArrival = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 8, scale: 2, nullable: true)]
+    #[Groups(['donor:read'])]
     private ?string $creatinineSample = null;
 
     #[ORM\Column(length: 3, nullable: true)]
     #[Assert\Choice(choices: ['1', '2'], message: 'Uretère invalide')]
+    #[Groups(['donor:read'])]
     private ?string $ureter = null;
 
     #[ORM\ManyToOne(targetEntity: PerfusionLiquid::class)]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?PerfusionLiquid $conservationLiquid = null;
 
     // ===== Atheroma (deceased donor) =====
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?bool $aortaAtheroma = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?bool $calcifiedAortaPlaques = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?bool $ostiumArteryAtheroma = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?bool $calcifiedOstiumPlaques = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?bool $renalArteryAtheroma = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?bool $calcifiedRenalPlaques = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?bool $digestiveWound = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['donor:read'])]
     private ?bool $conservationLiquidInfection = null;
 
     // ===== Timestamps =====
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    #[Groups(['donor:read'])]
     private \DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]

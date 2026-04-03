@@ -90,8 +90,22 @@ class DonorController extends AbstractController
             }
         }
 
+        // Build list of patient IDs the current user can access (for filtering recipient info)
+        $accessiblePatientIds = [];
+        if ($this->isGranted('ROLE_DOCTOR') || $this->isGranted('ROLE_NURSE')) {
+            /** @var User $user */
+            $user = $this->getUser();
+            foreach ($donor->getTransplants() as $transplant) {
+                $patient = $transplant->getPatient();
+                if ($patient !== null && $this->isGranted('VIEW_PATIENT', $patient)) {
+                    $accessiblePatientIds[] = $patient->getId();
+                }
+            }
+        }
+
         return $this->render('donor/show.html.twig', [
             'donor' => $donor,
+            'accessiblePatientIds' => $accessiblePatientIds,
         ]);
     }
 

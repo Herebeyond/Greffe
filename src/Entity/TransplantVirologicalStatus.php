@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Entity\Reference\VirologicalMarker;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
@@ -22,10 +23,12 @@ class TransplantVirologicalStatus
 
     #[ORM\ManyToOne(targetEntity: VirologicalMarker::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['transplant:read'])]
     private ?VirologicalMarker $virologicalMarker = null;
 
     #[ORM\Column(length: 10)]
     #[Assert\NotBlank(message: 'Le statut virologique est obligatoire')]
+    #[Groups(['transplant:read'])]
     private ?string $status = null;
 
     public function getId(): ?int { return $this->id; }

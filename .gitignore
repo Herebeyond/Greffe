@@ -38,3 +38,7 @@ encryption.key
 /docs/PRODUCTION_CHECKLIST.md
 # Keep: CHANGELOG.md, BACKUP.md, PATIENT_ACCESS_LEGAL.md
 ###< docs ###
+
+###> lexik/jwt-authentication-bundle ###
+/config/jwt/*.pem
+###< lexik/jwt-authentication-bundle ###

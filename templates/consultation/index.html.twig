@@ -27,6 +27,7 @@
                         <th>Praticien</th>
                         <th>Observations</th>
                         <th>Prochain RDV</th>
+                        <th>Fichier</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -38,6 +39,15 @@
                         <td>{{ consultation.practitionerName }}</td>
                         <td>{{ consultation.observations }}</td>
                         <td>{{ consultation.nextAppointmentDate ? consultation.nextAppointmentDate|date('d/m/Y') : '—' }}</td>
+                        <td>
+                            {% if consultation.attachmentFilenames is not empty %}
+                            {% for filename in consultation.attachmentFilenames %}
+                            <a href="{{ path('app_consultation_download', {patientId: patient.id, id: consultation.id, filename: filename}) }}" class="file-link" target="_blank" title="{{ filename }}">📎</a>
+                            {% endfor %}
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
                         <td class="actions-cell">
                             {% if is_granted('CAN_WRITE') %}
                             <a href="{{ path('app_consultation_edit', {patientId: patient.id, id: consultation.id}) }}" class="btn-small">Modifier</a>

@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Entity\Reference\SerologyMarker;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
@@ -22,10 +23,12 @@ class DonorSerology
 
     #[ORM\ManyToOne(targetEntity: SerologyMarker::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['donor:read'])]
     private ?SerologyMarker $serologyMarker = null;
 
     #[ORM\Column(length: 5)]
     #[Assert\NotBlank(message: 'Le résultat sérologique est obligatoire')]
+    #[Groups(['donor:read'])]
     private ?string $result = null;
 
     public function getId(): ?int { return $this->id; }

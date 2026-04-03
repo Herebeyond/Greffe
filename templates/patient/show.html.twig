@@ -161,6 +161,38 @@
         </section>
     </div>
 
+    {# Access management section #}
+    {% if accessRecords is defined %}
+    <div class="patient-details">
+        <section class="detail-section">
+            <h2>Équipe de soins</h2>
+            <div class="access-list">
+                {% for access in accessRecords %}
+                <div class="access-item">
+                    <span class="access-user">{{ access.user.fullName }}</span>
+                    {% for role in access.user.roles %}
+                        {% set role_labels = {'ROLE_DOCTOR': 'Médecin', 'ROLE_NURSE': 'Infirmier(e)'} %}
+                        {% if role_labels[role] is defined %}
+                            <span class="badge badge-{{ role|lower|replace({'role_': ''}) }}">{{ role_labels[role] }}</span>
+                        {% endif %}
+                    {% endfor %}
+                    {% if access.isPrimary %}
+                        <span class="badge badge-access-primary">Principal</span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="empty-message">Aucun praticien assigné.</p>
+                {% endfor %}
+            </div>
+            {% if canManageAccess is defined and canManageAccess %}
+            <div class="section-actions">
+                <a href="{{ path('app_patient_access', {patientId: patient.id}) }}" class="btn btn-secondary">Gérer les accès</a>
+            </div>
+            {% endif %}
+        </section>
+    </div>
+    {% endif %}
+
     {% if is_granted('CAN_DELETE') %}
     <div class="danger-zone">
         <h2>Zone de danger</h2>

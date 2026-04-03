@@ -2,9 +2,22 @@
 
 namespace App\Entity\Reference;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\Reference\ConsultationTypeRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
+#[ApiResource(
+    operations: [
+        new GetCollection(security: "is_granted('ROLE_USER')"),
+        new Get(security: "is_granted('ROLE_USER')"),
+    ],
+    normalizationContext: ['groups' => ['consultation_type:read']],
+    paginationEnabled: false,
+    order: ['displayOrder' => 'ASC'],
+)]
 #[ORM\Entity(repositoryClass: ConsultationTypeRepository::class)]
 #[ORM\Table(name: 'ref_consultation_type')]
 class ConsultationType
@@ -12,12 +25,15 @@ class ConsultationType
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['consultation:read', 'consultation_type:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
+    #[Groups(['consultation:read', 'consultation_type:read'])]
     private string $code;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['consultation:read', 'consultation_type:read'])]
     private string $label;
 
     #[ORM\Column]

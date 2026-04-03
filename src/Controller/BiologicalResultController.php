@@ -6,10 +6,13 @@ use App\Entity\BiologicalResult;
 use App\Entity\Patient;
 use App\Form\BiologicalResultType;
 use App\Repository\BiologicalResultRepository;
+use App\Service\FileUploadService;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -17,8 +20,11 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_USER')]
 class BiologicalResultController extends AbstractController
 {
+    private const UPLOAD_DIR = 'biological_results';
+
     public function __construct(
         private BiologicalResultRepository $biologicalResultRepository,
+        private FileUploadService $fileUploadService,
     ) {
     }
 
@@ -48,6 +54,13 @@ class BiologicalResultController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $reportFiles = $form->get('reportFiles')->getData();
+            if ($reportFiles) {
+                $newFilenames = $this->fileUploadService->uploadMultiple($reportFiles, self::UPLOAD_DIR);
+                foreach ($newFilenames as $f) {
+                    $result->addReportFilename($f);
+                }
+            }
             $this->biologicalResultRepository->save($result);
             $this->addFlash('success', 'Résultat biologique ajouté avec succès');
 
@@ -71,6 +84,13 @@ class BiologicalResultController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $reportFiles = $form->get('reportFiles')->getData();
+            if ($reportFiles) {
+                $newFilenames = $this->fileUploadService->uploadMultiple($reportFiles, self::UPLOAD_DIR);
+                foreach ($newFilenames as $f) {
+                    $result->addReportFilename($f);
+                }
+            }
             $this->biologicalResultRepository->save($result);
             $this->addFlash('success', 'Résultat biologique modifié avec succès');
 
@@ -92,10 +112,46 @@ class BiologicalResultController extends AbstractController
         $this->denyAccessUnlessGranted('VIEW_PATIENT', $patient);
 
         if ($this->isCsrfTokenValid('delete' . $result->getId(), $request->request->get('_token'))) {
+            $this->fileUploadService->deleteMultiple($result->getReportFilenames(), self::UPLOAD_DIR);
             $this->biologicalResultRepository->remove($result);
             $this->addFlash('success', 'Résultat biologique supprimé avec succès');
         }
 
         return $this->redirectToRoute('app_biological_result_index', ['patientId' => $patient->getId()]);
+    }
+
+    #[Route('/{id}/download/{filename}', name: 'app_biological_result_download', requirements: ['id' => '\d+'])]
+    public function download(#[MapEntity(id: 'patientId')] Patient $patient, BiologicalResult $result, string $filename): BinaryFileResponse
+    {
+        $this->denyAccessUnlessGranted('VIEW_PATIENT', $patient);
+
+        if (!in_array($filename, $result->getReportFilenames(), true)) {
+            throw $this->createNotFoundException('Fichier non trouvé.');
+        }
+
+        $filePath = $this->fileUploadService->getFilePath($filename, self::UPLOAD_DIR);
+        if (!file_exists($filePath)) {
+            throw $this->createNotFoundException('Fichier non trouvé sur le serveur.');
+        }
+
+        return $this->file($filePath, $filename, ResponseHeaderBag::DISPOSITION_INLINE);
+    }
+
+    #[Route('/{id}/delete-file/{filename}', name: 'app_biological_result_delete_file', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('CAN_WRITE')]
+    public function deleteFile(Request $request, #[MapEntity(id: 'patientId')] Patient $patient, BiologicalResult $result, string $filename): Response
+    {
+        $this->denyAccessUnlessGranted('VIEW_PATIENT', $patient);
+
+        if ($this->isCsrfTokenValid('delete-file' . $result->getId(), $request->request->get('_token'))) {
+            if (in_array($filename, $result->getReportFilenames(), true)) {
+                $this->fileUploadService->delete($filename, self::UPLOAD_DIR);
+                $result->removeReportFilename($filename);
+                $this->biologicalResultRepository->save($result);
+            }
+            $this->addFlash('success', 'Fichier supprimé avec succès');
+        }
+
+        return $this->redirectToRoute('app_biological_result_edit', ['patientId' => $patient->getId(), 'id' => $result->getId()]);
     }
 }

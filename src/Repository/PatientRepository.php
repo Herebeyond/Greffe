@@ -173,8 +173,8 @@ class PatientRepository extends ServiceEntityRepository
     public function findByPractitioner(User $user): array
     {
         $patients = $this->createQueryBuilder('p')
-            ->join('p.authorizedPractitioners', 'u')
-            ->where('u = :user')
+            ->join('p.patientAccesses', 'pa')
+            ->where('pa.user = :user')
             ->setParameter('user', $user)
             ->getQuery()
             ->getResult();

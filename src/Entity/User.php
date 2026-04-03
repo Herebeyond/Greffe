@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -22,9 +23,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['notification:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
+    #[Groups(['notification:read'])]
     private ?string $email = null;
 
     /**
@@ -61,12 +64,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var string|null Encrypted - Name is sensitive PII
      */
     #[ORM\Column(type: 'encrypted_string')]
+    #[Groups(['notification:read'])]
     private ?string $name = null;
 
     /**
      * @var string|null Encrypted - Surname is sensitive PII
      */
     #[ORM\Column(type: 'encrypted_string')]
+    #[Groups(['notification:read'])]
     private ?string $surname = null;
 
     /**
@@ -92,16 +97,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private bool $isChuPractitioner = false;
 
     /**
-     * Patients assigned to this practitioner.
-     * All practitioners (CHU or external) can only access their assigned patients.
+     * Patient access records for this practitioner.
+     *
+     * @var Collection<int, PatientAccess>
      */
-    #[ORM\ManyToMany(targetEntity: \App\Entity\Patient::class, mappedBy: 'authorizedPractitioners')]
-    private Collection $assignedPatients;
+    #[ORM\OneToMany(targetEntity: PatientAccess::class, mappedBy: 'user')]
+    private Collection $patientAccesses;
 
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
-        $this->assignedPatients = new ArrayCollection();
+        $this->patientAccesses = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -264,11 +270,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection<int, \App\Entity\Patient>
+     * @return Collection<int, PatientAccess>
      */
-    public function getAssignedPatients(): Collection
+    public function getPatientAccesses(): Collection
     {
-        return $this->assignedPatients;
+        return $this->patientAccesses;
     }
 
     /**

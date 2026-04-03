@@ -2,6 +2,9 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Reference\BloodGroup;
 use App\Repository\PatientRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -9,11 +12,20 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Patient entity - represents a kidney transplant recipient.
  */
+#[ApiResource(
+    operations: [
+        new GetCollection(security: "is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE')"),
+        new Get(security: "is_granted('VIEW_PATIENT', object)"),
+    ],
+    normalizationContext: ['groups' => ['patient:read']],
+    paginationItemsPerPage: 20,
+)]
 #[ORM\Entity(repositoryClass: PatientRepository::class)]
 #[ORM\Table(name: 'patient')]
 #[ORM\Index(columns: ['file_number'], name: 'idx_patient_file_number')]
@@ -24,6 +36,7 @@ class Patient
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['patient:read'])]
     private ?int $id = null;
 
     /**
@@ -32,6 +45,7 @@ class Patient
     #[ORM\Column(length: 50, unique: true)]
     #[Assert\NotBlank(message: 'Le numéro de dossier est obligatoire')]
     #[Assert\Length(max: 50, maxMessage: 'Le numéro de dossier ne peut pas dépasser {{ limit }} caractères')]
+    #[Groups(['patient:read'])]
     private ?string $fileNumber = null;
 
     /**
@@ -39,6 +53,7 @@ class Patient
      */
     #[ORM\Column(type: 'encrypted_string')]
     #[Assert\NotBlank(message: 'Le nom est obligatoire')]
+    #[Groups(['patient:read'])]
     private ?string $lastName = null;
 
     /**
@@ -46,6 +61,7 @@ class Patient
      */
     #[ORM\Column(type: 'encrypted_string')]
     #[Assert\NotBlank(message: 'Le prénom est obligatoire')]
+    #[Groups(['patient:read'])]
     private ?string $firstName = null;
 
     /**
@@ -54,12 +70,14 @@ class Patient
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'La ville de résidence est obligatoire')]
     #[Assert\Length(max: 100, maxMessage: 'La ville ne peut pas dépasser {{ limit }} caractères')]
+    #[Groups(['patient:read'])]
     private ?string $city = null;
 
     /**
      * Date of birth - encrypted sensitive PII.
      */
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['patient:read'])]
     private ?\DateTimeInterface $birthDate = null;
 
     /**
@@ -67,6 +85,7 @@ class Patient
      */
     #[ORM\ManyToOne(targetEntity: BloodGroup::class)]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['patient:read'])]
     private ?BloodGroup $bloodGroup = null;
 
     /**
@@ -74,6 +93,7 @@ class Patient
      */
     #[ORM\Column(length: 1, nullable: true)]
     #[Assert\Choice(choices: ['+', '-'], message: 'Rhésus invalide')]
+    #[Groups(['patient:read'])]
     private ?string $rhesus = null;
 
     /**
@@ -81,6 +101,7 @@ class Patient
      */
     #[ORM\Column(length: 1, nullable: true)]
     #[Assert\Choice(choices: ['M', 'F'], message: 'Sexe invalide')]
+    #[Groups(['patient:read'])]
     private ?string $sex = null;
 
     /**
@@ -115,18 +136,18 @@ class Patient
     private ?\DateTimeImmutable $updatedAt = null;
 
     /**
-     * Practitioners authorized to access this patient's file.
-     * Every practitioner must be explicitly assigned to access a patient.
-     * Break-the-glass emergency access checked via PatientAccessVoter.
+     * Access records for practitioners authorized to access this patient's file.
+     * Each record tracks the access level (primary/secondary) and who granted it.
+     *
+     * @var Collection<int, PatientAccess>
      */
-    #[ORM\ManyToMany(targetEntity: \App\Entity\User::class, inversedBy: 'assignedPatients')]
-    #[ORM\JoinTable(name: 'patient_authorized_user')]
-    private Collection $authorizedPractitioners;
+    #[ORM\OneToMany(targetEntity: PatientAccess::class, mappedBy: 'patient', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $patientAccesses;
 
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
-        $this->authorizedPractitioners = new ArrayCollection();
+        $this->patientAccesses = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -338,31 +359,73 @@ class Patient
     }
 
     /**
-     * @return Collection<int, \App\Entity\User>
+     * @return Collection<int, PatientAccess>
      */
-    public function getAuthorizedPractitioners(): Collection
+    public function getPatientAccesses(): Collection
     {
-        return $this->authorizedPractitioners;
+        return $this->patientAccesses;
     }
 
-    public function addAuthorizedPractitioner(\App\Entity\User $user): static
+    public function addPatientAccess(PatientAccess $access): static
     {
-        if (!$this->authorizedPractitioners->contains($user)) {
-            $this->authorizedPractitioners->add($user);
+        if (!$this->patientAccesses->contains($access)) {
+            $this->patientAccesses->add($access);
+            $access->setPatient($this);
         }
 
         return $this;
     }
 
-    public function removeAuthorizedPractitioner(\App\Entity\User $user): static
+    public function removePatientAccess(PatientAccess $access): static
     {
-        $this->authorizedPractitioners->removeElement($user);
+        if ($this->patientAccesses->removeElement($access)) {
+            if ($access->getPatient() === $this) {
+                $access->setPatient(null);
+            }
+        }
 
         return $this;
     }
 
-    public function isAuthorizedPractitioner(\App\Entity\User $user): bool
+    /**
+     * Check if a user has any access (primary or secondary) to this patient.
+     */
+    public function isAuthorizedPractitioner(User $user): bool
     {
-        return $this->authorizedPractitioners->contains($user);
+        foreach ($this->patientAccesses as $access) {
+            if ($access->getUser() === $user) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Find the access record for a specific user.
+     */
+    public function getAccessFor(User $user): ?PatientAccess
+    {
+        foreach ($this->patientAccesses as $access) {
+            if ($access->getUser() === $user) {
+                return $access;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Find the primary access holder.
+     */
+    public function getPrimaryAccess(): ?PatientAccess
+    {
+        foreach ($this->patientAccesses as $access) {
+            if ($access->isPrimary()) {
+                return $access;
+            }
+        }
+
+        return null;
     }
 }

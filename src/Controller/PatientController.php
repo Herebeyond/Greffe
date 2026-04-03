@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Patient;
+use App\Entity\PatientAccess;
 use App\Entity\User;
 use App\Form\PatientType;
 use App\Form\PatientSearchType;
@@ -21,6 +22,7 @@ class PatientController extends AbstractController
     public function __construct(
         private PatientRepository $patientRepository,
         private BreakTheGlassAccessRepository $btgRepository,
+        private \App\Repository\PatientAccessRepository $patientAccessRepository,
     ) {
     }
 
@@ -128,7 +130,11 @@ class PatientController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             /** @var User $currentUser */
             $currentUser = $this->getUser();
-            $patient->addAuthorizedPractitioner($currentUser);
+            $access = new PatientAccess();
+            $access->setUser($currentUser);
+            $access->setAccessLevel(PatientAccess::LEVEL_PRIMARY);
+            $access->setGrantedBy($currentUser);
+            $patient->addPatientAccess($access);
             $this->patientRepository->save($patient);
 
             $this->addFlash('success', 'Patient créé avec succès');
@@ -154,9 +160,24 @@ class PatientController extends AbstractController
         $currentUser = $this->getUser();
         $btgAccess = $this->btgRepository->findActiveAccess($currentUser, $patient);
 
+        // Determine if the current user can manage access for this patient
+        $currentAccess = $patient->getAccessFor($currentUser);
+        $canManageAccess = false;
+        if (in_array('ROLE_SUPER_ADMIN', $currentUser->getRoles(), true)) {
+            $canManageAccess = true;
+        } elseif ($currentAccess !== null && $currentAccess->isPrimary()) {
+            $canManageAccess = true;
+        }
+
+        // Get all access records for display
+        $accessRecords = $this->patientAccessRepository->findByPatient($patient);
+
         return $this->render('patient/show.html.twig', [
             'patient' => $patient,
             'btgAccess' => $btgAccess,
+            'canManageAccess' => $canManageAccess,
+            'accessRecords' => $accessRecords,
+            'currentAccess' => $currentAccess,
         ]);
     }
 

@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Controller\Api;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Attribute\Route;
+
+class ApiLoginController extends AbstractController
+{
+    #[Route('/api/login', name: 'api_login', methods: ['POST'])]
+    public function login(): JsonResponse
+    {
+        // This method is never actually called — the json_login authenticator
+        // intercepts the request before it reaches the controller.
+        // If we get here, authentication failed.
+        return new JsonResponse(['error' => 'Identifiants invalides'], 401);
+    }
+}
