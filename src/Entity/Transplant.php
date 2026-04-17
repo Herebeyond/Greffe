@@ -11,7 +11,6 @@ use App\Entity\Reference\DonorType as DonorTypeRef;
 use App\Entity\Reference\ImmunologicalRisk;
 use App\Entity\Reference\ImmunosuppressiveDrug;
 use App\Entity\Reference\PeritonealPosition;
-use App\Entity\Reference\TransplantType as TransplantTypeRef;
 use App\Repository\TransplantRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -44,7 +43,7 @@ class Transplant
     #[Groups(['transplant:read'])]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Patient::class)]
+    #[ORM\ManyToOne(targetEntity: Patient::class, inversedBy: 'transplants')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     #[Groups(['transplant:read'])]
     private ?Patient $patient = null;
@@ -81,12 +80,6 @@ class Transplant
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['transplant:read'])]
     private ?string $graftEndCause = null;
-
-    #[ORM\ManyToOne(targetEntity: TransplantTypeRef::class)]
-    #[ORM\JoinColumn(nullable: false)]
-    #[Assert\NotBlank(message: 'Le type de transplantation est obligatoire')]
-    #[Groups(['transplant:read'])]
-    private ?TransplantTypeRef $transplantType = null;
 
     #[ORM\Column(length: 100, nullable: true)]
     #[Groups(['transplant:read'])]
@@ -314,18 +307,6 @@ class Transplant
     public function setGraftEndCause(?string $graftEndCause): static
     {
         $this->graftEndCause = $graftEndCause;
-
-        return $this;
-    }
-
-    public function getTransplantType(): ?TransplantTypeRef
-    {
-        return $this->transplantType;
-    }
-
-    public function setTransplantType(?TransplantTypeRef $transplantType): static
-    {
-        $this->transplantType = $transplantType;
 
         return $this;
     }

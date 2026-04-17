@@ -61,23 +61,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     /**
-     * @var string|null Encrypted - Name is sensitive PII
+     * @var string|null User's first name
      */
-    #[ORM\Column(type: 'encrypted_string')]
+    #[ORM\Column(length: 255)]
     #[Groups(['notification:read'])]
     private ?string $name = null;
 
     /**
-     * @var string|null Encrypted - Surname is sensitive PII
+     * @var string|null User's last name
      */
-    #[ORM\Column(type: 'encrypted_string')]
+    #[ORM\Column(length: 255)]
     #[Groups(['notification:read'])]
     private ?string $surname = null;
 
     /**
-     * @var string|null Encrypted - CRISTAL identifier is sensitive medical data
+     * @var string|null CRISTAL system identifier
      */
-    #[ORM\Column(type: 'encrypted_string', nullable: true)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $cristalId = null;
 
     /**

@@ -34,10 +34,6 @@
                     <span class="detail-value">{{ transplant.donorTypeLabel }}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Type de transplantation</span>
-                    <span class="detail-value"><span class="badge">{{ transplant.transplantType }}</span></span>
-                </div>
-                <div class="detail-item">
                     <span class="detail-label">Greffon fonctionnel</span>
                     <span class="detail-value">
                         {% if transplant.isGraftFunctional %}
@@ -280,6 +276,14 @@
                     <span class="detail-value">{{ transplant.donor.age }} ans</span>
                 </div>
             </div>
+            {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
+            <form action="{{ path('app_donor_unassign', {id: transplant.donor.id, transplantId: transplant.id}) }}" method="post" class="inline-form"
+                  onsubmit="return confirm('Retirer le donneur {{ transplant.donor.cristalNumber }} de cette greffe ?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('unassign' ~ transplant.donor.id ~ '-' ~ transplant.id) }}">
+                <input type="hidden" name="redirectTo" value="transplant">
+                <button type="submit" class="btn btn-danger">Retirer le donneur</button>
+            </form>
+            {% endif %}
         </section>
         {% endif %}
 
@@ -579,6 +583,16 @@
             <div class="detail-comment">
                 {{ donor.patientComment|nl2br }}
             </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        {% if not transplant.donor and not transplant.donorData %}
+        <section class="detail-section donor-section">
+            <h2>Donneur</h2>
+            <p class="text-muted">Donneur inconnu — aucune donnée donneur associée à cette greffe.</p>
+            {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
+            <a href="{{ path('app_transplant_assign_donor', {patientId: patient.id, id: transplant.id}) }}" class="btn btn-primary">Assigner un donneur</a>
             {% endif %}
         </section>
         {% endif %}

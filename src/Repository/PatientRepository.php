@@ -105,6 +105,19 @@ class PatientRepository extends ServiceEntityRepository
             $patients = array_values($patients);
         }
 
+        // Filter by transplant status (computed field)
+        if (!empty($criteria['transplantStatus'])) {
+            $statusFilter = $criteria['transplantStatus'];
+            $patients = array_values(array_filter($patients, function (Patient $patient) use ($statusFilter) {
+                return match ($statusFilter) {
+                    'waiting' => $patient->getTransplantCount() === 0,
+                    'active' => $patient->hasActiveFunctionalGraft(),
+                    'failed' => $patient->getTransplantCount() > 0 && !$patient->hasActiveFunctionalGraft(),
+                    default => true,
+                };
+            }));
+        }
+
         // Sort alphabetically by name (since encrypted fields aren't sorted by DB)
         usort($patients, function (Patient $a, Patient $b) {
             $lastNameCompare = strcasecmp($a->getLastName() ?? '', $b->getLastName() ?? '');

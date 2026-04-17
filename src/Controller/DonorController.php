@@ -5,9 +5,11 @@ namespace App\Controller;
 use App\Entity\Donor;
 use App\Entity\DonorHlaTyping;
 use App\Entity\DonorSerology;
+use App\Entity\Transplant;
 use App\Entity\User;
 use App\Form\DonorType;
 use App\Repository\DonorRepository;
+use App\Repository\TransplantRepository;
 use App\Repository\Reference\HlaLocusRepository;
 use App\Repository\Reference\SerologyMarkerRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,6 +24,7 @@ class DonorController extends AbstractController
 {
     public function __construct(
         private DonorRepository $donorRepository,
+        private TransplantRepository $transplantRepository,
         private HlaLocusRepository $hlaLocusRepository,
         private SerologyMarkerRepository $serologyMarkerRepository,
     ) {
@@ -39,6 +42,9 @@ class DonorController extends AbstractController
 
         $bloodTypes = [];
 
+        // Coordinator toggle: show only available donors by default
+        $showAll = $isCoordinator && $request->query->get('showAll') === '1';
+
         if ($request->isMethod('POST')) {
             $searched = true;
             $cristalNumber = $request->request->get('cristalNumber');
@@ -46,10 +52,17 @@ class DonorController extends AbstractController
             $bloodTypes = $request->request->all('bloodTypes');
             $allowedBloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
             $bloodTypes = array_intersect($bloodTypes, $allowedBloodTypes);
+            $showAll = $isCoordinator && $request->request->get('showAll') === '1';
 
             if ($isMedicalStaff) {
                 $donors = $this->donorRepository->searchByPractitioner(
                     $user,
+                    $cristalNumber ?: null,
+                    $bloodTypes,
+                    $donorType ?: null,
+                );
+            } elseif ($isCoordinator && !$showAll) {
+                $donors = $this->donorRepository->searchAvailable(
                     $cristalNumber ?: null,
                     $bloodTypes,
                     $donorType ?: null,
@@ -64,6 +77,8 @@ class DonorController extends AbstractController
         } else {
             if ($isMedicalStaff) {
                 $donors = $this->donorRepository->findByPractitioner($user);
+            } elseif ($isCoordinator && !$showAll) {
+                $donors = $this->donorRepository->findAvailableOrderedByDate();
             } else {
                 $donors = $this->donorRepository->findAllOrderedByDate();
             }
@@ -73,6 +88,7 @@ class DonorController extends AbstractController
             'donors' => $donors,
             'searched' => $searched,
             'bloodTypes' => $bloodTypes,
+            'showAll' => $showAll,
         ]);
     }
 
@@ -92,14 +108,10 @@ class DonorController extends AbstractController
 
         // Build list of patient IDs the current user can access (for filtering recipient info)
         $accessiblePatientIds = [];
-        if ($this->isGranted('ROLE_DOCTOR') || $this->isGranted('ROLE_NURSE')) {
-            /** @var User $user */
-            $user = $this->getUser();
-            foreach ($donor->getTransplants() as $transplant) {
-                $patient = $transplant->getPatient();
-                if ($patient !== null && $this->isGranted('VIEW_PATIENT', $patient)) {
-                    $accessiblePatientIds[] = $patient->getId();
-                }
+        foreach ($donor->getTransplants() as $transplant) {
+            $patient = $transplant->getPatient();
+            if ($patient !== null && $this->isGranted('VIEW_PATIENT', $patient)) {
+                $accessiblePatientIds[] = $patient->getId();
             }
         }
 
@@ -159,6 +171,70 @@ class DonorController extends AbstractController
             'form' => $form,
             'donor' => $donor,
         ]);
+    }
+
+    #[Route('/{id}/assign', name: 'app_donor_assign', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_TRANSPLANT_COORDINATOR')]
+    public function assign(Request $request, Donor $donor): Response
+    {
+        if ($request->isMethod('POST') && $request->request->has('transplantId')) {
+            $transplantId = $request->request->getInt('transplantId');
+            $transplant = $this->transplantRepository->find($transplantId);
+
+            if ($transplant
+                && $transplant->getDonor() === null
+                && $this->isCsrfTokenValid('assign' . $donor->getId(), $request->request->get('_token'))
+            ) {
+                $transplant->setDonor($donor);
+                $transplant->setUpdatedAt(new \DateTimeImmutable());
+                $this->transplantRepository->save($transplant);
+                $this->addFlash('success', 'Donneur assigné à la greffe avec succès');
+
+                return $this->redirectToRoute('app_donor_show', ['id' => $donor->getId()]);
+            }
+
+            $this->addFlash('error', 'Impossible d\'assigner le donneur à cette greffe');
+        }
+
+        $fileNumber = null;
+        if ($request->isMethod('POST') && $request->request->has('fileNumber')) {
+            $fileNumber = trim($request->request->get('fileNumber', ''));
+        }
+
+        $transplants = $this->transplantRepository->findWithoutDonor($fileNumber ?: null);
+
+        return $this->render('donor/assign.html.twig', [
+            'donor' => $donor,
+            'transplants' => $transplants,
+            'fileNumber' => $fileNumber,
+        ]);
+    }
+
+    #[Route('/{id}/unassign/{transplantId}', name: 'app_donor_unassign', methods: ['POST'], requirements: ['id' => '\d+', 'transplantId' => '\d+'])]
+    #[IsGranted('ROLE_TRANSPLANT_COORDINATOR')]
+    public function unassign(Request $request, Donor $donor, int $transplantId): Response
+    {
+        $transplant = $this->transplantRepository->find($transplantId);
+
+        if ($transplant
+            && $transplant->getDonor() === $donor
+            && $this->isCsrfTokenValid('unassign' . $donor->getId() . '-' . $transplantId, $request->request->get('_token'))
+        ) {
+            $patient = $transplant->getPatient();
+            $transplant->setDonor(null);
+            $transplant->setUpdatedAt(new \DateTimeImmutable());
+            $this->transplantRepository->save($transplant);
+            $this->addFlash('success', 'Donneur retiré de la greffe avec succès');
+
+            if ($request->request->get('redirectTo') === 'transplant' && $patient) {
+                return $this->redirectToRoute('app_transplant_show', [
+                    'patientId' => $patient->getId(),
+                    'id' => $transplantId,
+                ]);
+            }
+        }
+
+        return $this->redirectToRoute('app_donor_show', ['id' => $donor->getId()]);
     }
 
     #[Route('/{id}/delete', name: 'app_donor_delete', methods: ['POST'], requirements: ['id' => '\d+'])]

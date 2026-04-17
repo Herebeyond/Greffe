@@ -26,7 +26,7 @@ class FileUploadApiController extends AbstractController
     }
 
     #[Route('/consultations/{id}/upload', name: 'api_consultation_upload', methods: ['POST'])]
-    #[IsGranted('ROLE_DOCTOR')]
+    #[IsGranted('ROLE_USER')]
     public function uploadConsultationAttachment(Consultation $consultation, Request $request): JsonResponse
     {
         $patient = $consultation->getPatient();

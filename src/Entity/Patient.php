@@ -144,10 +144,18 @@ class Patient
     #[ORM\OneToMany(targetEntity: PatientAccess::class, mappedBy: 'patient', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $patientAccesses;
 
+    /**
+     * @var Collection<int, Transplant>
+     */
+    #[ORM\OneToMany(targetEntity: Transplant::class, mappedBy: 'patient')]
+    #[ORM\OrderBy(['transplantDate' => 'ASC'])]
+    private Collection $transplants;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->patientAccesses = new ArrayCollection();
+        $this->transplants = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -427,5 +435,99 @@ class Patient
         }
 
         return null;
+    }
+
+    /**
+     * @return Collection<int, Transplant>
+     */
+    public function getTransplants(): Collection
+    {
+        return $this->transplants;
+    }
+
+    /**
+     * Get the number of transplants for this patient.
+     */
+    public function getTransplantCount(): int
+    {
+        return $this->transplants->count();
+    }
+
+    /**
+     * Get the number of failed (non-functional) transplants.
+     */
+    public function getFailedTransplantCount(): int
+    {
+        $count = 0;
+        foreach ($this->transplants as $transplant) {
+            if (!$transplant->isGraftFunctional()) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    /**
+     * Check if the patient has at least one functional graft.
+     */
+    public function hasActiveFunctionalGraft(): bool
+    {
+        foreach ($this->transplants as $transplant) {
+            if ($transplant->isGraftFunctional()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if the patient needs a transplant (no transplants or all grafts failed).
+     */
+    public function needsTransplant(): bool
+    {
+        if ($this->transplants->isEmpty()) {
+            return true;
+        }
+        return !$this->hasActiveFunctionalGraft();
+    }
+
+    /**
+     * Get the transplant status label for display.
+     * Returns: "En attente de greffe", "Greffé(e)", "Greffe échouée — en attente", etc.
+     */
+    public function getTransplantStatusLabel(): string
+    {
+        $total = $this->getTransplantCount();
+        $failed = $this->getFailedTransplantCount();
+
+        if ($total === 0) {
+            return 'En attente de greffe';
+        }
+
+        if ($this->hasActiveFunctionalGraft()) {
+            if ($failed > 0) {
+                return 'Greffé(e) (' . $failed . ' échec' . ($failed > 1 ? 's' : '') . ' ant.)';
+            }
+            return 'Greffé(e)';
+        }
+
+        // All grafts failed
+        return 'En attente de re-greffe (' . $failed . ' échec' . ($failed > 1 ? 's' : '') . ')';
+    }
+
+    /**
+     * Get the CSS class for the transplant status badge.
+     */
+    public function getTransplantStatusClass(): string
+    {
+        if ($this->transplants->isEmpty()) {
+            return 'status-waiting';
+        }
+
+        if ($this->hasActiveFunctionalGraft()) {
+            return 'status-active';
+        }
+
+        return 'status-failed';
     }
 }

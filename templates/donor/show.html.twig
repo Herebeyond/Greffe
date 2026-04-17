@@ -8,11 +8,28 @@
         <h2>Donneur #{{ donor.id }} — {{ donor.cristalNumber }}</h2>
         <div class="page-header-actions">
             {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
+            {% if not donor.fullyAssigned %}
+            <a href="{{ path('app_donor_assign', {id: donor.id}) }}" class="btn btn-success">Assigner à une greffe</a>
+            {% endif %}
             <a href="{{ path('app_donor_edit', {id: donor.id}) }}" class="btn btn-primary">Modifier</a>
             {% endif %}
             <a href="{{ path('app_donor_index') }}" class="btn btn-secondary">Retour au registre</a>
         </div>
     </div>
+
+    {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
+    <div class="assignment-status-box {{ donor.fullyAssigned ? 'assignment-status-full' : (donor.assignedTransplantCount > 0 ? 'assignment-status-partial' : 'assignment-status-available') }}">
+        <strong>Statut d'assignation :</strong>
+        {{ donor.assignedTransplantCount }}/{{ donor.maxTransplants }} rein{{ donor.maxTransplants > 1 ? 's' : '' }} assigné{{ donor.assignedTransplantCount > 1 ? 's' : '' }}
+        {% if donor.fullyAssigned %}
+            — <em>Entièrement assigné</em>
+        {% elseif donor.assignedTransplantCount > 0 %}
+            — <em>{{ donor.remainingTransplants }} rein{{ donor.remainingTransplants > 1 ? 's' : '' }} restant{{ donor.remainingTransplants > 1 ? 's' : '' }}</em>
+        {% else %}
+            — <em>Disponible pour assignation</em>
+        {% endif %}
+    </div>
+    {% endif %}
 
     <div class="transplant-details">
         {# ===== Identification ===== #}
@@ -336,7 +353,6 @@
                         <tr>
                             <th>Patient</th>
                             <th>Date de greffe</th>
-                            <th>Type</th>
                             <th>Rang</th>
                             <th>Greffon</th>
                             <th>Actions</th>
@@ -354,7 +370,6 @@
                                 {% endif %}
                             </td>
                             <td>{{ transplant.transplantDate|date('d/m/Y') }}</td>
-                            <td><span class="badge">{{ transplant.transplantType }}</span></td>
                             <td>{{ transplant.rank }}</td>
                             <td>
                                 {% if transplant.isGraftFunctional %}
@@ -367,7 +382,15 @@
                                 {% if has_access %}
                                     <a href="{{ path('app_transplant_show', {patientId: transplant.patient.id, id: transplant.id}) }}" class="btn-small">Voir greffe</a>
                                     <a href="{{ path('app_patient_show', {id: transplant.patient.id}) }}" class="btn-small">Voir patient</a>
-                                {% else %}
+                                {% endif %}
+                                {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
+                                    <form action="{{ path('app_donor_unassign', {id: donor.id, transplantId: transplant.id}) }}" method="post" class="inline-form"
+                                          onsubmit="return confirm('Retirer ce donneur de cette greffe ?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('unassign' ~ donor.id ~ '-' ~ transplant.id) }}">
+                                        <button type="submit" class="btn-small btn-small-danger">Retirer</button>
+                                    </form>
+                                {% endif %}
+                                {% if not has_access and not is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
                                     <span class="detail-empty">—</span>
                                 {% endif %}
                             </td>

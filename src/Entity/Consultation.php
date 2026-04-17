@@ -21,8 +21,8 @@ use Symfony\Component\Validator\Constraints as Assert;
     operations: [
         new GetCollection(security: "is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE')"),
         new Get(security: "is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE')"),
-        new Post(security: "is_granted('ROLE_DOCTOR')"),
-        new Put(security: "is_granted('ROLE_DOCTOR') and object.getCreatedBy() == user"),
+        new Post(security: "is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE')"),
+        new Put(security: "(is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE')) and object.getCreatedBy() == user"),
     ],
     normalizationContext: ['groups' => ['consultation:read']],
     denormalizationContext: ['groups' => ['consultation:write']],
@@ -54,8 +54,7 @@ class Consultation
     private ?\DateTimeInterface $date = null;
 
     #[ORM\Column(length: 100)]
-    #[Assert\NotBlank(message: 'Le nom du praticien est obligatoire')]
-    #[Groups(['consultation:read'])]
+    #[Groups(['consultation:read', 'consultation:write'])]
     private ?string $practitionerName = null;
 
     #[ORM\ManyToOne(targetEntity: ConsultationTypeRef::class)]

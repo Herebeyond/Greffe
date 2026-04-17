@@ -338,6 +338,15 @@ main {
     background-color: #c0392b;
 }
 
+.btn-success {
+    background-color: #27ae60;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #219a52;
+}
+
 .btn-warning {
     background-color: #e67e22;
     color: white;
@@ -1475,6 +1484,15 @@ main {
     background-color: #c0392b !important;
 }
 
+.btn-small-success {
+    background-color: #27ae60 !important;
+    color: white !important;
+}
+
+.btn-small-success:hover {
+    background-color: #219a52 !important;
+}
+
 /* Badges */
 .badge {
     display: inline-block;
@@ -2246,6 +2264,34 @@ main:has(.audit-container) {
     color: #922b21;
 }
 
+/* Patient transplant status badges */
+.transplant-status {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-waiting {
+    background: #fef9e7;
+    color: #9a7d0a;
+    border: 1px solid #f9e79f;
+}
+
+.status-active {
+    background: #d5f5e3;
+    color: #1e8449;
+    border: 1px solid #abebc6;
+}
+
+.status-failed {
+    background: #fadbd8;
+    color: #922b21;
+    border: 1px solid #f5b7b1;
+}
+
 /* Immunological risk badges */
 .risk-badge {
     display: inline-block;
@@ -2287,6 +2333,57 @@ main:has(.audit-container) {
 .serology-negative {
     background: #d5f5e3;
     color: #1e8449;
+}
+
+/* Assignment status badges (donor list) */
+.assignment-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.assignment-available {
+    background: #d5f5e3;
+    color: #1e8449;
+}
+
+.assignment-partial {
+    background: #fdebd0;
+    color: #b9770e;
+}
+
+.assignment-full {
+    background: #fadbd8;
+    color: #922b21;
+}
+
+/* Assignment status box (donor show page) */
+.assignment-status-box {
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    border-left: 4px solid;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.assignment-status-available {
+    background: #d5f5e3;
+    border-left-color: #27ae60;
+    color: #1e8449;
+}
+
+.assignment-status-partial {
+    background: #fdebd0;
+    border-left-color: #e67e22;
+    color: #b9770e;
+}
+
+.assignment-status-full {
+    background: #fadbd8;
+    border-left-color: #e74c3c;
+    color: #922b21;
 }
 
 /* Transplant details layout */

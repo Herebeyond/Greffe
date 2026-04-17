@@ -24,7 +24,6 @@
                     <tr>
                         <th>Rang</th>
                         <th>Date</th>
-                        <th>Type</th>
                         <th>Type de donneur</th>
                         <th>Donneur</th>
                         <th>Greffon</th>
@@ -37,13 +36,15 @@
                     <tr>
                         <td>{{ transplant.rank }}</td>
                         <td>{{ transplant.transplantDate|date('d/m/Y') }}</td>
-                        <td><span class="badge">{{ transplant.transplantType }}</span></td>
                         <td>{{ transplant.donorTypeLabel }}</td>
                         <td>
                             {% if transplant.donor %}
                                 <a href="{{ path('app_donor_show', {id: transplant.donor.id}) }}" class="btn-small">{{ transplant.donor.cristalNumber }}</a>
                             {% else %}
-                                —
+                                <span class="text-muted">Donneur inconnu</span>
+                                {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
+                                    <a href="{{ path('app_transplant_assign_donor', {patientId: patient.id, id: transplant.id}) }}" class="btn-small btn-small-success" style="margin-left: 0.5rem;">Assigner</a>
+                                {% endif %}
                             {% endif %}
                         </td>
                         <td>

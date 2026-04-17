@@ -48,6 +48,11 @@ class PatientAccessVoter extends Voter
         /** @var Patient $patient */
         $patient = $subject;
 
+        // Transplant coordinators can view all patients (restricted view enforced in templates)
+        if (in_array('ROLE_TRANSPLANT_COORDINATOR', $user->getRoles(), true)) {
+            return true;
+        }
+
         // Practitioners can access their assigned patients
         if ($patient->isAuthorizedPractitioner($user)) {
             return true;

@@ -45,6 +45,17 @@
                     <input type="text" id="city" name="city" value="{{ criteria.city }}" placeholder="Ex: Paris">
                 </div>
 
+                {% if is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
+                <div class="form-group">
+                    <label for="transplantStatus">Statut greffe</label>
+                    <select id="transplantStatus" name="transplantStatus">
+                        <option value="">Tous les statuts</option>
+                        <option value="waiting"{{ criteria.transplantStatus == 'waiting' ? ' selected' }}>En attente de greffe</option>
+                        <option value="active"{{ criteria.transplantStatus == 'active' ? ' selected' }}>Greffé(e)</option>
+                        <option value="failed"{{ criteria.transplantStatus == 'failed' ? ' selected' }}>Greffe échouée — en attente</option>
+                    </select>
+                </div>
+                {% endif %}
             </div>
             
             <div class="search-actions">
@@ -67,6 +78,7 @@
                         <input type="hidden" name="firstName" value="{{ criteria.firstName }}">
                         <input type="hidden" name="fileNumber" value="{{ criteria.fileNumber }}">
                         <input type="hidden" name="city" value="{{ criteria.city }}">
+                        <input type="hidden" name="transplantStatus" value="{{ criteria.transplantStatus }}">
                         <input type="hidden" name="confirmed" value="1">
                         <button type="submit" class="btn btn-primary">Oui, afficher</button>
                     </form>
@@ -77,7 +89,7 @@
     {% elseif patients|length > 0 %}
         <div class="results-section">
             <div class="results-header">
-                <h2>{% if hasSearchCriteria %}Résultats{% else %}Mes patients{% endif %}</h2>
+                <h2>{% if hasSearchCriteria %}Résultats{% elseif is_granted('ROLE_TRANSPLANT_COORDINATOR') %}Tous les patients{% else %}Mes patients{% endif %}</h2>
                 <span class="results-count">{{ total }} patient(s){% if hasSearchCriteria %} trouvé(s){% endif %}</span>
             </div>
 
@@ -91,6 +103,7 @@
                             <th>Ville</th>
                             <th>Sexe</th>
                             <th>Groupe sanguin</th>
+                            <th>Statut greffe</th>
                             <th class="actions-column">Actions</th>
                         </tr>
                     </thead>
@@ -105,6 +118,7 @@
                             <td>{{ patient.city }}</td>
                             <td>{{ patient.sexLabel ?? '-' }}</td>
                             <td>{{ patient.fullBloodGroup ?? '-' }}</td>
+                            <td><span class="transplant-status {{ patient.transplantStatusClass }}">{{ patient.transplantStatusLabel }}</span></td>
                             <td class="actions-cell">
                                 {% if is_granted('VIEW_PATIENT', patient) %}
                                 <a href="{{ path('app_patient_show', {id: patient.id}) }}" class="btn btn-small">Voir</a>
@@ -132,6 +146,7 @@
                             <input type="hidden" name="firstName" value="{{ criteria.firstName }}">
                             <input type="hidden" name="fileNumber" value="{{ criteria.fileNumber }}">
                             <input type="hidden" name="city" value="{{ criteria.city }}">
+                            <input type="hidden" name="transplantStatus" value="{{ criteria.transplantStatus }}">
                             <input type="hidden" name="confirmed" value="1">
                             <input type="hidden" name="page" value="{{ page - 1 }}">
                             <button type="submit" class="pagination-link">&laquo; Précédent</button>
@@ -147,6 +162,7 @@
                             <input type="hidden" name="firstName" value="{{ criteria.firstName }}">
                             <input type="hidden" name="fileNumber" value="{{ criteria.fileNumber }}">
                             <input type="hidden" name="city" value="{{ criteria.city }}">
+                            <input type="hidden" name="transplantStatus" value="{{ criteria.transplantStatus }}">
                             <input type="hidden" name="confirmed" value="1">
                             <input type="hidden" name="page" value="{{ page + 1 }}">
                             <button type="submit" class="pagination-link">Suivant &raquo;</button>

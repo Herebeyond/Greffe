@@ -30,7 +30,6 @@ use App\Entity\Reference\PeritonealPosition;
 use App\Entity\Reference\RelationshipType;
 use App\Entity\Reference\SerologyMarker;
 use App\Entity\Reference\SurgicalApproach;
-use App\Entity\Reference\TransplantType;
 use App\Entity\Reference\VirologicalMarker;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -44,8 +43,6 @@ class AppFixtures extends Fixture
     private array $donorTypes = [];
     /** @var array<string, ConsultationType> */
     private array $consultationTypes = [];
-    /** @var array<string, TransplantType> */
-    private array $transplantTypes = [];
     /** @var array<string, DeathCause> */
     private array $deathCauses = [];
     /** @var array<string, RelationshipType> */
@@ -113,7 +110,6 @@ class AppFixtures extends Fixture
         $this->loadBloodGroups($manager);
         $this->loadDonorTypes($manager);
         $this->loadConsultationTypes($manager);
-        $this->loadTransplantTypes($manager);
         $this->loadDeathCauses($manager);
         $this->loadRelationshipTypes($manager);
         $this->loadEducationTopics($manager);
@@ -174,24 +170,6 @@ class AppFixtures extends Fixture
             $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
             $manager->persist($e);
             $this->consultationTypes[$d['code']] = $e;
-        }
-    }
-
-    private function loadTransplantTypes(ObjectManager $manager): void
-    {
-        $data = [
-            ['code' => 'rein',                  'label' => 'Rein',                   'order' => 1],
-            ['code' => 'rein_donneur_vivant',   'label' => 'Rein donneur vivant',    'order' => 2],
-            ['code' => 'rein_pancreas',         'label' => 'Rein-pancréas',          'order' => 3],
-            ['code' => 'rein_foie',             'label' => 'Rein-foie',              'order' => 4],
-            ['code' => 'rein_coeur',            'label' => 'Rein-cœur',              'order' => 5],
-            ['code' => 'autre',                 'label' => 'Autre',                  'order' => 6],
-        ];
-        foreach ($data as $d) {
-            $e = new TransplantType();
-            $e->setCode($d['code'])->setLabel($d['label'])->setDisplayOrder($d['order']);
-            $manager->persist($e);
-            $this->transplantTypes[$d['code']] = $e;
         }
     }
 
@@ -1278,24 +1256,6 @@ class AppFixtures extends Fixture
     }
 
     /**
-     * Map from fixture transplant type labels to reference entity codes.
-     */
-    private function getTransplantTypeCode(string $label): string
-    {
-        $map = [
-            'Rein' => 'rein',
-            'Rein donneur vivant' => 'rein_donneur_vivant',
-            'Rein-pancréas' => 'rein_pancreas',
-            'Rein-foie' => 'rein_foie',
-            'Rein-cœur' => 'rein_coeur',
-            'Rein-coeur' => 'rein_coeur',
-            'Autre' => 'autre',
-        ];
-
-        return $map[$label] ?? strtolower($label);
-    }
-
-    /**
      * Map from fixture peritoneal position labels to reference entity codes.
      */
     private function getPeritonealPositionCode(string $label): string
@@ -1329,7 +1289,6 @@ class AppFixtures extends Fixture
                 'transplantDate' => '2024-06-15',
                 'rank' => 1,
                 'donorType' => 'living',
-                'transplantType' => 'Rein donneur vivant',
                 'isGraftFunctional' => true,
                 'surgeonName' => 'Pr. Legrand François',
                 'declampingDate' => '2024-06-15',
@@ -1358,7 +1317,6 @@ class AppFixtures extends Fixture
                 'transplantDate' => '2024-09-22',
                 'rank' => 1,
                 'donorType' => 'deceased_encephalic',
-                'transplantType' => 'Rein',
                 'isGraftFunctional' => true,
                 'surgeonName' => 'Dr. Bernard Michel',
                 'declampingDate' => '2024-09-22',
@@ -1387,7 +1345,6 @@ class AppFixtures extends Fixture
                 'transplantDate' => '2023-03-10',
                 'rank' => 1,
                 'donorType' => 'deceased_encephalic',
-                'transplantType' => 'Rein',
                 'isGraftFunctional' => false,
                 'graftEndDate' => '2024-11-05',
                 'graftEndCause' => 'Rejet chronique humoral avec DSA anti-HLA de novo. Retour en dialyse.',
@@ -1417,7 +1374,6 @@ class AppFixtures extends Fixture
                 'transplantDate' => '2025-01-20',
                 'rank' => 2,
                 'donorType' => 'living',
-                'transplantType' => 'Rein donneur vivant',
                 'isGraftFunctional' => true,
                 'surgeonName' => 'Pr. Legrand François',
                 'declampingDate' => '2025-01-20',
@@ -1446,7 +1402,6 @@ class AppFixtures extends Fixture
                 'transplantDate' => '2024-11-08',
                 'rank' => 1,
                 'donorType' => 'deceased_cardiac_arrest',
-                'transplantType' => 'Rein',
                 'isGraftFunctional' => true,
                 'surgeonName' => 'Dr. Lambert Pierre',
                 'declampingDate' => '2024-11-08',
@@ -1473,7 +1428,6 @@ class AppFixtures extends Fixture
                 'transplantDate' => '2024-04-03',
                 'rank' => 1,
                 'donorType' => 'deceased_encephalic',
-                'transplantType' => 'Rein-pancréas',
                 'isGraftFunctional' => true,
                 'surgeonName' => 'Pr. Duval Catherine',
                 'declampingDate' => '2024-04-03',
@@ -1502,7 +1456,6 @@ class AppFixtures extends Fixture
                 'transplantDate' => '2024-08-12',
                 'rank' => 1,
                 'donorType' => 'living',
-                'transplantType' => 'Rein donneur vivant',
                 'isGraftFunctional' => true,
                 'surgeonName' => 'Dr. Petit Laurent',
                 'declampingDate' => '2024-08-12',
@@ -1530,7 +1483,6 @@ class AppFixtures extends Fixture
                 'transplantDate' => '2025-02-05',
                 'rank' => 1,
                 'donorType' => 'deceased_cardiac_arrest',
-                'transplantType' => 'Rein',
                 'isGraftFunctional' => true,
                 'surgeonName' => 'Dr. Faure Nathalie',
                 'declampingDate' => '2025-02-05',
@@ -1557,7 +1509,6 @@ class AppFixtures extends Fixture
                 'transplantDate' => '2024-09-22',
                 'rank' => 1,
                 'donorType' => 'deceased_encephalic',
-                'transplantType' => 'Rein',
                 'isGraftFunctional' => true,
                 'surgeonName' => 'Dr. Bernard Michel',
                 'declampingDate' => '2024-09-22',
@@ -1585,7 +1536,6 @@ class AppFixtures extends Fixture
                 'transplantDate' => '2024-04-03',
                 'rank' => 1,
                 'donorType' => 'deceased_encephalic',
-                'transplantType' => 'Rein',
                 'isGraftFunctional' => true,
                 'surgeonName' => 'Pr. Duval Catherine',
                 'declampingDate' => '2024-04-03',
@@ -1614,7 +1564,6 @@ class AppFixtures extends Fixture
                 'transplantDate' => '2024-07-19',
                 'rank' => 1,
                 'donorType' => 'deceased_encephalic',
-                'transplantType' => 'Rein-foie',
                 'isGraftFunctional' => true,
                 'surgeonName' => 'Pr. Moreau Jean-Philippe',
                 'declampingDate' => '2024-07-19',
@@ -1642,7 +1591,6 @@ class AppFixtures extends Fixture
                 'transplantDate' => '2018-05-20',
                 'rank' => 1,
                 'donorType' => 'deceased_encephalic',
-                'transplantType' => 'Rein',
                 'isGraftFunctional' => false,
                 'graftEndDate' => '2023-08-15',
                 'graftEndCause' => 'Néphropathie chronique d\'allogreffe. Fibrose interstitielle et atrophie tubulaire sévères.',
@@ -1675,7 +1623,6 @@ class AppFixtures extends Fixture
             $transplant->setTransplantDate(new \DateTime($data['transplantDate']));
             $transplant->setRank($data['rank']);
             $transplant->setDonorType($this->donorTypes[$data['donorType']]);
-            $transplant->setTransplantType($this->transplantTypes[$this->getTransplantTypeCode($data['transplantType'])]);
             $transplant->setIsGraftFunctional($data['isGraftFunctional']);
 
             if (isset($data['graftEndDate'])) {

@@ -110,6 +110,48 @@
         </section>
 
         <section class="detail-section">
+            <h2>Statut greffe</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Statut</span>
+                    <span class="detail-value">
+                        <span class="transplant-status {{ patient.transplantStatusClass }}">{{ patient.transplantStatusLabel }}</span>
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Nombre de greffes</span>
+                    <span class="detail-value">{{ patient.transplantCount }}</span>
+                </div>
+                {% if patient.failedTransplantCount > 0 %}
+                <div class="detail-item">
+                    <span class="detail-label">Greffes échouées</span>
+                    <span class="detail-value">
+                        <span class="transplant-status status-failed">{{ patient.failedTransplantCount }}</span>
+                    </span>
+                </div>
+                {% endif %}
+                {% for transplant in patient.transplants %}
+                <div class="detail-item" style="grid-column: 1 / -1;">
+                    <span class="detail-label">Greffe n°{{ transplant.rank }} — {{ transplant.transplantDate|date('d/m/Y') }}</span>
+                    <span class="detail-value">
+                        {% if transplant.isGraftFunctional %}
+                            <span class="transplant-status status-active">Greffon fonctionnel</span>
+                        {% else %}
+                            <span class="transplant-status status-failed">Greffon non fonctionnel</span>
+                            {% if transplant.graftEndCause %}
+                                — {{ transplant.graftEndCause }}
+                            {% endif %}
+                            {% if transplant.graftEndDate %}
+                                ({{ transplant.graftEndDate|date('d/m/Y') }})
+                            {% endif %}
+                        {% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="detail-section">
             <h2>Contact</h2>
             <div class="detail-grid">
                 <div class="detail-item">

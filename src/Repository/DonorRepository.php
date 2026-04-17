@@ -29,6 +29,20 @@ class DonorRepository extends ServiceEntityRepository
     }
 
     /**
+     * Find donors that still have kidneys available for assignment.
+     * Living donors: max 1 transplant. Deceased donors: max 2 transplants.
+     *
+     * @return Donor[]
+     */
+    public function findAvailableOrderedByDate(): array
+    {
+        return array_values(array_filter(
+            $this->findAllOrderedByDate(),
+            fn(Donor $d) => !$d->isFullyAssigned()
+        ));
+    }
+
+    /**
      * @return Donor[]
      */
     public function findByType(string $typeCode): array
@@ -76,6 +90,19 @@ class DonorRepository extends ServiceEntityRepository
         return $qb->orderBy('d.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Search donors that still have kidneys available for assignment.
+     *
+     * @return Donor[]
+     */
+    public function searchAvailable(?string $cristalNumber, array $bloodTypes, ?string $donorType): array
+    {
+        return array_values(array_filter(
+            $this->search($cristalNumber, $bloodTypes, $donorType),
+            fn(Donor $d) => !$d->isFullyAssigned()
+        ));
     }
 
     public function save(Donor $entity): void

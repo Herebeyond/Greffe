@@ -1,0 +1,112 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Assigner donneur {{ donor.cristalNumber }} à une greffe{% endblock %}
+
+{% block body %}
+<div class="page-container">
+    <div class="section-header">
+        <h2>Assigner le donneur {{ donor.cristalNumber }} à une greffe</h2>
+        <div class="page-header-actions">
+            <a href="{{ path('app_donor_show', {id: donor.id}) }}" class="btn btn-secondary">Retour au donneur</a>
+        </div>
+    </div>
+
+    {# ===== Donor summary ===== #}
+    <section class="detail-section">
+        <h2>Donneur sélectionné</h2>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">CRISTAL</span>
+                <span class="detail-value"><strong>{{ donor.cristalNumber }}</strong></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Type</span>
+                <span class="detail-value"><span class="badge badge-donor-{{ donor.donorType.code }}">{{ donor.donorTypeLabel }}</span></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Groupe sanguin</span>
+                <span class="detail-value"><span class="blood-group blood-group-{{ donor.bloodGroup.code }}">{{ donor.fullBloodGroup }}</span></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Âge</span>
+                <span class="detail-value">{{ donor.age }} ans</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Sexe</span>
+                <span class="detail-value">{{ donor.sex == 'M' ? 'Masculin' : 'Féminin' }}</span>
+            </div>
+        </div>
+    </section>
+
+    {# ===== Filter form ===== #}
+    <section class="detail-section">
+        <h2>Filtrer par numéro de dossier</h2>
+        <form method="post" action="{{ path('app_donor_assign', {id: donor.id}) }}" class="search-form">
+            <div class="form-group">
+                <label for="fileNumber">Numéro de dossier du patient</label>
+                <input type="text" id="fileNumber" name="fileNumber" value="{{ fileNumber }}" placeholder="Ex: 2023-001234" class="form-control">
+            </div>
+            <div class="form-group form-group-actions">
+                <button type="submit" class="btn btn-primary">Filtrer</button>
+                {% if fileNumber %}
+                <a href="{{ path('app_donor_assign', {id: donor.id}) }}" class="btn btn-secondary">Réinitialiser</a>
+                {% endif %}
+            </div>
+        </form>
+    </section>
+
+    {# ===== Transplants without donor ===== #}
+    <section class="detail-section">
+        <h2>Greffes en attente de donneur ({{ transplants|length }})</h2>
+        {% if transplants is empty %}
+            <p class="detail-empty">Aucune greffe sans donneur trouvée{{ fileNumber ? ' pour le dossier "' ~ fileNumber ~ '"' : '' }}.</p>
+        {% else %}
+            <div class="data-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Dossier</th>
+                            <th>Groupe sanguin</th>
+                            <th>Âge</th>
+                            <th>Sexe</th>
+                            <th>Date de greffe</th>
+                            <th>Rang</th>
+                            <th>Type de donneur</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transplant in transplants %}
+                        {% set patient = transplant.patient %}
+                        <tr>
+                            <td><strong>{{ patient.fileNumber }}</strong></td>
+                            <td>
+                                {% if patient.fullBloodGroup %}
+                                    <span class="blood-group blood-group-{{ patient.bloodGroup.code }}">{{ patient.fullBloodGroup }}</span>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>{{ patient.age ? patient.age ~ ' ans' : '—' }}</td>
+                            <td>{{ patient.sex == 'M' ? 'Masculin' : (patient.sex == 'F' ? 'Féminin' : '—') }}</td>
+                            <td>{{ transplant.transplantDate|date('d/m/Y') }}</td>
+                            <td>{{ transplant.rank }}</td>
+                            <td><span class="badge badge-donor-{{ transplant.donorType.code }}">{{ transplant.donorTypeLabel }}</span></td>
+                            <td class="actions-cell">
+                                <a href="{{ path('app_patient_show', {id: patient.id}) }}" class="btn-small">Voir patient</a>
+                                <form method="post" action="{{ path('app_donor_assign', {id: donor.id}) }}" class="inline-form"
+                                      onsubmit="return confirm('Confirmer l\'assignation du donneur {{ donor.cristalNumber }} à cette greffe (dossier {{ patient.fileNumber }}) ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('assign' ~ donor.id) }}">
+                                    <input type="hidden" name="transplantId" value="{{ transplant.id }}">
+                                    <button type="submit" class="btn-small btn-small-success">Assigner</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

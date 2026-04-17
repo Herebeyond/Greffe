@@ -8,6 +8,7 @@ use App\Entity\TransplantVirologicalStatus;
 use App\Entity\Patient;
 use App\Form\TransplantType;
 use App\Form\DonorDataType;
+use App\Repository\DonorRepository;
 use App\Repository\TransplantRepository;
 use App\Repository\Reference\HlaLocusRepository;
 use App\Repository\Reference\VirologicalMarkerRepository;
@@ -29,6 +30,7 @@ class TransplantController extends AbstractController
 
     public function __construct(
         private TransplantRepository $transplantRepository,
+        private DonorRepository $donorRepository,
         private HlaLocusRepository $hlaLocusRepository,
         private VirologicalMarkerRepository $virologicalMarkerRepository,
         private FileUploadService $fileUploadService,
@@ -45,6 +47,46 @@ class TransplantController extends AbstractController
         return $this->render('transplant/index.html.twig', [
             'patient' => $patient,
             'transplants' => $transplants,
+            'activeTab' => 'greffes',
+        ]);
+    }
+
+    #[Route('/{id}/assign-donor', name: 'app_transplant_assign_donor', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_TRANSPLANT_COORDINATOR')]
+    public function assignDonor(Request $request, #[MapEntity(id: 'patientId')] Patient $patient, Transplant $transplant): Response
+    {
+        $this->denyAccessUnlessGranted('VIEW_PATIENT', $patient);
+
+        if ($transplant->getDonor() !== null) {
+            $this->addFlash('error', 'Cette greffe a déjà un donneur assigné');
+            return $this->redirectToRoute('app_transplant_index', ['patientId' => $patient->getId()]);
+        }
+
+        if ($request->isMethod('POST') && $request->request->has('donorId')) {
+            $donorId = $request->request->getInt('donorId');
+            $donor = $this->donorRepository->find($donorId);
+
+            if ($donor
+                && !$donor->isFullyAssigned()
+                && $this->isCsrfTokenValid('assign_donor' . $transplant->getId(), $request->request->get('_token'))
+            ) {
+                $transplant->setDonor($donor);
+                $transplant->setUpdatedAt(new \DateTimeImmutable());
+                $this->transplantRepository->save($transplant);
+                $this->addFlash('success', 'Donneur assigné à la greffe avec succès');
+
+                return $this->redirectToRoute('app_transplant_index', ['patientId' => $patient->getId()]);
+            }
+
+            $this->addFlash('error', 'Impossible d\'assigner ce donneur à la greffe');
+        }
+
+        $donors = $this->donorRepository->findAvailableOrderedByDate();
+
+        return $this->render('transplant/assign_donor.html.twig', [
+            'patient' => $patient,
+            'transplant' => $transplant,
+            'donors' => $donors,
             'activeTab' => 'greffes',
         ]);
     }

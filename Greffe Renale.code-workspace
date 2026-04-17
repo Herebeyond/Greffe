@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../greffe_renale_mobile"
 		}
 	],
 	"settings": {}

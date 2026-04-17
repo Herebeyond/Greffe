@@ -43,6 +43,7 @@ class PatientController extends AbstractController
             'firstName' => $bag->get('firstName', ''),
             'fileNumber' => $bag->get('fileNumber', ''),
             'city' => $bag->get('city', ''),
+            'transplantStatus' => $bag->get('transplantStatus', ''),
         ];
 
         // Validate CSRF token on POST requests
@@ -56,7 +57,8 @@ class PatientController extends AbstractController
         $hasSearchCriteria = !empty($criteria['lastName']) 
             || !empty($criteria['firstName']) 
             || !empty($criteria['fileNumber']) 
-            || !empty($criteria['city']);
+            || !empty($criteria['city'])
+            || !empty($criteria['transplantStatus']);
 
         $patients = [];
         $total = 0;
@@ -82,14 +84,23 @@ class PatientController extends AbstractController
                 $total = $result['total'];
             }
         } else {
-            // No search criteria: show the user's assigned patients
+            // No search criteria: show the user's assigned patients (or all for coordinators)
             /** @var User $currentUser */
             $currentUser = $this->getUser();
-            $patients = $this->patientRepository->findByPractitioner($currentUser);
-            $total = count($patients);
 
-            // Paginate manually
-            $patients = array_slice($patients, ($page - 1) * $limit, $limit);
+            if (in_array('ROLE_TRANSPLANT_COORDINATOR', $currentUser->getRoles(), true)) {
+                // Coordinators see all patients (apply transplant status filter if set)
+                $coordinatorCriteria = !empty($criteria['transplantStatus']) ? ['transplantStatus' => $criteria['transplantStatus']] : [];
+                $result = $this->patientRepository->searchPaginated($coordinatorCriteria, $page, $limit);
+                $patients = $result['patients'];
+                $total = $result['total'];
+            } else {
+                $patients = $this->patientRepository->findByPractitioner($currentUser);
+                $total = count($patients);
+
+                // Paginate manually
+                $patients = array_slice($patients, ($page - 1) * $limit, $limit);
+            }
         }
 
         $totalPages = (int) ceil($total / $limit);

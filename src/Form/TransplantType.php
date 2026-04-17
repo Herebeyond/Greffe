@@ -6,7 +6,6 @@ use App\Entity\Reference\DonorType as DonorTypeRef;
 use App\Entity\Reference\ImmunologicalRisk;
 use App\Entity\Reference\ImmunosuppressiveDrug;
 use App\Entity\Reference\PeritonealPosition;
-use App\Entity\Reference\TransplantType as TransplantTypeRef;
 use App\Entity\Transplant;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
@@ -61,15 +60,6 @@ class TransplantType extends AbstractType
                 'label' => 'Cause de fin du greffon',
                 'required' => false,
                 'attr' => ['rows' => 2],
-            ])
-            ->add('transplantType', EntityType::class, [
-                'class' => TransplantTypeRef::class,
-                'label' => 'Type de transplantation',
-                'placeholder' => 'Sélectionner...',
-                'choice_label' => 'label',
-                'query_builder' => fn ($repo) => $repo->createQueryBuilder('r')
-                    ->where('r.isActive = true')
-                    ->orderBy('r.displayOrder', 'ASC'),
             ])
             ->add('surgeonName', TextType::class, [
                 'label' => 'Chirurgien',

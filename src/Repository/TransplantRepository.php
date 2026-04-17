@@ -29,6 +29,24 @@ class TransplantRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return Transplant[]
+     */
+    public function findWithoutDonor(?string $fileNumber = null): array
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->join('t.patient', 'p')
+            ->where('t.donor IS NULL')
+            ->orderBy('t.transplantDate', 'DESC');
+
+        if ($fileNumber) {
+            $qb->andWhere('p.fileNumber LIKE :fileNumber')
+                ->setParameter('fileNumber', '%' . $fileNumber . '%');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
     public function save(Transplant $entity): void
     {
         $this->getEntityManager()->persist($entity);

@@ -1154,4 +1154,30 @@ class Donor
 
         return $this;
     }
+
+    // ===== Transplant assignment helpers =====
+
+    /**
+     * Maximum number of transplants this donor can be assigned to.
+     * Living donor: 1 kidney. Deceased donor: 2 kidneys.
+     */
+    public function getMaxTransplants(): int
+    {
+        return $this->donorType?->getCode() === 'living' ? 1 : 2;
+    }
+
+    public function getAssignedTransplantCount(): int
+    {
+        return $this->transplants->count();
+    }
+
+    public function getRemainingTransplants(): int
+    {
+        return max(0, $this->getMaxTransplants() - $this->getAssignedTransplantCount());
+    }
+
+    public function isFullyAssigned(): bool
+    {
+        return $this->getRemainingTransplants() === 0;
+    }
 }

@@ -1,0 +1,90 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Assigner un donneur - Greffe #{{ transplant.rank }} - {{ patient.fullName }}{% endblock %}
+
+{% block body %}
+<div class="patient-page">
+    {% include 'patient/_medical_nav.html.twig' %}
+
+    <div class="section-header">
+        <h2>Assigner un donneur à la greffe rang {{ transplant.rank }}</h2>
+        <div class="page-header-actions">
+            <a href="{{ path('app_transplant_index', {patientId: patient.id}) }}" class="btn btn-secondary">Retour aux greffes</a>
+        </div>
+    </div>
+
+    {# ===== Transplant summary ===== #}
+    <section class="detail-section">
+        <h2>Greffe sélectionnée</h2>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">Patient</span>
+                <span class="detail-value"><strong>{{ patient.fileNumber }}</strong></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Rang</span>
+                <span class="detail-value">{{ transplant.rank }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Date de greffe</span>
+                <span class="detail-value">{{ transplant.transplantDate|date('d/m/Y') }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Type de donneur</span>
+                <span class="detail-value"><span class="badge badge-donor-{{ transplant.donorType.code }}">{{ transplant.donorTypeLabel }}</span></span>
+            </div>
+            {% if patient.fullBloodGroup %}
+            <div class="detail-item">
+                <span class="detail-label">Groupe sanguin patient</span>
+                <span class="detail-value"><span class="blood-group blood-group-{{ patient.bloodGroup.code }}">{{ patient.fullBloodGroup }}</span></span>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    {# ===== Available donors ===== #}
+    <section class="detail-section">
+        <h2>Donneurs disponibles ({{ donors|length }})</h2>
+        {% if donors is empty %}
+            <p class="detail-empty">Aucun donneur disponible pour l'assignation.</p>
+        {% else %}
+            <div class="data-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>CRISTAL</th>
+                            <th>Type</th>
+                            <th>Groupe sanguin</th>
+                            <th>Âge</th>
+                            <th>Sexe</th>
+                            <th>Reins disponibles</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for donor in donors %}
+                        <tr>
+                            <td><strong>{{ donor.cristalNumber }}</strong></td>
+                            <td><span class="badge badge-donor-{{ donor.donorType.code }}">{{ donor.donorTypeLabel }}</span></td>
+                            <td><span class="blood-group blood-group-{{ donor.bloodGroup.code }}">{{ donor.fullBloodGroup }}</span></td>
+                            <td>{{ donor.age }} ans</td>
+                            <td>{{ donor.sex == 'M' ? 'Masculin' : 'Féminin' }}</td>
+                            <td>{{ donor.remainingTransplants }}/{{ donor.maxTransplants }}</td>
+                            <td class="actions-cell">
+                                <a href="{{ path('app_donor_show', {id: donor.id}) }}" class="btn-small">Voir donneur</a>
+                                <form method="post" action="{{ path('app_transplant_assign_donor', {patientId: patient.id, id: transplant.id}) }}" class="inline-form"
+                                      onsubmit="return confirm('Confirmer l\'assignation du donneur {{ donor.cristalNumber }} à la greffe rang {{ transplant.rank }} (dossier {{ patient.fileNumber }}) ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('assign_donor' ~ transplant.id) }}">
+                                    <input type="hidden" name="donorId" value="{{ donor.id }}">
+                                    <button type="submit" class="btn-small btn-small-success">Assigner</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
