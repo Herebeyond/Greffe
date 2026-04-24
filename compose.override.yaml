@@ -16,12 +16,20 @@ services:
       # creates an anonymous volume that is lost on rebuild)
       - encryption-key:/app/var/encryption
     environment:
-      SERVER_NAME: "localhost, 192.168.137.1, php:80"
+      # `:80` is an HTTP catch-all block (any Host header) so traffic forwarded by
+      # ngrok (`ngrok http 80`) matches without needing the public hostname here.
+      # The HTTPS hosts (localhost / 192.168.137.1 hotspot / 192.168.20.119 Wi-Fi)
+      # are kept for direct LAN access.
+      SERVER_NAME: "${SERVER_NAME:-localhost, 192.168.137.1, 192.168.20.119, php:80, :80}"
       FRANKENPHP_WORKER_CONFIG: watch
       MERCURE_EXTRA_DIRECTIVES: demo
       # See https://xdebug.org/docs/all_settings#mode
       XDEBUG_MODE: "${XDEBUG_MODE:-off}"
       APP_ENV: "${APP_ENV:-dev}"
+      # Trust ngrok / docker-network reverse proxies so Symfony sees the original
+      # client IP and detects HTTPS via X-Forwarded-Proto.
+      SYMFONY_TRUSTED_PROXIES: "127.0.0.1,REMOTE_ADDR,private_ranges"
+      SYMFONY_TRUSTED_HEADERS: "x-forwarded-for,x-forwarded-host,x-forwarded-proto,x-forwarded-port,x-forwarded-prefix"
     extra_hosts:
       # Ensure that host.docker.internal is correctly defined on Linux
       - host.docker.internal:host-gateway
