@@ -1670,10 +1670,6 @@ main {
         grid-template-columns: 1fr;
     }
 }
-    color: #2c3e50;
-    padding: 0 0.5rem;
-    font-size: 1rem;
-}
 
 .form-grid-3 {
     grid-template-columns: repeat(3, 1fr);
