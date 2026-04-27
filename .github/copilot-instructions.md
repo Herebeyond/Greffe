@@ -310,6 +310,11 @@ CADDY_SERVER_EXTRA_DIRECTIVES="tls /etc/caddy/certs/tls.pem /etc/caddy/certs/tls
 docker compose -f compose.yaml -f compose.prod.yaml up -d
 ```
 
+The production stack also mounts `/app/var/encryption` on a named volume so the
+medical-data encryption key persists across rebuilds. If an existing database is
+restored on a new server, the original `var/encryption/encryption.key` must be
+restored too, otherwise encrypted patient or donor fields may fail at runtime.
+
 ---
 
 ## Data Encryption
