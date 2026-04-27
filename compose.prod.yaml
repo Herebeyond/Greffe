@@ -6,6 +6,7 @@ services:
       context: .
       target: frankenphp_prod
     environment:
+      CADDY_GLOBAL_OPTIONS: ${CADDY_GLOBAL_OPTIONS:-}
       SERVER_NAME: ${SERVER_NAME:-localhost}
       APP_SECRET: ${APP_SECRET}
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}

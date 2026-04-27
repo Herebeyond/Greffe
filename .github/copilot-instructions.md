@@ -302,6 +302,7 @@ automatic public TLS is not sufficient. Place custom certificate files at
 production stack with:
 
 ```bash
+CADDY_GLOBAL_OPTIONS="default_sni 10.187.22.27" \
 SERVER_NAME=10.187.22.27 \
 APP_SECRET=ChangeMe \
 CADDY_MERCURE_JWT_SECRET=ChangeThisMercureHubJWTSecretKey \
