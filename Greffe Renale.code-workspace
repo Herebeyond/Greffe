@@ -1,10 +1,10 @@
 {
 	"folders": [
 		{
-			"path": "."
+			"path": "../../../../Docker/Greffe Renale"
 		},
 		{
-			"path": "../greffe_renale_mobile"
+			"path": "../../../../Docker/greffe_renale_mobile"
 		}
 	],
 	"settings": {}

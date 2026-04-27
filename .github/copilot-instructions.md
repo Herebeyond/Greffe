@@ -38,6 +38,7 @@ The platform will integrate with the French national organ allocation system (CR
 │   ├── routes.yaml         # Main routing
 │   └── services.yaml       # Service definitions
 ├── frankenphp/             # FrankenPHP configuration
+│   └── certs/              # Optional custom TLS certificates for direct HTTPS on IP/host deployments
 ├── public/                 # Web root
 ├── src/                    # Application source code
 │   ├── Command/            # Console commands (encryption key generation)
@@ -105,6 +106,7 @@ This ensures Copilot always has accurate context about the project's current sta
 - **PHP Version**: 8.4+
 - **Database**: PostgreSQL 16 (via Doctrine ORM)
 - **Containerization**: Docker with FrankenPHP
+- **TLS**: Automatic Caddy TLS for hostnames, or custom certificate files mounted from `frankenphp/certs/` for direct HTTPS on bare IPs
 - **Authentication**: Symfony Security bundle with form login + JWT (API)
 - **API**: API Platform v4.3.2 with JWT authentication (Lexik)
 - **Encryption**: paragonie/halite (libsodium-based field-level encryption)
@@ -291,6 +293,21 @@ docker compose exec php bin/console app:generate-encryption-key
 > docker compose exec php php bin/console cache:clear
 > ```
 > This ensures the application reflects the latest changes immediately. Failing to clear the cache can lead to stale behavior or misleading errors.
+
+### Custom HTTPS On Bare IPs
+
+If the application is deployed behind a raw IP address instead of a DNS hostname,
+automatic public TLS is not sufficient. Place custom certificate files at
+`frankenphp/certs/tls.pem` and `frankenphp/certs/tls.key`, then start the
+production stack with:
+
+```bash
+SERVER_NAME=10.187.22.27 \
+APP_SECRET=ChangeMe \
+CADDY_MERCURE_JWT_SECRET=ChangeThisMercureHubJWTSecretKey \
+CADDY_SERVER_EXTRA_DIRECTIVES="tls /etc/caddy/certs/tls.pem /etc/caddy/certs/tls.key" \
+docker compose -f compose.yaml -f compose.prod.yaml up -d
+```
 
 ---
 
