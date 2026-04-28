@@ -17,5 +17,16 @@ services:
       - ./frankenphp/certs:/etc/caddy/certs:ro
       - encryption-key:/app/var/encryption
 
+  mobile:
+    build:
+      context: ../greffe_renale_mobile
+      args:
+        API_BASE_URL: ${MOBILE_API_BASE_URL:-https://10.187.22.27}
+    restart: unless-stopped
+    ports:
+      - "${MOBILE_PORT:-3000}:80"
+    depends_on:
+      - php
+
 volumes:
   encryption-key:
