@@ -41,7 +41,8 @@ The platform will integrate with the French national organ allocation system (CR
 │   └── certs/              # Optional custom TLS certificates for direct HTTPS on IP/host deployments
 ├── public/                 # Web root
 ├── src/                    # Application source code
-│   ├── Command/            # Console commands (encryption key generation)
+│   ├── Command/            # Console commands (encryption key generation,
+│   │                       #   decryption diagnostics, legacy field decryption)
 │   ├── Controller/         # Controllers (Home, Login, Patient, PatientAccess, Consultation,
 │   │                       #   BiologicalResult, MedicalHistory, TherapeuticEducation,
 │   │                       #   Transplant, Donor, Admin, Password, Profile, BreakTheGlass,

@@ -4,6 +4,7 @@ namespace App\EventSubscriber;
 
 use App\Doctrine\Type\EncryptedStringType;
 use App\Service\EncryptionService;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -18,6 +19,7 @@ class EncryptionInitializerSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly EncryptionService $encryptionService,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -59,9 +61,26 @@ class EncryptionInitializerSubscriber implements EventSubscriberInterface
 
     private function initializeEncryption(): void
     {
-        // Only initialize if the key is available
-        if ($this->encryptionService->isKeyAvailable()) {
+        $diagnostics = $this->encryptionService->getKeyDiagnostics();
+
+        if ($diagnostics['loadable']) {
             EncryptedStringType::setEncryptionService($this->encryptionService);
+
+            $this->logger->info('EncryptedStringType initialized.', [
+                'path' => $diagnostics['path'],
+                'fingerprint' => $diagnostics['fingerprint'],
+            ]);
+
+            return;
         }
+
+        $this->logger->warning('EncryptedStringType could not be initialized.', [
+            'path' => $diagnostics['path'],
+            'exists' => $diagnostics['exists'],
+            'readable' => $diagnostics['readable'],
+            'permissions' => $diagnostics['permissions'],
+            'fingerprint' => $diagnostics['fingerprint'],
+            'load_error' => $diagnostics['load_error'],
+        ]);
     }
 }

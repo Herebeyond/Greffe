@@ -21,6 +21,11 @@ class EncryptedStringType extends Type
         self::$encryptionService = $encryptionService;
     }
 
+    public static function hasEncryptionService(): bool
+    {
+        return self::$encryptionService !== null;
+    }
+
     public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
         // Encrypted strings are longer than original, use TEXT for safety
