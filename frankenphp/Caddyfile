@@ -49,8 +49,15 @@
 	# Disable Topics tracking if not enabled explicitly: https://github.com/jkarlin/topics
 	header ?Permissions-Policy "browsing-topics=()"
 
+	# Serve the mobile APK page through the main HTTPS endpoint.
+	redir /mobile /mobile/ 308
+	handle_path /mobile/* {
+		reverse_proxy mobile:80
+	}
+
 	@phpRoute {
 		not path /.well-known/mercure*
+		not path /mobile*
 		not file {path}
 	}
 	rewrite @phpRoute index.php
