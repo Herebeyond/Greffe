@@ -20,8 +20,9 @@ services:
   mobile:
     build:
       context: ../greffe_renale_mobile
-      args:
-        API_BASE_URL: ${MOBILE_API_BASE_URL:-https://10.187.22.27}
+      # Use the lightweight Dockerfile that ships a prebuilt APK.
+      # Build the APK on a developer machine first (see Dockerfile.prebuilt header).
+      dockerfile: Dockerfile.prebuilt
     restart: unless-stopped
     ports:
       - "${MOBILE_PORT:-3000}:80"
