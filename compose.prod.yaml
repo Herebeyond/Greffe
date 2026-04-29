@@ -12,7 +12,12 @@ services:
       ENCRYPTION_KEY_PATH: /app/var/encryption/encryption.key
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
       MERCURE_SUBSCRIBER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
-      CADDY_SERVER_EXTRA_DIRECTIVES: ${CADDY_SERVER_EXTRA_DIRECTIVES:-}
+      CADDY_SERVER_EXTRA_DIRECTIVES: |
+        tls /etc/caddy/certs/tls.pem /etc/caddy/certs/tls.key
+        redir /mobile /mobile/ 308
+        handle_path /mobile/* {
+          reverse_proxy mobile:80
+        }
     volumes:
       - ./frankenphp/certs:/etc/caddy/certs:ro
       - encryption-key:/app/var/encryption
@@ -24,8 +29,8 @@ services:
       # Build the APK on a developer machine first (see Dockerfile.prebuilt header).
       dockerfile: Dockerfile.prebuilt
     restart: unless-stopped
-    ports:
-      - "${MOBILE_PORT:-3000}:80"
+    expose:
+      - "80"
     depends_on:
       - php
 
