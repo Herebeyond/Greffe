@@ -4,6 +4,9 @@ This guide explains how to make the kidney-transplant platform reachable from
 anywhere (e.g. a Flutter mobile app running on a phone that is **not** on the
 PC's hotspot) using [ngrok](https://ngrok.com/).
 
+> This document is for development tunneling only. For the school server
+> deployment, use the direct LAN URL (`https://10.187.22.27`) instead of ngrok.
+
 ---
 
 ## 1. Start the backend

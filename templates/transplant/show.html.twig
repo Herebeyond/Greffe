@@ -257,7 +257,7 @@
             <div class="detail-grid">
                 <div class="detail-item">
                     <span class="detail-label">Numéro CRISTAL</span>
-                    <span class="detail-value">{{ transplant.donor.cristalNumber }}</span>
+                    <span class="detail-value"><span class="cristal-number">{{ transplant.donor.cristalNumber }}</span></span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Type</span>
@@ -295,7 +295,13 @@
             <div class="detail-grid">
                 <div class="detail-item">
                     <span class="detail-label">Numéro CRISTAL</span>
-                    <span class="detail-value">{{ donor.cristalNumber ?? '—' }}</span>
+                    <span class="detail-value">
+                        {% if donor.cristalNumber is defined and donor.cristalNumber %}
+                            <span class="cristal-number">{{ donor.cristalNumber }}</span>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Groupe sanguin</span>

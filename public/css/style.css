@@ -357,13 +357,48 @@ main {
 }
 
 .btn-small {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 0.4rem 0.75rem;
     font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.2;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
     background-color: #3498db;
 }
 
 .btn-small:hover {
     background-color: #2980b9;
+}
+
+.btn-small.btn-secondary {
+    background-color: #95a5a6;
+}
+
+.btn-small.btn-secondary:hover {
+    background-color: #7f8c8d;
+}
+
+.btn-small.btn-danger {
+    background-color: #e74c3c;
+}
+
+.btn-small.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+.btn-small.btn-success {
+    background-color: #27ae60;
+}
+
+.btn-small.btn-success:hover {
+    background-color: #219a52;
 }
 
 .text-restricted {
@@ -1156,13 +1191,23 @@ main {
     white-space: normal;
 }
 
-.detail-value a {
+.detail-value a:not(.btn):not(.btn-small) {
     color: #3498db;
     text-decoration: none;
 }
 
-.detail-value a:hover {
+.detail-value a:not(.btn):not(.btn-small):hover {
     text-decoration: underline;
+}
+
+.cristal-number {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: #eaf2fb;
+    color: #1f4f7a;
+    font-weight: 700;
+    letter-spacing: 0.02em;
 }
 
 .detail-secondary {
