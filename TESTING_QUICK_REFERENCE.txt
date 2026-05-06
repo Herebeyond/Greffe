@@ -1,0 +1,131 @@
+Greffe - Quick Testing Reference
+Date: 2026-05-05
+
+Purpose
+- Provide copy/paste commands and expected results for common functional tests.
+- Includes a break-the-glass scenario with patients not linked to docteur@chu.fr.
+
+Assumptions
+- Database is based on fixtures from src/DataFixtures/AppFixtures.php.
+- Test password for fixture users is: password
+- Commands are run from project root.
+
+---------------------------------------------------------------------
+0) Optional reset to fixture baseline
+---------------------------------------------------------------------
+Command:
+  docker compose exec php php bin/console doctrine:fixtures:load --no-interaction
+
+Expected result:
+- Fixtures reloaded.
+- User assignments match the ranges below.
+
+---------------------------------------------------------------------
+1) Test accounts
+---------------------------------------------------------------------
+- docteur@chu.fr            ROLE_DOCTOR
+- admin-medical@chu.fr      ROLE_DOCTOR
+- infirmiere@chu.fr         ROLE_NURSE
+- nephrologue@ville.fr      ROLE_DOCTOR
+- coordinateur@chu.fr       ROLE_TRANSPLANT_COORDINATOR
+- admin@admin.fr            ROLE_TECH_ADMIN
+- superadmin@admin.fr       ROLE_SUPER_ADMIN
+
+Password for all fixture users: password
+
+Expected result:
+- Active users can log in.
+- disabled@test.fr login must fail (inactive account).
+
+---------------------------------------------------------------------
+2) Patient assignment map (fixture baseline)
+---------------------------------------------------------------------
+- docteur@chu.fr primary access: file numbers 2024-001 to 2024-015
+- baillard.bjm2@orange.fr primary access: 2024-016 to 2024-030
+- admin-medical@chu.fr primary access: 2024-031 to 2024-050
+- infirmiere@chu.fr secondary access: 2024-001 to 2024-015
+- nephrologue@ville.fr secondary access: 2024-001 to 2024-005
+
+Verification command:
+  docker compose exec database psql -U app -d app -c "SELECT u.email, pa.access_level, MIN(p.file_number) AS min_file, MAX(p.file_number) AS max_file, COUNT(*) AS patient_count FROM patient_access pa JOIN \"user\" u ON u.id = pa.user_id JOIN patient p ON p.id = pa.patient_id GROUP BY u.email, pa.access_level ORDER BY u.email, pa.access_level;"
+
+Expected result:
+- docteur@chu.fr has 15 primary records.
+- infirmiere@chu.fr has 15 secondary records.
+- nephrologue@ville.fr has 5 secondary records.
+
+---------------------------------------------------------------------
+3) 3 patients NOT linked to docteur@chu.fr (for break-the-glass)
+---------------------------------------------------------------------
+Deterministic examples from fixtures:
+- 2024-016
+- 2024-031
+- 2024-050
+
+Verification command:
+  docker compose exec database psql -U app -d app -c "SELECT p.file_number FROM patient p WHERE p.file_number IN ('2024-016','2024-031','2024-050') AND NOT EXISTS (SELECT 1 FROM patient_access pa JOIN \"user\" u ON u.id = pa.user_id WHERE pa.patient_id = p.id AND u.email = 'docteur@chu.fr') ORDER BY p.file_number;"
+
+Expected result:
+- Exactly 3 rows: 2024-016, 2024-031, 2024-050.
+
+Dynamic command (always pick first 3 currently unlinked to docteur@chu.fr):
+  docker compose exec database psql -U app -d app -c "SELECT p.id, p.file_number FROM patient p WHERE NOT EXISTS (SELECT 1 FROM patient_access pa JOIN \"user\" u ON u.id = pa.user_id WHERE pa.patient_id = p.id AND u.email = 'docteur@chu.fr') ORDER BY p.file_number LIMIT 3;"
+
+---------------------------------------------------------------------
+4) Break-the-glass end-to-end test
+---------------------------------------------------------------------
+Scenario:
+- Login as docteur@chu.fr
+- Open patient 2024-016 (not assigned)
+- Submit emergency access justification
+
+Expected UI behavior:
+- Initial patient access is denied and redirects to break-the-glass form.
+- Justification shorter than 10 chars is rejected.
+- Valid justification grants temporary access (30 minutes).
+- Patient page becomes accessible after submission.
+
+Database checks after a successful request:
+1) Active break-the-glass record exists
+   docker compose exec database psql -U app -d app -c "SELECT u.email, p.file_number, b.accessed_at, b.expires_at, b.reviewed FROM break_the_glass_access b JOIN \"user\" u ON u.id = b.user_id JOIN patient p ON p.id = b.patient_id WHERE u.email = 'docteur@chu.fr' AND p.file_number = '2024-016' ORDER BY b.accessed_at DESC LIMIT 1;"
+
+2) Audit log contains break_the_glass action
+   docker compose exec database psql -U app -d app -c "SELECT created_at, user_identifier, action, entity_type, entity_id, route_name FROM audit_log WHERE action = 'break_the_glass' AND user_identifier = 'docteur@chu.fr' ORDER BY created_at DESC LIMIT 5;"
+
+Expected result:
+- One recent row in break_the_glass_access for docteur@chu.fr + 2024-016.
+- expires_at about 30 minutes after accessed_at.
+- One recent audit_log row with action = break_the_glass.
+
+---------------------------------------------------------------------
+5) Negative access tests
+---------------------------------------------------------------------
+A) Tech admin must not access patient data
+- Login: admin@admin.fr
+- Try opening any patient record.
+Expected result:
+- Access denied (no patient data visibility).
+
+B) Nurse cannot manage access assignments
+- Login: infirmiere@chu.fr
+- Open patient access management actions (grant/revoke/transfer).
+Expected result:
+- Management actions unavailable or denied.
+
+C) Doctor can access own assigned patient without break-the-glass
+- Login: docteur@chu.fr
+- Open patient 2024-001.
+Expected result:
+- Direct access granted.
+
+---------------------------------------------------------------------
+6) Useful helper commands
+---------------------------------------------------------------------
+Find patient ID from file number:
+  docker compose exec database psql -U app -d app -c "SELECT id, file_number FROM patient WHERE file_number IN ('2024-001','2024-016','2024-031','2024-050') ORDER BY file_number;"
+
+Count active break-the-glass entries for docteur@chu.fr:
+  docker compose exec database psql -U app -d app -c "SELECT COUNT(*) AS active_btg FROM break_the_glass_access b JOIN \"user\" u ON u.id = b.user_id WHERE u.email = 'docteur@chu.fr' AND b.expires_at > NOW();"
+
+List latest access records for docteur@chu.fr:
+  docker compose exec database psql -U app -d app -c "SELECT p.file_number, pa.access_level, pa.granted_at FROM patient_access pa JOIN \"user\" u ON u.id = pa.user_id JOIN patient p ON p.id = pa.patient_id WHERE u.email = 'docteur@chu.fr' ORDER BY p.file_number;"
