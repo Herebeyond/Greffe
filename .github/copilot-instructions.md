@@ -76,7 +76,7 @@ The platform will integrate with the French national organ allocation system (CR
 ├── vendor/                 # Dependencies
 ├── compose.yaml            # Docker Compose configuration
 ├── compose.override.yaml   # Development overrides
-├── compose.prod.yaml       # Production configuration (PHP + optional mobile APK download service)
+├── compose.prod.yaml       # Production configuration
 └── Dockerfile              # Container build instructions
 ```
 
@@ -316,10 +316,10 @@ medical-data encryption key persists across rebuilds. If an existing database is
 restored on a new server, the original `var/encryption/encryption.key` must be
 restored too, otherwise encrypted patient or donor fields may fail at runtime.
 
-The production compose override can also build the sibling Flutter project at
-`../greffe_renale_mobile` as a `mobile` service that serves the Android APK
-download page on `${MOBILE_PORT:-3000}`. Set `MOBILE_API_BASE_URL` so the built
-APK targets the correct backend URL for the deployment network.
+The sibling Flutter project at `../greffe_renale_mobile` consumes this backend
+API. For phone testing outside the local machine, prefer exposing the backend
+through a public HTTPS tunnel such as ngrok and configuring that URL in the
+mobile app's server settings.
 
 ---
 

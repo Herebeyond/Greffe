@@ -18,9 +18,9 @@ services:
     environment:
       # `:80` is an HTTP catch-all block (any Host header) so traffic forwarded by
       # ngrok (`ngrok http 80`) matches without needing the public hostname here.
-      # The HTTPS hosts (localhost / 192.168.137.1 hotspot / 192.168.20.119 Wi-Fi)
+      # The HTTPS hosts (localhost / greffe.local / 192.168.137.1 hotspot / 192.168.20.119 Wi-Fi)
       # are kept for direct LAN access.
-      SERVER_NAME: "${SERVER_NAME:-localhost, 10.187.22.27, 192.168.137.1, 192.168.20.119, php:80, :80}"
+      SERVER_NAME: "${SERVER_NAME:-localhost, greffe.local, 192.168.137.1, 192.168.20.119, php:80, :80}"
       FRANKENPHP_WORKER_CONFIG: watch
       MERCURE_EXTRA_DIRECTIVES: demo
       # See https://xdebug.org/docs/all_settings#mode
