@@ -18,9 +18,9 @@ services:
     environment:
       # `:80` is an HTTP catch-all block (any Host header) so traffic forwarded by
       # ngrok (`ngrok http 80`) matches without needing the public hostname here.
-      # The HTTPS hosts (localhost / greffe.local / 192.168.137.1 hotspot / 192.168.20.119 Wi-Fi)
-      # are kept for direct LAN access.
-      SERVER_NAME: "${SERVER_NAME:-localhost, greffe.local, 192.168.137.1, 192.168.20.119, php:80, :80}"
+      # For universal LAN access without client-side host changes, keep HTTP catch-all.
+      # Access from any machine: http://<server-ip>
+      SERVER_NAME: "${SERVER_NAME:-php:80, :80}"
       FRANKENPHP_WORKER_CONFIG: watch
       MERCURE_EXTRA_DIRECTIVES: demo
       # See https://xdebug.org/docs/all_settings#mode
@@ -40,7 +40,7 @@ services:
     build:
       context: ../greffe_renale_mobile
       args:
-        API_BASE_URL: https://10.187.22.27
+        API_BASE_URL: http://10.187.22.27
     restart: unless-stopped
     ports:
       - "3000:80"
