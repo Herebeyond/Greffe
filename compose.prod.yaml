@@ -26,8 +26,7 @@ services:
   mobile:
     build:
       context: ../greffe_renale_mobile
-      args:
-        API_BASE_URL: https://${SERVER_NAME:-localhost}
+      dockerfile: Dockerfile.prebuilt
     restart: unless-stopped
     depends_on:
       - php

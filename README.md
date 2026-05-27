@@ -50,6 +50,19 @@ docker compose -f compose.yaml -f compose.prod.yaml up -d --build
 docker compose -f compose.yaml -f compose.prod.yaml ps
 ```
 
+Mobile APK note (production):
+
+- The `mobile` service uses `../greffe_renale_mobile/Dockerfile.prebuilt`.
+- Server deployments no longer run `flutter build apk`.
+- Before deploying a new mobile version, update `../greffe_renale_mobile/prebuilt/app-release.apk` in Git.
+
+Fast server refresh after `git pull` (no full rebuild):
+
+```bash
+docker compose -f compose.yaml -f compose.prod.yaml up -d --no-build
+docker compose -f compose.yaml -f compose.prod.yaml ps
+```
+
 ## Documentation
 
 - `docs/BACKUP.md`: backup architecture and restore procedures

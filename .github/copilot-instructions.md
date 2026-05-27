@@ -316,6 +316,12 @@ medical-data encryption key persists across rebuilds. If an existing database is
 restored on a new server, the original `var/encryption/encryption.key` must be
 restored too, otherwise encrypted patient or donor fields may fail at runtime.
 
+In production, the mobile download page is exposed through
+`https://<server>/mobile/` and proxied by Caddy to a dedicated `mobile` service.
+That service uses `../greffe_renale_mobile/Dockerfile.prebuilt`, which serves
+`prebuilt/app-release.apk` directly and avoids running `flutter build apk` on
+the server during deployment.
+
 The sibling Flutter project at `../greffe_renale_mobile` consumes this backend
 API. For phone testing outside the local machine, prefer exposing the backend
 through a public HTTPS tunnel such as ngrok and configuring that URL in the
