@@ -9,8 +9,9 @@ services:
       - ./frankenphp/certs:/etc/caddy/certs:ro
       - encryption-key:/app/var/encryption
     environment:
-      CADDY_GLOBAL_OPTIONS: ${CADDY_GLOBAL_OPTIONS:-}
-      SERVER_NAME: ${SERVER_NAME:-localhost}
+      # School reverse proxy already terminates TLS (openresty), keep backend on HTTP.
+      CADDY_GLOBAL_OPTIONS: ${CADDY_GLOBAL_OPTIONS:-auto_https disable_redirects}
+      SERVER_NAME: ${SERVER_NAME:-:80}
       APP_SECRET: ${APP_SECRET}
       ENCRYPTION_KEY_PATH: /app/var/encryption/encryption.key
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}

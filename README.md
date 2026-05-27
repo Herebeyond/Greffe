@@ -50,6 +50,15 @@ docker compose -f compose.yaml -f compose.prod.yaml up -d --build
 docker compose -f compose.yaml -f compose.prod.yaml ps
 ```
 
+If the app is behind the school reverse proxy (`std27.beaupeyrat.com`), keep
+the backend in HTTP mode to avoid redirect loops:
+
+- `SERVER_NAME=:80`
+- `CADDY_GLOBAL_OPTIONS=auto_https disable_redirects`
+
+These are now the defaults in `compose.prod.yaml` and can be overridden if you
+deploy with direct TLS on the backend.
+
 ### Mobile APK in Production (Fast Build)
 
 Production now uses `../greffe_renale_mobile/Dockerfile.prebuilt` for the
