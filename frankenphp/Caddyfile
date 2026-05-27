@@ -44,6 +44,14 @@
 
 	vulcain
 
+	# Always expose the mobile APK distribution container under /mobile.
+	handle /mobile {
+		redir /mobile/ 308
+	}
+	handle_path /mobile/* {
+		reverse_proxy mobile:80
+	}
+
 	{$CADDY_SERVER_EXTRA_DIRECTIVES}
 
 	# Disable Topics tracking if not enabled explicitly: https://github.com/jkarlin/topics

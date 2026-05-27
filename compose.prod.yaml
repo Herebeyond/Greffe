@@ -16,6 +16,8 @@ services:
       ENCRYPTION_KEY_PATH: /app/var/encryption/encryption.key
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
       MERCURE_SUBSCRIBER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
+      SYMFONY_TRUSTED_PROXIES: "127.0.0.1,REMOTE_ADDR,private_ranges"
+      SYMFONY_TRUSTED_HEADERS: "x-forwarded-for,x-forwarded-host,x-forwarded-proto,x-forwarded-port,x-forwarded-prefix"
       CADDY_SERVER_EXTRA_DIRECTIVES: |
         handle /mobile {
           redir /mobile/ 308
