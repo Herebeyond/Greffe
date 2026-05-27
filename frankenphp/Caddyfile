@@ -48,7 +48,8 @@
 	handle /mobile {
 		redir /mobile/ 308
 	}
-	handle_path /mobile/* {
+	route /mobile* {
+		uri strip_prefix /mobile
 		reverse_proxy mobile:80
 	}
 
