@@ -50,18 +50,25 @@ docker compose -f compose.yaml -f compose.prod.yaml up -d --build
 docker compose -f compose.yaml -f compose.prod.yaml ps
 ```
 
-Mobile APK note (production):
+### Mobile APK in Production (Fast Build)
 
-- The `mobile` service uses `../greffe_renale_mobile/Dockerfile.prebuilt`.
-- Server deployments no longer run `flutter build apk`.
-- Before deploying a new mobile version, update `../greffe_renale_mobile/prebuilt/app-release.apk` in Git.
+Production now uses `../greffe_renale_mobile/Dockerfile.prebuilt` for the
+`mobile` service, so the server does not run `flutter build apk` during
+`docker compose ... --build`.
 
-Fast server refresh after `git pull` (no full rebuild):
+Before rebuilding on the server, update the prebuilt APK in the mobile repo:
 
 ```bash
-docker compose -f compose.yaml -f compose.prod.yaml up -d --no-build
-docker compose -f compose.yaml -f compose.prod.yaml ps
+# local/dev machine
+cd ../greffe_renale_mobile
+flutter build apk --release
+cp build/app/outputs/flutter-apk/app-release.apk prebuilt/app-release.apk
+git add prebuilt/app-release.apk
+git commit -m "Update prebuilt APK"
+git push
 ```
+
+Then on the server, pull both repositories and rebuild from the backend repo.
 
 ## Documentation
 
