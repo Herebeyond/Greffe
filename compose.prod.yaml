@@ -5,6 +5,9 @@ services:
     build:
       context: .
       target: frankenphp_prod
+    volumes:
+      - ./frankenphp/certs:/etc/caddy/certs:ro
+      - encryption-key:/app/var/encryption
     environment:
       CADDY_GLOBAL_OPTIONS: ${CADDY_GLOBAL_OPTIONS:-}
       SERVER_NAME: ${SERVER_NAME:-localhost}
@@ -12,10 +15,22 @@ services:
       ENCRYPTION_KEY_PATH: /app/var/encryption/encryption.key
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
       MERCURE_SUBSCRIBER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
-      CADDY_SERVER_EXTRA_DIRECTIVES: ${CADDY_SERVER_EXTRA_DIRECTIVES:-}
-    volumes:
-      - ./frankenphp/certs:/etc/caddy/certs:ro
-      - encryption-key:/app/var/encryption
+      CADDY_SERVER_EXTRA_DIRECTIVES: |
+        handle /mobile {
+          redir /mobile/ 308
+        }
+        handle_path /mobile/* {
+          reverse_proxy mobile:80
+        }
+
+  mobile:
+    build:
+      context: ../greffe_renale_mobile
+      args:
+        API_BASE_URL: https://${SERVER_NAME:-localhost}
+    restart: unless-stopped
+    depends_on:
+      - php
 
 volumes:
   encryption-key:

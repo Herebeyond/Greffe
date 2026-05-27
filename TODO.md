@@ -17,6 +17,8 @@
   - `docker compose -f compose.yaml -f compose.prod.yaml up -d --build`
 - [ ] Confirm mobile is reachable through backend route:
   - `https://<server>/mobile/`
+- [x] Confirm APK direct link works through the mobile reverse proxy:
+  - `https://<server>/mobile/greffe-renale.apk`
 - [ ] Remove or restrict direct access to admin tools in prod:
   - `adminer` on port `8080`
 - [ ] Validate trusted proxies/headers when behind reverse proxies.
@@ -41,6 +43,7 @@
 - [ ] Add checksum (SHA-256) for APK integrity verification.
 - [ ] Add release notes section on APK download page.
 - [ ] Plan migration to `/mobile/` URL only (no `:3000`) for production-facing use.
+- [x] Production mobile route uses `/mobile/` on the school domain.
 
 ## Documentation Hygiene
 

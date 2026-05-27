@@ -14,8 +14,8 @@ The project is deployed on the school server with:
 Current access URLs from the school network:
 
 - Web app: `https://10.187.22.27`
-- Mobile APK page: `http://10.187.22.27:3000`
-- APK direct link: `http://10.187.22.27:3000/greffe-renale.apk`
+- Mobile APK page: `https://std27.beaupeyrat.com/mobile/`
+- APK direct link: `https://std27.beaupeyrat.com/mobile/greffe-renale.apk`
 - Adminer: `http://10.187.22.27:8080`
 
 Note: `APP_ENV` is currently set to `dev` on the server (`.env.local`).
@@ -32,7 +32,7 @@ Note: `APP_ENV` is currently set to `dev` on the server (`.env.local`).
 
 - `compose.yaml`: base stack
 - `compose.override.yaml`: development overrides (bind mounts, debug)
-- `compose.prod.yaml`: production overrides (frankenphp_prod, `/mobile/` reverse proxy, mounted certs)
+- `compose.prod.yaml`: production overrides (frankenphp_prod, mobile service, `/mobile/` reverse proxy, mounted certs)
 
 ## Run Commands
 
