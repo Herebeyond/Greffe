@@ -20,6 +20,9 @@ services:
         handle /mobile {
           redir /mobile/ 308
         }
+        handle_path /mobile/ {
+          reverse_proxy mobile:80
+        }
         handle_path /mobile/* {
           reverse_proxy mobile:80
         }
