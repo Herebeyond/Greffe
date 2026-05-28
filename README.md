@@ -3,23 +3,6 @@
 This repository contains the backend web platform (Symfony + FrankenPHP/Caddy)
 for the BTS SIO kidney transplant follow-up project.
 
-## Modalites d'acces aux productions et a leur documentation
-
-### Documentation
-
-- README principal mobile: `../greffe_renale_mobile/README.md`
-- Documentation backend (dont API): `docs/`
-
-### Acces au code source
-
-- Depot local mobile: `../greffe_renale_mobile`
-- Le projet backend `Greffe Renale` (SP1) est requis pour faire fonctionner l'application
-
-### Acces a l'application deployee
-
-- L'APK est servi par un conteneur nginx via `download.html`
-- URL de telechargement de l'APK: https://std27.beaupeyrat.com/mobile/greffe-renale.apk
-
 ## Guide Utilisateur (Reference Principale)
 
 Cette section est la reference utilisateur. Si un contenu est destine aux
