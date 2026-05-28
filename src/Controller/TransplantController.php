@@ -13,6 +13,7 @@ use App\Repository\TransplantRepository;
 use App\Repository\Reference\HlaLocusRepository;
 use App\Repository\Reference\VirologicalMarkerRepository;
 use App\Service\FileUploadService;
+use App\Service\NotificationService;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,6 +35,7 @@ class TransplantController extends AbstractController
         private HlaLocusRepository $hlaLocusRepository,
         private VirologicalMarkerRepository $virologicalMarkerRepository,
         private FileUploadService $fileUploadService,
+        private NotificationService $notificationService,
     ) {
     }
 
@@ -70,9 +72,17 @@ class TransplantController extends AbstractController
                 && !$donor->isFullyAssigned()
                 && $this->isCsrfTokenValid('assign_donor' . $transplant->getId(), $request->request->get('_token'))
             ) {
+                /** @var \App\Entity\User $currentUser */
+                $currentUser = $this->getUser();
                 $transplant->setDonor($donor);
                 $transplant->setUpdatedAt(new \DateTimeImmutable());
                 $this->transplantRepository->save($transplant);
+
+                $primaryDoctor = $patient->getPrimaryAccess()?->getUser();
+                if ($primaryDoctor !== null) {
+                    $this->notificationService->notifyDonorLinked($primaryDoctor, $currentUser, $patient, $donor);
+                }
+
                 $this->addFlash('success', 'Donneur assigné à la greffe avec succès');
 
                 return $this->redirectToRoute('app_transplant_index', ['patientId' => $patient->getId()]);

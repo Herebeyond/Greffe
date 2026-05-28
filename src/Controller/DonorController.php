@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Donor;
 use App\Entity\DonorHlaTyping;
 use App\Entity\DonorSerology;
+use App\Entity\Patient;
 use App\Entity\Transplant;
 use App\Entity\User;
 use App\Form\DonorType;
@@ -13,6 +14,7 @@ use App\Repository\PatientRepository;
 use App\Repository\TransplantRepository;
 use App\Repository\Reference\HlaLocusRepository;
 use App\Repository\Reference\SerologyMarkerRepository;
+use App\Service\NotificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,6 +31,7 @@ class DonorController extends AbstractController
         private PatientRepository $patientRepository,
         private HlaLocusRepository $hlaLocusRepository,
         private SerologyMarkerRepository $serologyMarkerRepository,
+        private NotificationService $notificationService,
     ) {
     }
 
@@ -189,9 +192,18 @@ class DonorController extends AbstractController
                 && $transplant->getDonor() === null
                 && $this->isCsrfTokenValid('assign' . $donor->getId(), $request->request->get('_token'))
             ) {
+                $patient = $transplant->getPatient();
                 $transplant->setDonor($donor);
                 $transplant->setUpdatedAt(new \DateTimeImmutable());
                 $this->transplantRepository->save($transplant);
+
+                /** @var User $currentUser */
+                $currentUser = $this->getUser();
+                $primaryDoctor = $patient?->getPrimaryAccess()?->getUser();
+                if ($patient !== null && $primaryDoctor !== null) {
+                    $this->notificationService->notifyDonorLinked($primaryDoctor, $currentUser, $patient, $donor);
+                }
+
                 $this->addFlash('success', 'Donneur assigné à la greffe avec succès');
 
                 return $this->redirectToRoute('app_donor_show', ['id' => $donor->getId()]);
@@ -211,6 +223,14 @@ class DonorController extends AbstractController
                 $transplant = new Transplant();
                 $this->applyAssignmentDraftDefaults($transplant, $patient, $donor);
                 $this->transplantRepository->save($transplant);
+
+                /** @var User $currentUser */
+                $currentUser = $this->getUser();
+                $primaryDoctor = $patient->getPrimaryAccess()?->getUser();
+                if ($primaryDoctor !== null) {
+                    $this->notificationService->notifyDonorLinked($primaryDoctor, $currentUser, $patient, $donor);
+                }
+
                 $this->addFlash('success', 'Donneur assigné au patient avec création de la pré-affectation de greffe');
 
                 return $this->redirectToRoute('app_donor_show', ['id' => $donor->getId()]);
@@ -255,7 +275,7 @@ class DonorController extends AbstractController
         ]);
     }
 
-    private function applyAssignmentDraftDefaults(Transplant $transplant, $patient, Donor $donor): void
+    private function applyAssignmentDraftDefaults(Transplant $transplant, Patient $patient, Donor $donor): void
     {
         $transplant->setPatient($patient);
         $transplant->setRank($this->transplantRepository->getNextRankForPatient($patient));

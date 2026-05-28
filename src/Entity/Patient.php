@@ -460,7 +460,29 @@ class Patient
     {
         $count = 0;
         foreach ($this->transplants as $transplant) {
-            if (!$transplant->isGraftFunctional()) {
+            if (
+                !$transplant->isGraftFunctional()
+                && ($transplant->getGraftEndDate() !== null || $transplant->getGraftEndCause() !== null)
+            ) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    /**
+     * Get the number of assigned draft transplants awaiting medical completion.
+     */
+    public function getAssignedDraftTransplantCount(): int
+    {
+        $count = 0;
+        foreach ($this->transplants as $transplant) {
+            if (
+                !$transplant->isGraftFunctional()
+                && $transplant->getDonor() !== null
+                && $transplant->getGraftEndDate() === null
+                && $transplant->getGraftEndCause() === null
+            ) {
                 $count++;
             }
         }
@@ -499,6 +521,7 @@ class Patient
     {
         $total = $this->getTransplantCount();
         $failed = $this->getFailedTransplantCount();
+        $assigned = $this->getAssignedDraftTransplantCount();
 
         if ($total === 0) {
             return 'En attente de greffe';
@@ -509,6 +532,16 @@ class Patient
                 return 'Greffé(e) (' . $failed . ' échec' . ($failed > 1 ? 's' : '') . ' ant.)';
             }
             return 'Greffé(e)';
+        }
+
+        if ($assigned > 0) {
+            if ($failed > 0) {
+                return 'En attente de re-greffe ('
+                    . $failed . ' échec' . ($failed > 1 ? 's' : '')
+                    . ', ' . $assigned . ' assigné' . ($assigned > 1 ? 's' : '') . ')';
+            }
+
+            return 'Greffe assignée (' . $assigned . ' en cours)';
         }
 
         // All grafts failed
@@ -526,6 +559,10 @@ class Patient
 
         if ($this->hasActiveFunctionalGraft()) {
             return 'status-active';
+        }
+
+        if ($this->getAssignedDraftTransplantCount() > 0) {
+            return 'status-waiting';
         }
 
         return 'status-failed';
