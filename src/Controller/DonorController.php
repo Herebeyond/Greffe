@@ -200,6 +200,25 @@ class DonorController extends AbstractController
             $this->addFlash('error', 'Impossible d\'assigner le donneur à cette greffe');
         }
 
+        if ($request->isMethod('POST') && $request->request->has('patientId')) {
+            $patientId = $request->request->getInt('patientId');
+            $patient = $this->patientRepository->find($patientId);
+
+            if ($patient
+                && !$donor->isFullyAssigned()
+                && $this->isCsrfTokenValid('assign' . $donor->getId(), $request->request->get('_token'))
+            ) {
+                $transplant = new Transplant();
+                $this->applyAssignmentDraftDefaults($transplant, $patient, $donor);
+                $this->transplantRepository->save($transplant);
+                $this->addFlash('success', 'Donneur assigné au patient avec création de la pré-affectation de greffe');
+
+                return $this->redirectToRoute('app_donor_show', ['id' => $donor->getId()]);
+            }
+
+            $this->addFlash('error', 'Impossible de créer la pré-affectation de greffe pour ce patient');
+        }
+
         $fileNumber = null;
         if ($request->isMethod('POST') && $request->request->has('fileNumber')) {
             $fileNumber = trim($request->request->get('fileNumber', ''));
@@ -234,6 +253,34 @@ class DonorController extends AbstractController
             'patientPage' => $patientPage,
             'patientTotalPages' => $patientTotalPages,
         ]);
+    }
+
+    private function applyAssignmentDraftDefaults(Transplant $transplant, $patient, Donor $donor): void
+    {
+        $transplant->setPatient($patient);
+        $transplant->setRank($this->transplantRepository->getNextRankForPatient($patient));
+        $transplant->setDonor($donor);
+        $transplant->setDonorType($donor->getDonorType());
+        $transplant->setTransplantDate(null);
+        $transplant->setIsGraftFunctional(false);
+        $transplant->setGraftEndDate(null);
+        $transplant->setGraftEndCause(null);
+        $transplant->setSurgeonName($patient->getPrimaryAccess()?->getUser()?->getFullName());
+        $transplant->setDeclampingDate(null);
+        $transplant->setDeclampingTime(null);
+        $transplant->setHarvestSide(null);
+        $transplant->setTransplantSide(null);
+        $transplant->setPeritonealPosition(null);
+        $transplant->setTotalIschemiaMinutes(null);
+        $transplant->setAnastomosisDuration(null);
+        $transplant->setJjProbe(false);
+        $transplant->setImmunologicalRisk(null);
+        $transplant->getImmunosuppressiveDrugs()->clear();
+        $transplant->setDialysis(false);
+        $transplant->setLastDialysisDate(null);
+        $transplant->setHasProtocol(false);
+        $transplant->setComment(null);
+        $transplant->setDonorData(null);
     }
 
     #[Route('/{id}/unassign/{transplantId}', name: 'app_donor_unassign', methods: ['POST'], requirements: ['id' => '\d+', 'transplantId' => '\d+'])]

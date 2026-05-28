@@ -155,7 +155,7 @@
         {% if patientsWithoutTransplant is empty %}
             <p class="detail-empty">Aucun patient sans greffe trouvée{{ fileNumber ? ' pour le dossier "' ~ fileNumber ~ '"' : '' }}.</p>
         {% else %}
-            <p class="detail-empty">Utilisez « Assigner » pour lier ce donneur à un patient en attente. Le médecin complétera ensuite les données de greffe.</p>
+            <p class="detail-empty">Utilisez « Assigner » pour créer immédiatement la pré-affectation de greffe depuis cette page. Le médecin complétera ensuite les données médicales.</p>
             <div class="data-table-container">
                 <table class="data-table">
                     <thead>
@@ -184,7 +184,12 @@
                             <td><span class="badge">Aucune greffe enregistrée</span></td>
                             <td class="actions-cell">
                                 <a href="{{ path('app_patient_show', {id: patient.id}) }}" class="btn-small">Voir patient</a>
-                                <a href="{{ path('app_transplant_new', {patientId: patient.id, donorId: donor.id}) }}" class="btn-small btn-small-success">Assigner</a>
+                                <form method="post" action="{{ path('app_donor_assign', {id: donor.id}) }}" class="inline-form"
+                                      onsubmit="return confirm('Confirmer l\'assignation du donneur {{ donor.cristalNumber }} au patient {{ patient.fileNumber }} et créer la pré-affectation de greffe ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('assign' ~ donor.id) }}">
+                                    <input type="hidden" name="patientId" value="{{ patient.id }}">
+                                    <button type="submit" class="btn-small btn-small-success">Assigner</button>
+                                </form>
                             </td>
                         </tr>
                         {% endfor %}
