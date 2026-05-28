@@ -40,6 +40,14 @@ class UserType extends AbstractType
             ])
         ;
 
+        if ($options['show_is_active']) {
+            $builder->add('isActive', CheckboxType::class, [
+                'label' => 'Compte actif',
+                'required' => false,
+                'help' => 'Décochez pour désactiver la connexion de cet utilisateur.',
+            ]);
+        }
+
         // Only ROLE_SUPER_ADMIN can assign privileged roles
         // ROLE_TECH_ADMIN can only create basic ROLE_USER profiles (no role checkboxes shown)
         if ($options['is_super_admin']) {
@@ -109,6 +117,7 @@ class UserType extends AbstractType
             'data_class' => User::class,
             'require_password' => true,
             'is_super_admin' => false,
+            'show_is_active' => true,
         ]);
     }
 }

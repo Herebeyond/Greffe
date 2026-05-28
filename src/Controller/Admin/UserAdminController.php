@@ -20,14 +20,11 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class UserAdminController extends AbstractController
 {
     /**
-     * Privileged roles that only ROLE_SUPER_ADMIN can assign or manage.
+     * Admin roles that only ROLE_SUPER_ADMIN can manage.
      */
-    private const PRIVILEGED_ROLES = [
+    private const ADMIN_ROLES = [
         'ROLE_SUPER_ADMIN',
         'ROLE_TECH_ADMIN',
-        'ROLE_DOCTOR',
-        'ROLE_NURSE',
-        'ROLE_TRANSPLANT_COORDINATOR',
     ];
 
     #[Route('/users', name: 'app_admin_users')]
@@ -52,6 +49,7 @@ class UserAdminController extends AbstractController
         $form = $this->createForm(UserType::class, $user, [
             'require_password' => true,
             'is_super_admin' => $isSuperAdmin,
+            'show_is_active' => false,
         ]);
         $form->handleRequest($request);
 
@@ -89,8 +87,8 @@ class UserAdminController extends AbstractController
     ): Response {
         $isSuperAdmin = $this->isGranted('ROLE_SUPER_ADMIN');
 
-        // ROLE_TECH_ADMIN cannot edit users who hold privileged roles
-        if (!$isSuperAdmin && $this->hasPrivilegedRole($user)) {
+        // ROLE_TECH_ADMIN cannot edit other admin accounts
+        if (!$isSuperAdmin && $this->hasAdminRole($user)) {
             $this->addFlash('error', 'Vous n\'avez pas les droits pour modifier cet utilisateur');
 
             return $this->redirectToRoute('app_admin_users');
@@ -99,14 +97,12 @@ class UserAdminController extends AbstractController
         $form = $this->createForm(UserType::class, $user, [
             'require_password' => false,
             'is_super_admin' => $isSuperAdmin,
+            'show_is_active' => true,
         ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // ROLE_TECH_ADMIN cannot assign privileged roles via form manipulation
-            if (!$isSuperAdmin) {
-                $user->setRoles([]);
-            }
+            // ROLE_TECH_ADMIN has no role field in the form, so existing roles are preserved.
 
             $plainPassword = $form->get('plainPassword')->getData();
             if ($plainPassword) {
@@ -145,8 +141,8 @@ class UserAdminController extends AbstractController
                 return $this->redirectToRoute('app_admin_users');
             }
 
-            // ROLE_TECH_ADMIN cannot delete users who hold privileged roles
-            if (!$this->isGranted('ROLE_SUPER_ADMIN') && $this->hasPrivilegedRole($user)) {
+            // ROLE_TECH_ADMIN cannot delete admin accounts
+            if (!$this->isGranted('ROLE_SUPER_ADMIN') && $this->hasAdminRole($user)) {
                 $this->addFlash('error', 'Vous n\'avez pas les droits pour supprimer cet utilisateur');
 
                 return $this->redirectToRoute('app_admin_users');
@@ -161,11 +157,46 @@ class UserAdminController extends AbstractController
         return $this->redirectToRoute('app_admin_users');
     }
 
+    #[Route('/users/{id}/toggle-active', name: 'app_admin_users_toggle_active', methods: ['POST'])]
+    public function toggleActive(
+        User $user,
+        Request $request,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        if (!$this->isCsrfTokenValid('toggle_active' . $user->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Jeton de sécurité invalide');
+
+            return $this->redirectToRoute('app_admin_users');
+        }
+
+        if ($user === $this->getUser()) {
+            $this->addFlash('error', 'Vous ne pouvez pas désactiver votre propre compte');
+
+            return $this->redirectToRoute('app_admin_users');
+        }
+
+        if (!$this->isGranted('ROLE_SUPER_ADMIN') && $this->hasAdminRole($user)) {
+            $this->addFlash('error', 'Vous n\'avez pas les droits pour modifier le statut de cet utilisateur');
+
+            return $this->redirectToRoute('app_admin_users');
+        }
+
+        $user->setIsActive(!$user->isActive());
+        $entityManager->flush();
+
+        $this->addFlash('success', $user->isActive()
+            ? 'Compte utilisateur réactivé avec succès'
+            : 'Compte utilisateur désactivé avec succès'
+        );
+
+        return $this->redirectToRoute('app_admin_users');
+    }
+
     /**
-     * Check if a user holds any privileged role that only ROLE_SUPER_ADMIN can manage.
+     * Check if a user holds any admin role that only ROLE_SUPER_ADMIN can manage.
      */
-    private function hasPrivilegedRole(User $user): bool
+    private function hasAdminRole(User $user): bool
     {
-        return !empty(array_intersect($user->getRoles(), self::PRIVILEGED_ROLES));
+        return !empty(array_intersect($user->getRoles(), self::ADMIN_ROLES));
     }
 }

@@ -25,6 +25,7 @@
                 <th>Email</th>
                 <th>ID CRISTAL</th>
                 <th>Rôles</th>
+                <th>Statut</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -52,15 +53,28 @@
                         </span>
                     {% endfor %}
                 </td>
+                <td>
+                    {% if user.isActive %}
+                        <span class="badge badge-success">Actif</span>
+                    {% else %}
+                        <span class="badge badge-danger">Désactivé</span>
+                    {% endif %}
+                </td>
                 <td class="actions">
-                    {% set has_privileged_role = false %}
+                    {% set has_admin_role = false %}
                     {% for role in user.roles %}
-                        {% if role in ['ROLE_SUPER_ADMIN', 'ROLE_TECH_ADMIN', 'ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_TRANSPLANT_COORDINATOR'] %}
-                            {% set has_privileged_role = true %}
+                        {% if role in ['ROLE_SUPER_ADMIN', 'ROLE_TECH_ADMIN'] %}
+                            {% set has_admin_role = true %}
                         {% endif %}
                     {% endfor %}
-                    {% if is_granted('ROLE_SUPER_ADMIN') or not has_privileged_role %}
+                    {% if is_granted('ROLE_SUPER_ADMIN') or not has_admin_role %}
                     <a href="{{ path('app_admin_users_edit', {id: user.id}) }}" class="btn btn-small btn-secondary">Modifier</a>
+                    {% if app.user and app.user.id != user.id %}
+                    <form action="{{ path('app_admin_users_toggle_active', {id: user.id}) }}" method="post" class="delete-form" onsubmit="return confirm('{{ user.isActive ? 'Désactiver' : 'Réactiver' }} cet utilisateur ?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('toggle_active' ~ user.id) }}">
+                        <button type="submit" class="btn btn-small {{ user.isActive ? 'btn-warning' : 'btn-success' }}">{{ user.isActive ? 'Désactiver' : 'Réactiver' }}</button>
+                    </form>
+                    {% endif %}
                     <form action="{{ path('app_admin_users_delete', {id: user.id}) }}" method="post" class="delete-form" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
                         <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
                         <button type="submit" class="btn btn-small btn-danger">Supprimer</button>
@@ -70,7 +84,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="8" class="empty-table">Aucun utilisateur trouvé</td>
+                <td colspan="9" class="empty-table">Aucun utilisateur trouvé</td>
             </tr>
             {% endfor %}
         </tbody>

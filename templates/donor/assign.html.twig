@@ -134,6 +134,14 @@
                         <button type="submit" name="transplantPage" value="{{ transplantTotalPages }}" class="pagination-link">{{ transplantTotalPages }}</button>
                     {% endif %}
 
+                    <label for="transplant-page-select" class="pagination-info">Aller à</label>
+                    <select id="transplant-page-select" name="transplantPage" class="form-control pagination-select">
+                        {% for p in 1..transplantTotalPages %}
+                            <option value="{{ p }}"{{ p == transplantPage ? ' selected' : '' }}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="pagination-link">OK</button>
+
                     <button type="submit" name="transplantPage" value="{{ transplantPage + 1 }}" class="pagination-link" {{ transplantPage >= transplantTotalPages ? 'disabled' : '' }}>Suivant &raquo;</button>
                 </form>
             </nav>
@@ -209,6 +217,14 @@
                         {% endif %}
                         <button type="submit" name="patientPage" value="{{ patientTotalPages }}" class="pagination-link">{{ patientTotalPages }}</button>
                     {% endif %}
+
+                    <label for="patient-page-select" class="pagination-info">Aller à</label>
+                    <select id="patient-page-select" name="patientPage" class="form-control pagination-select">
+                        {% for p in 1..patientTotalPages %}
+                            <option value="{{ p }}"{{ p == patientPage ? ' selected' : '' }}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="pagination-link">OK</button>
 
                     <button type="submit" name="patientPage" value="{{ patientPage + 1 }}" class="pagination-link" {{ patientPage >= patientTotalPages ? 'disabled' : '' }}>Suivant &raquo;</button>
                 </form>

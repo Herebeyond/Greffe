@@ -55,20 +55,23 @@
             </div>
         </div>
 
+        {% if form.roles is defined %}
         <div class="form-section">
             <h3 class="form-section-title">Rôles et permissions</h3>
-            {% if form.roles is defined %}
             <div class="form-group">
                 <div class="checkbox-group">
                     {{ form_widget(form.roles) }}
                 </div>
                 {{ form_errors(form.roles) }}
             </div>
-            {% else %}
-            <div class="alert alert-info">
-                Seul un Super Admin peut modifier les rôles de cet utilisateur.
+        </div>
+        {% endif %}
+
+        <div class="form-section">
+            <h3 class="form-section-title">État du compte</h3>
+            <div class="form-group">
+                {{ form_row(form.isActive) }}
             </div>
-            {% endif %}
         </div>
 
         <div class="form-actions">

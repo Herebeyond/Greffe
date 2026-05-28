@@ -169,6 +169,14 @@
                             <button type="submit" name="page" value="{{ totalPages }}" class="pagination-link">{{ totalPages }}</button>
                         {% endif %}
 
+                        <label for="page-select" class="pagination-info">Aller à</label>
+                        <select id="page-select" name="page" class="form-control pagination-select">
+                            {% for p in 1..totalPages %}
+                                <option value="{{ p }}"{{ p == page ? ' selected' : '' }}>{{ p }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="pagination-link">OK</button>
+
                         <button type="submit" name="page" value="{{ page + 1 }}" class="pagination-link" {{ page >= totalPages ? 'disabled' : '' }}>Suivant &raquo;</button>
                     </form>
                 </nav>
