@@ -10,7 +10,7 @@ utilisateurs finaux, il doit etre ajoute ici en priorite.
 
 ### Acces a la plateforme
 
-- Portail web: https://10.187.22.27
+- Portail web: https://std27.beaupeyrat.com
 - Page de telechargement mobile: https://std27.beaupeyrat.com/mobile/
 - Lien direct APK: https://std27.beaupeyrat.com/mobile/greffe-renale.apk
 
