@@ -108,5 +108,49 @@
             </div>
         {% endif %}
     </section>
+
+    {# ===== Patients with no transplant record ===== #}
+    <section class="detail-section">
+        <h2>Patients sans greffe enregistrée ({{ patientsWithoutTransplant|length }})</h2>
+        {% if patientsWithoutTransplant is empty %}
+            <p class="detail-empty">Aucun patient sans greffe trouvée{{ fileNumber ? ' pour le dossier "' ~ fileNumber ~ '"' : '' }}.</p>
+        {% else %}
+            <div class="data-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Dossier</th>
+                            <th>Groupe sanguin</th>
+                            <th>Âge</th>
+                            <th>Sexe</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patientsWithoutTransplant %}
+                        <tr>
+                            <td><strong>{{ patient.fileNumber }}</strong></td>
+                            <td>
+                                {% if patient.fullBloodGroup %}
+                                    <span class="blood-group blood-group-{{ patient.bloodGroup.code }}">{{ patient.fullBloodGroup }}</span>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>{{ patient.age ? patient.age ~ ' ans' : '—' }}</td>
+                            <td>{{ patient.sex == 'M' ? 'Masculin' : (patient.sex == 'F' ? 'Féminin' : '—') }}</td>
+                            <td><span class="badge">Aucune greffe enregistrée</span></td>
+                            <td class="actions-cell">
+                                <a href="{{ path('app_patient_show', {id: patient.id}) }}" class="btn-small">Voir patient</a>
+                                <a href="{{ path('app_transplant_new', {patientId: patient.id}) }}" class="btn-small btn-small-success">Créer greffe</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
 </div>
 {% endblock %}

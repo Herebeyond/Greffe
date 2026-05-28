@@ -202,4 +202,24 @@ class PatientRepository extends ServiceEntityRepository
 
         return $patients;
     }
+
+    /**
+     * Find patients that have no transplant record yet.
+     *
+     * @return Patient[]
+     */
+    public function findWithoutTransplantRecord(?string $fileNumber = null): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.transplants', 't')
+            ->andWhere('t.id IS NULL')
+            ->orderBy('p.fileNumber', 'ASC');
+
+        if ($fileNumber) {
+            $qb->andWhere('LOWER(p.fileNumber) LIKE LOWER(:fileNumber)')
+                ->setParameter('fileNumber', '%' . $fileNumber . '%');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
 }

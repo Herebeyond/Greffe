@@ -9,6 +9,7 @@ use App\Entity\Transplant;
 use App\Entity\User;
 use App\Form\DonorType;
 use App\Repository\DonorRepository;
+use App\Repository\PatientRepository;
 use App\Repository\TransplantRepository;
 use App\Repository\Reference\HlaLocusRepository;
 use App\Repository\Reference\SerologyMarkerRepository;
@@ -25,6 +26,7 @@ class DonorController extends AbstractController
     public function __construct(
         private DonorRepository $donorRepository,
         private TransplantRepository $transplantRepository,
+        private PatientRepository $patientRepository,
         private HlaLocusRepository $hlaLocusRepository,
         private SerologyMarkerRepository $serologyMarkerRepository,
     ) {
@@ -202,10 +204,12 @@ class DonorController extends AbstractController
         }
 
         $transplants = $this->transplantRepository->findWithoutDonor($fileNumber ?: null);
+        $patientsWithoutTransplant = $this->patientRepository->findWithoutTransplantRecord($fileNumber ?: null);
 
         return $this->render('donor/assign.html.twig', [
             'donor' => $donor,
             'transplants' => $transplants,
+            'patientsWithoutTransplant' => $patientsWithoutTransplant,
             'fileNumber' => $fileNumber,
         ]);
     }
