@@ -10,6 +10,12 @@
         <h2>Ajouter une greffe</h2>
     </div>
 
+    {% if preselectedDonor is defined and preselectedDonor %}
+    <div class="alert alert-info">
+        Donneur pré-assigné : <strong>{{ preselectedDonor.cristalNumber }}</strong> ({{ preselectedDonor.donorTypeLabel }}).
+    </div>
+    {% endif %}
+
     <div class="form-container transplant-form">
         {{ form_start(form, {'attr': {'id': 'transplant'}}) }}
 

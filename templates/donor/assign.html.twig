@@ -155,7 +155,7 @@
         {% if patientsWithoutTransplant is empty %}
             <p class="detail-empty">Aucun patient sans greffe trouvée{{ fileNumber ? ' pour le dossier "' ~ fileNumber ~ '"' : '' }}.</p>
         {% else %}
-            <p class="detail-empty">Le coordinateur peut assigner un donneur uniquement sur une greffe déjà enregistrée par un médecin.</p>
+            <p class="detail-empty">Utilisez « Assigner » pour lier ce donneur à un patient en attente. Le médecin complétera ensuite les données de greffe.</p>
             <div class="data-table-container">
                 <table class="data-table">
                     <thead>
@@ -184,7 +184,7 @@
                             <td><span class="badge">Aucune greffe enregistrée</span></td>
                             <td class="actions-cell">
                                 <a href="{{ path('app_patient_show', {id: patient.id}) }}" class="btn-small">Voir patient</a>
-                                <button type="button" class="btn-small btn-secondary" disabled title="Une greffe doit d'abord être créée par un médecin avant l'assignation du donneur">Assigner</button>
+                                <a href="{{ path('app_transplant_new', {patientId: patient.id, donorId: donor.id}) }}" class="btn-small btn-small-success">Assigner</a>
                             </td>
                         </tr>
                         {% endfor %}

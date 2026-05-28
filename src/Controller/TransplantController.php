@@ -104,13 +104,28 @@ class TransplantController extends AbstractController
     }
 
     #[Route('/new', name: 'app_transplant_new', methods: ['GET', 'POST'])]
-    #[IsGranted('CAN_WRITE')]
     public function new(Request $request, #[MapEntity(id: 'patientId')] Patient $patient): Response
     {
+        if (!$this->isGranted('CAN_WRITE') && !$this->isGranted('ROLE_TRANSPLANT_COORDINATOR')) {
+            throw $this->createAccessDeniedException();
+        }
+
         $this->denyAccessUnlessGranted('VIEW_PATIENT', $patient);
 
         $transplant = new Transplant();
         $transplant->setPatient($patient);
+
+        $preselectedDonor = null;
+        $preselectedDonorId = $request->query->getInt('donorId', 0);
+        if ($preselectedDonorId > 0) {
+            $candidateDonor = $this->donorRepository->find($preselectedDonorId);
+            if ($candidateDonor !== null && !$candidateDonor->isFullyAssigned()) {
+                $preselectedDonor = $candidateDonor;
+                if ($transplant->getDonorType() === null) {
+                    $transplant->setDonorType($candidateDonor->getDonorType());
+                }
+            }
+        }
 
         $form = $this->createForm(TransplantType::class, $transplant);
         $form->handleRequest($request);
@@ -127,6 +142,9 @@ class TransplantController extends AbstractController
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
+            if ($preselectedDonor !== null && $transplant->getDonor() === null) {
+                $transplant->setDonor($preselectedDonor);
+            }
             if ($donorForm && $donorForm->isSubmitted() && $donorForm->isValid()) {
                 $transplant->setDonorData($donorForm->getData());
             }
@@ -144,6 +162,7 @@ class TransplantController extends AbstractController
             'form' => $form,
             'donorForm' => $donorForm,
             'donorType' => $donorTypeCode,
+            'preselectedDonor' => $preselectedDonor,
             'activeTab' => 'greffes',
         ]);
     }
