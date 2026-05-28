@@ -1,7 +1,8 @@
 {# Shared patient header with medical navigation tabs #}
 <div class="page-header">
+    {% set isCoordinator = is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
     <div class="page-header-content">
-        <h1>{{ patient.fullName }}</h1>
+        <h1>{{ isCoordinator ? 'Patient anonyme' : patient.fullName }}</h1>
         <span class="patient-identifier">Dossier n° {{ patient.fileNumber }}</span>
     </div>
     <div class="page-header-actions">

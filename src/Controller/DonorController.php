@@ -179,6 +179,8 @@ class DonorController extends AbstractController
     #[IsGranted('ROLE_TRANSPLANT_COORDINATOR')]
     public function assign(Request $request, Donor $donor): Response
     {
+        $isPost = $request->isMethod('POST');
+
         if ($request->isMethod('POST') && $request->request->has('transplantId')) {
             $transplantId = $request->request->getInt('transplantId');
             $transplant = $this->transplantRepository->find($transplantId);
@@ -203,14 +205,34 @@ class DonorController extends AbstractController
             $fileNumber = trim($request->request->get('fileNumber', ''));
         }
 
-        $transplants = $this->transplantRepository->findWithoutDonor($fileNumber ?: null);
-        $patientsWithoutTransplant = $this->patientRepository->findWithoutTransplantRecord($fileNumber ?: null);
+        $transplantPage = max(1, $isPost ? $request->request->getInt('transplantPage', 1) : $request->query->getInt('transplantPage', 1));
+        $patientPage = max(1, $isPost ? $request->request->getInt('patientPage', 1) : $request->query->getInt('patientPage', 1));
+        $pageSize = 25;
+
+        $allTransplants = $this->transplantRepository->findWithoutDonor($fileNumber ?: null);
+        $allPatientsWithoutTransplant = $this->patientRepository->findWithoutTransplantRecord($fileNumber ?: null);
+
+        $transplantTotal = count($allTransplants);
+        $transplantTotalPages = max(1, (int) ceil($transplantTotal / $pageSize));
+        $transplantPage = min($transplantPage, $transplantTotalPages);
+        $transplants = array_slice($allTransplants, ($transplantPage - 1) * $pageSize, $pageSize);
+
+        $patientTotal = count($allPatientsWithoutTransplant);
+        $patientTotalPages = max(1, (int) ceil($patientTotal / $pageSize));
+        $patientPage = min($patientPage, $patientTotalPages);
+        $patientsWithoutTransplant = array_slice($allPatientsWithoutTransplant, ($patientPage - 1) * $pageSize, $pageSize);
 
         return $this->render('donor/assign.html.twig', [
             'donor' => $donor,
             'transplants' => $transplants,
             'patientsWithoutTransplant' => $patientsWithoutTransplant,
             'fileNumber' => $fileNumber,
+            'transplantTotal' => $transplantTotal,
+            'transplantPage' => $transplantPage,
+            'transplantTotalPages' => $transplantTotalPages,
+            'patientTotal' => $patientTotal,
+            'patientPage' => $patientPage,
+            'patientTotalPages' => $patientTotalPages,
         ]);
     }
 

@@ -4,6 +4,7 @@
 
 {% block body %}
 <div class="patient-page">
+    {% set isCoordinator = is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
     <div class="page-header">
         <h1>Gestion des Patients</h1>
         {% if is_granted('CAN_WRITE') %}
@@ -96,7 +97,6 @@
             <table class="data-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Nom</th>
                             <th>Prénom</th>
                             <th>N° Dossier</th>
@@ -111,9 +111,8 @@
                         {% for patient in patients %}
                         {% set activeBtg = btgAccesses[patient.id] ?? null %}
                         <tr{% if activeBtg %} class="btg-active-row"{% endif %}>
-                            <td>{{ patient.id }}</td>
-                            <td>{{ patient.lastName }}</td>
-                            <td>{{ patient.firstName }}</td>
+                            <td>{{ isCoordinator ? 'Anonyme' : patient.lastName }}</td>
+                            <td>{{ isCoordinator ? 'Anonyme' : patient.firstName }}</td>
                             <td>{{ patient.fileNumber }}</td>
                             <td>{{ patient.city }}</td>
                             <td>{{ patient.sexLabel ?? '-' }}</td>

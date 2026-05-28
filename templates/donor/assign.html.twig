@@ -57,7 +57,7 @@
 
     {# ===== Transplants without donor ===== #}
     <section class="detail-section">
-        <h2>Greffes en attente de donneur ({{ transplants|length }})</h2>
+        <h2>Greffes en attente de donneur ({{ transplantTotal }})</h2>
         {% if transplants is empty %}
             <p class="detail-empty">Aucune greffe sans donneur trouvée{{ fileNumber ? ' pour le dossier "' ~ fileNumber ~ '"' : '' }}.</p>
         {% else %}
@@ -106,12 +106,35 @@
                     </tbody>
                 </table>
             </div>
+            {% if transplantTotalPages > 1 %}
+            <nav class="pagination">
+                {% if transplantPage > 1 %}
+                    <form method="post" action="{{ path('app_donor_assign', {id: donor.id}) }}" class="inline-form">
+                        <input type="hidden" name="fileNumber" value="{{ fileNumber }}">
+                        <input type="hidden" name="transplantPage" value="{{ transplantPage - 1 }}">
+                        <input type="hidden" name="patientPage" value="{{ patientPage }}">
+                        <button type="submit" class="pagination-link">&laquo; Précédent</button>
+                    </form>
+                {% endif %}
+
+                <span class="pagination-info">Page {{ transplantPage }} sur {{ transplantTotalPages }}</span>
+
+                {% if transplantPage < transplantTotalPages %}
+                    <form method="post" action="{{ path('app_donor_assign', {id: donor.id}) }}" class="inline-form">
+                        <input type="hidden" name="fileNumber" value="{{ fileNumber }}">
+                        <input type="hidden" name="transplantPage" value="{{ transplantPage + 1 }}">
+                        <input type="hidden" name="patientPage" value="{{ patientPage }}">
+                        <button type="submit" class="pagination-link">Suivant &raquo;</button>
+                    </form>
+                {% endif %}
+            </nav>
+            {% endif %}
         {% endif %}
     </section>
 
     {# ===== Patients with no transplant record ===== #}
     <section class="detail-section">
-        <h2>Patients sans greffe enregistrée ({{ patientsWithoutTransplant|length }})</h2>
+        <h2>Patients sans greffe enregistrée ({{ patientTotal }})</h2>
         {% if patientsWithoutTransplant is empty %}
             <p class="detail-empty">Aucun patient sans greffe trouvée{{ fileNumber ? ' pour le dossier "' ~ fileNumber ~ '"' : '' }}.</p>
         {% else %}
@@ -150,6 +173,29 @@
                     </tbody>
                 </table>
             </div>
+            {% if patientTotalPages > 1 %}
+            <nav class="pagination">
+                {% if patientPage > 1 %}
+                    <form method="post" action="{{ path('app_donor_assign', {id: donor.id}) }}" class="inline-form">
+                        <input type="hidden" name="fileNumber" value="{{ fileNumber }}">
+                        <input type="hidden" name="transplantPage" value="{{ transplantPage }}">
+                        <input type="hidden" name="patientPage" value="{{ patientPage - 1 }}">
+                        <button type="submit" class="pagination-link">&laquo; Précédent</button>
+                    </form>
+                {% endif %}
+
+                <span class="pagination-info">Page {{ patientPage }} sur {{ patientTotalPages }}</span>
+
+                {% if patientPage < patientTotalPages %}
+                    <form method="post" action="{{ path('app_donor_assign', {id: donor.id}) }}" class="inline-form">
+                        <input type="hidden" name="fileNumber" value="{{ fileNumber }}">
+                        <input type="hidden" name="transplantPage" value="{{ transplantPage }}">
+                        <input type="hidden" name="patientPage" value="{{ patientPage + 1 }}">
+                        <button type="submit" class="pagination-link">Suivant &raquo;</button>
+                    </form>
+                {% endif %}
+            </nav>
+            {% endif %}
         {% endif %}
     </section>
 </div>

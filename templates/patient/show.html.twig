@@ -1,12 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ patient.fullName }} - Gestion des Greffes Rénales{% endblock %}
+{% block title %}{{ is_granted('ROLE_TRANSPLANT_COORDINATOR') ? 'Patient anonyme' : patient.fullName }} - Gestion des Greffes Rénales{% endblock %}
 
 {% block body %}
 <div class="patient-page">
+    {% set isCoordinator = is_granted('ROLE_TRANSPLANT_COORDINATOR') %}
     <div class="page-header">
         <div class="page-header-content">
-            <h1>{{ patient.fullName }}</h1>
+            <h1>{{ isCoordinator ? 'Patient anonyme' : patient.fullName }}</h1>
             <span class="patient-identifier">Dossier n° {{ patient.fileNumber }}</span>
         </div>
         <div class="page-header-actions">
@@ -49,17 +50,19 @@
         <section class="detail-section">
             <h2>Identification</h2>
             <div class="detail-grid">
+                {% if not isCoordinator %}
                 <div class="detail-item">
                     <span class="detail-label">ID</span>
                     <span class="detail-value"><strong>{{ patient.id }}</strong></span>
                 </div>
+                {% endif %}
                 <div class="detail-item">
                     <span class="detail-label">Nom</span>
-                    <span class="detail-value">{{ patient.lastName }}</span>
+                    <span class="detail-value">{{ isCoordinator ? 'Anonyme' : patient.lastName }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Prénom</span>
-                    <span class="detail-value">{{ patient.firstName }}</span>
+                    <span class="detail-value">{{ isCoordinator ? 'Anonyme' : patient.firstName }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Numéro de dossier</span>
@@ -157,20 +160,28 @@
                 <div class="detail-item">
                     <span class="detail-label">Téléphone</span>
                     <span class="detail-value">
+                        {% if isCoordinator %}
+                            <span class="detail-empty">Masqué pour anonymisation</span>
+                        {% else %}
                         {% if patient.phone %}
                             <a href="tel:{{ patient.phone }}">{{ patient.phone }}</a>
                         {% else %}
                             <span class="detail-empty">Non renseigné</span>
+                        {% endif %}
                         {% endif %}
                     </span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Email</span>
                     <span class="detail-value">
+                        {% if isCoordinator %}
+                            <span class="detail-empty">Masqué pour anonymisation</span>
+                        {% else %}
                         {% if patient.email %}
                             <a href="mailto:{{ patient.email }}">{{ patient.email }}</a>
                         {% else %}
                             <span class="detail-empty">Non renseigné</span>
+                        {% endif %}
                         {% endif %}
                     </span>
                 </div>
