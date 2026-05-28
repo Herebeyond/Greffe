@@ -3,6 +3,36 @@
 This repository contains the backend web platform (Symfony + FrankenPHP/Caddy)
 for the BTS SIO kidney transplant follow-up project.
 
+## Guide Utilisateur (Reference Principale)
+
+Cette section est la reference utilisateur. Si un contenu est destine aux
+utilisateurs finaux, il doit etre ajoute ici en priorite.
+
+### Acces a la plateforme
+
+- Portail web: https://10.187.22.27
+- Page de telechargement mobile: https://std27.beaupeyrat.com/mobile/
+- Lien direct APK: https://std27.beaupeyrat.com/mobile/greffe-renale.apk
+
+### Installation de l'application mobile (Android)
+
+1. Ouvrir https://std27.beaupeyrat.com/mobile/
+2. Appuyer sur "Telecharger l'APK"
+3. Ouvrir le fichier telecharge
+4. Autoriser l'installation depuis cette source si Android le demande
+5. Lancer l'application "Greffe Renale"
+
+### Connexion
+
+- L'application mobile utilise par defaut: https://std27.beaupeyrat.com
+- En cas d'oubli de mot de passe, contacter un administrateur technique
+
+### Support Utilisateur
+
+- Verifier d'abord que le lien APK commence par https://std27.beaupeyrat.com/mobile/
+- Si l'application ne demarre pas correctement, desinstaller puis reinstaller
+	depuis le lien officiel ci-dessus
+
 ## Current Deployment Status
 
 The project is deployed on the school server with:
@@ -81,8 +111,7 @@ Then on the server, pull both repositories and rebuild from the backend repo.
 
 ## Documentation
 
-- `docs/BACKUP.md`: backup architecture and restore procedures
-- `docs/NGROK.md`: remote dev access through ngrok
-- `docs/PATIENT_ACCESS_LEGAL.md`: legal basis and patient access control model
-- `docs/CHANGELOG.md`: notable project changes
-- `TODO.md`: backlog for changes, upgrades, and production hardening
+Documentation developpeur/ops (hors guide utilisateur):
+
+- docs index: `docs/README.md`
+- backlog technique: `TODO.md`
