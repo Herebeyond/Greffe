@@ -78,12 +78,14 @@
         </div>
         {% endif %}
 
+        {% if form.isActive is defined %}
         <div class="form-section">
             <h3 class="form-section-title">État du compte</h3>
             <div class="form-group">
                 {{ form_row(form.isActive) }}
             </div>
         </div>
+        {% endif %}
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>

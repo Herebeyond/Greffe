@@ -75,10 +75,12 @@
                         <button type="submit" class="btn btn-small {{ user.isActive ? 'btn-warning' : 'btn-success' }}">{{ user.isActive ? 'Désactiver' : 'Réactiver' }}</button>
                     </form>
                     {% endif %}
+                    {% if app.user and app.user.id != user.id %}
                     <form action="{{ path('app_admin_users_delete', {id: user.id}) }}" method="post" class="delete-form account-delete-form" data-user-name="{{ user.fullName }}">
                         <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
                         <button type="submit" class="btn btn-small btn-danger">Supprimer</button>
                     </form>
+                    {% endif %}
                     {% endif %}
                 </td>
             </tr>
