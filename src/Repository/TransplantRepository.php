@@ -37,6 +37,7 @@ class TransplantRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('t')
             ->join('t.patient', 'p')
             ->where('t.donor IS NULL')
+            ->andWhere('t.isGraftFunctional = false')
             ->orderBy('t.transplantDate', 'DESC');
 
         if ($fileNumber) {
