@@ -75,7 +75,7 @@
                         <button type="submit" class="btn btn-small {{ user.isActive ? 'btn-warning' : 'btn-success' }}">{{ user.isActive ? 'Désactiver' : 'Réactiver' }}</button>
                     </form>
                     {% endif %}
-                    <form action="{{ path('app_admin_users_delete', {id: user.id}) }}" method="post" class="delete-form" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
+                    <form action="{{ path('app_admin_users_delete', {id: user.id}) }}" method="post" class="delete-form account-delete-form" data-user-name="{{ user.fullName }}">
                         <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
                         <button type="submit" class="btn btn-small btn-danger">Supprimer</button>
                     </form>
@@ -90,4 +90,59 @@
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.account-delete-form').forEach(function (form) {
+        var button = form.querySelector('button[type="submit"]');
+        if (!button) {
+            return;
+        }
+
+        var armed = false;
+        var countdown = 0;
+        var timerId = null;
+        var baseText = button.textContent;
+        var targetName = form.dataset.userName || 'cet utilisateur';
+
+        form.addEventListener('submit', function (event) {
+            if (!armed) {
+                event.preventDefault();
+
+                if (timerId) {
+                    clearInterval(timerId);
+                }
+
+                countdown = 5;
+                button.disabled = true;
+                button.textContent = 'Confirmer (' + countdown + 's)';
+
+                timerId = setInterval(function () {
+                    countdown -= 1;
+                    if (countdown <= 0) {
+                        clearInterval(timerId);
+                        armed = true;
+                        button.disabled = false;
+                        button.textContent = 'Confirmer suppression';
+                        return;
+                    }
+
+                    button.textContent = 'Confirmer (' + countdown + 's)';
+                }, 1000);
+
+                return;
+            }
+
+            if (!confirm('Êtes-vous absolument sûr de vouloir supprimer ' + targetName + ' ? Cette action est irréversible.')) {
+                event.preventDefault();
+                armed = false;
+                button.disabled = false;
+                button.textContent = baseText;
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

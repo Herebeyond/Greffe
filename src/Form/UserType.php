@@ -37,10 +37,35 @@ class UserType extends AbstractType
                 'label' => 'Identifiant CRISTAL',
                 'required' => false,
                 'attr' => ['placeholder' => 'CRISTAL-123 (optionnel)'],
-            ])
-        ;
+            ]);
 
-        if ($options['show_is_active']) {
+        if (!$options['is_self_edit']) {
+            $roleChoices = $options['is_super_admin']
+                ? [
+                    'Super Admin (gestion complète)' => 'ROLE_SUPER_ADMIN',
+                    'Admin technique (gestion système)' => 'ROLE_TECH_ADMIN',
+                    'Docteur' => 'ROLE_DOCTOR',
+                    'Infirmière' => 'ROLE_NURSE',
+                    'Coordinateur de transplantation' => 'ROLE_TRANSPLANT_COORDINATOR',
+                    'Utilisateur' => 'ROLE_USER',
+                ]
+                : [
+                    'Docteur' => 'ROLE_DOCTOR',
+                    'Infirmière' => 'ROLE_NURSE',
+                    'Coordinateur de transplantation' => 'ROLE_TRANSPLANT_COORDINATOR',
+                    'Utilisateur' => 'ROLE_USER',
+                ];
+
+            $builder->add('roles', ChoiceType::class, [
+                'label' => 'Rôles',
+                'choices' => $roleChoices,
+                'multiple' => true,
+                'expanded' => true,
+                'required' => false,
+            ]);
+        }
+
+        if ($options['show_is_active'] && !$options['is_self_edit']) {
             $builder->add('isActive', CheckboxType::class, [
                 'label' => 'Compte actif',
                 'required' => false,
@@ -48,33 +73,6 @@ class UserType extends AbstractType
             ]);
         }
 
-        // ROLE_SUPER_ADMIN can assign all roles.
-        // ROLE_TECH_ADMIN can assign only non-admin roles.
-        $roleChoices = $options['is_super_admin']
-            ? [
-                'Super Admin (gestion complète)' => 'ROLE_SUPER_ADMIN',
-                'Admin technique (gestion système)' => 'ROLE_TECH_ADMIN',
-                'Docteur' => 'ROLE_DOCTOR',
-                'Infirmière' => 'ROLE_NURSE',
-                'Coordinateur de transplantation' => 'ROLE_TRANSPLANT_COORDINATOR',
-                'Utilisateur' => 'ROLE_USER',
-            ]
-            : [
-                'Docteur' => 'ROLE_DOCTOR',
-                'Infirmière' => 'ROLE_NURSE',
-                'Coordinateur de transplantation' => 'ROLE_TRANSPLANT_COORDINATOR',
-                'Utilisateur' => 'ROLE_USER',
-            ];
-
-        $builder->add('roles', ChoiceType::class, [
-            'label' => 'Rôles',
-            'choices' => $roleChoices,
-            'multiple' => true,
-            'expanded' => true,
-            'required' => false,
-        ]);
-
-        // Only add password field for new users or if explicitly requested
         if ($options['require_password']) {
             $builder->add('plainPassword', RepeatedType::class, [
                 'type' => PasswordType::class,
@@ -127,6 +125,7 @@ class UserType extends AbstractType
             'require_password' => true,
             'is_super_admin' => false,
             'show_is_active' => true,
+            'is_self_edit' => false,
         ]);
     }
 }

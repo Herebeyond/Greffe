@@ -87,6 +87,12 @@ class UserAdminController extends AbstractController
         PasswordHistoryService $passwordHistoryService,
     ): Response {
         $isSuperAdmin = $this->isGranted('ROLE_SUPER_ADMIN');
+        /** @var User|null $currentUser */
+        $currentUser = $this->getUser();
+        $isSelfEdit = $currentUser instanceof User && $currentUser->getId() === $user->getId();
+
+        $originalRoles = $user->getRoles();
+        $originalIsActive = $user->isActive();
 
         // ROLE_TECH_ADMIN cannot edit other admin accounts
         if (!$isSuperAdmin && $this->hasAdminRole($user)) {
@@ -99,15 +105,22 @@ class UserAdminController extends AbstractController
             'require_password' => false,
             'is_super_admin' => $isSuperAdmin,
             'show_is_active' => true,
+            'is_self_edit' => $isSelfEdit,
         ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $submittedRoles = $form->has('roles') ? (array) $form->get('roles')->getData() : [];
-            if (!$isSuperAdmin) {
-                $submittedRoles = array_values(array_diff($submittedRoles, self::ADMIN_ROLES));
+            if ($isSelfEdit) {
+                // Never allow changing own roles/activation from admin user management.
+                $user->setRoles($originalRoles);
+                $user->setIsActive($originalIsActive);
+            } else {
+                $submittedRoles = $form->has('roles') ? (array) $form->get('roles')->getData() : [];
+                if (!$isSuperAdmin) {
+                    $submittedRoles = array_values(array_diff($submittedRoles, self::ADMIN_ROLES));
+                }
+                $user->setRoles($submittedRoles);
             }
-            $user->setRoles($submittedRoles);
 
             $plainPassword = $form->get('plainPassword')->getData();
             if ($plainPassword) {
@@ -128,6 +141,7 @@ class UserAdminController extends AbstractController
         return $this->render('admin/users/edit.html.twig', [
             'user' => $user,
             'form' => $form,
+            'is_self_edit' => $isSelfEdit,
         ]);
     }
 

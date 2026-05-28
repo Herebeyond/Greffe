@@ -9,6 +9,12 @@
         <a href="{{ path('app_admin_users') }}" class="btn btn-secondary">Retour à la liste</a>
     </div>
 
+    {% if is_self_edit %}
+    <div class="alert alert-info">
+        Pour votre propre compte, la modification des rôles et de l'état du compte est verrouillée. Vous pouvez modifier vos informations et votre mot de passe.
+    </div>
+    {% endif %}
+
     {{ form_start(form, {'attr': {'class': 'admin-form'}}) }}
         <div class="form-section">
             <h3 class="form-section-title">Informations personnelles</h3>
