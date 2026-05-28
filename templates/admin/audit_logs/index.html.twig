@@ -101,9 +101,11 @@
                             {% for field in log.changedFields %}
                                 <span class="audit-field-badge">{{ field }}</span>
                             {% endfor %}
-                        {% elseif log.details %}
+                        {% endif %}
+                        {% if log.details %}
+                            {% if log.changedFields is not null and log.changedFields|length > 0 %}<br>{% endif %}
                             <span title="{{ log.details }}">{{ log.details }}</span>
-                        {% else %}
+                        {% elseif log.changedFields is null or log.changedFields|length == 0 %}
                             -
                         {% endif %}
                     </td>
@@ -152,12 +154,19 @@
     }
 
     function renderDetails(log) {
+        var html = '';
         if (log.changedFields && log.changedFields.length > 0) {
-            return '<td class="audit-details">' + log.changedFields.map(function(f) {
+            html += log.changedFields.map(function(f) {
                 return '<span class="audit-field-badge">' + escapeHtml(f) + '</span>';
-            }).join(' ') + '</td>';
+            }).join(' ');
         }
-        return '<td class="audit-details">' + escapeHtml(log.details) + '</td>';
+        if (log.details) {
+            html += (html ? '<br>' : '') + '<span title="' + escapeHtml(log.details) + '">' + escapeHtml(log.details) + '</span>';
+        }
+        if (!html) {
+            html = '-';
+        }
+        return '<td class="audit-details">' + html + '</td>';
     }
 
     function loadMore() {
