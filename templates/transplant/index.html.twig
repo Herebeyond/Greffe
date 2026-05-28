@@ -35,8 +35,8 @@
                     {% for transplant in transplants %}
                     <tr>
                         <td>{{ transplant.rank }}</td>
-                        <td>{{ transplant.transplantDate|date('d/m/Y') }}</td>
-                        <td>{{ transplant.donorTypeLabel }}</td>
+                        <td>{{ transplant.transplantDate ? transplant.transplantDate|date('d/m/Y') : 'En attente' }}</td>
+                        <td>{{ transplant.donorTypeLabel ?: '—' }}</td>
                         <td>
                             {% if transplant.donor %}
                                 <a href="{{ path('app_donor_show', {id: transplant.donor.id}) }}" class="btn-small">{{ transplant.donor.cristalNumber }}</a>
@@ -55,7 +55,11 @@
                             {% endif %}
                         </td>
                         <td>
-                            <span class="risk-badge {{ transplant.immunologicalRiskClass }}">{{ transplant.immunologicalRisk.label }}</span>
+                            {% if transplant.immunologicalRisk %}
+                                <span class="risk-badge {{ transplant.immunologicalRiskClass }}">{{ transplant.immunologicalRisk.label }}</span>
+                            {% else %}
+                                <span class="text-muted">À compléter</span>
+                            {% endif %}
                         </td>
                         <td class="actions-cell">
                             <a href="{{ path('app_transplant_show', {patientId: patient.id, id: transplant.id}) }}" class="btn-small">Voir</a>

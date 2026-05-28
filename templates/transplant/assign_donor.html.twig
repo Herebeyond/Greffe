@@ -27,11 +27,17 @@
             </div>
             <div class="detail-item">
                 <span class="detail-label">Date de greffe</span>
-                <span class="detail-value">{{ transplant.transplantDate|date('d/m/Y') }}</span>
+                <span class="detail-value">{{ transplant.transplantDate ? transplant.transplantDate|date('d/m/Y') : 'En attente' }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Type de donneur</span>
-                <span class="detail-value"><span class="badge badge-donor-{{ transplant.donorType.code }}">{{ transplant.donorTypeLabel }}</span></span>
+                <span class="detail-value">
+                    {% if transplant.donorType %}
+                        <span class="badge badge-donor-{{ transplant.donorType.code }}">{{ transplant.donorTypeLabel }}</span>
+                    {% else %}
+                        —
+                    {% endif %}
+                </span>
             </div>
             {% if patient.fullBloodGroup %}
             <div class="detail-item">

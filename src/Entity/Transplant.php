@@ -50,7 +50,7 @@ class Transplant
 
     // ===== Essential information =====
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     #[Assert\NotBlank(message: 'La date de greffe est obligatoire')]
     #[Groups(['transplant:read'])]
     private ?\DateTimeInterface $transplantDate = null;
@@ -93,32 +93,32 @@ class Transplant
     #[Groups(['transplant:read'])]
     private ?\DateTimeInterface $declampingTime = null;
 
-    #[ORM\Column(length: 10)]
+    #[ORM\Column(length: 10, nullable: true)]
     #[Assert\NotBlank(message: 'Le côté de prélèvement est obligatoire')]
     #[Assert\Choice(choices: ['droit', 'gauche'], message: 'Côté de prélèvement invalide')]
     #[Groups(['transplant:read'])]
     private ?string $harvestSide = null;
 
-    #[ORM\Column(length: 10)]
+    #[ORM\Column(length: 10, nullable: true)]
     #[Assert\NotBlank(message: 'Le côté de transplantation est obligatoire')]
     #[Assert\Choice(choices: ['droit', 'gauche'], message: 'Côté de transplantation invalide')]
     #[Groups(['transplant:read'])]
     private ?string $transplantSide = null;
 
     #[ORM\ManyToOne(targetEntity: PeritonealPosition::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     #[Assert\NotBlank(message: 'La position péritonéale est obligatoire')]
     #[Groups(['transplant:read'])]
     private ?PeritonealPosition $peritonealPosition = null;
 
     /** Total ischemia in minutes (stored as integer, displayed as HH:MM). */
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     #[Assert\NotBlank(message: "La durée d'ischémie totale est obligatoire")]
     #[Assert\Positive(message: "La durée d'ischémie doit être positive")]
     #[Groups(['transplant:read'])]
     private ?int $totalIschemiaMinutes = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     #[Assert\NotBlank(message: "La durée d'anastomose est obligatoire")]
     #[Assert\Positive(message: "La durée d'anastomose doit être positive")]
     #[Groups(['transplant:read'])]
@@ -153,7 +153,7 @@ class Transplant
     // ===== Immunological risk =====
 
     #[ORM\ManyToOne(targetEntity: ImmunologicalRisk::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     #[Assert\NotBlank(message: 'Le risque immunologique est obligatoire')]
     #[Groups(['transplant:read'])]
     private ?ImmunologicalRisk $immunologicalRisk = null;

@@ -505,7 +505,7 @@ The application implements the following roles:
 - `ROLE_USER`: Basic access, view-only for medical data
 - `ROLE_NURSE`: Same as ROLE_USER (read-only)
 - `ROLE_DOCTOR`: Can create, modify, and delete medical records
-- `ROLE_TRANSPLANT_COORDINATOR`: Can create/edit/view donors, assign/unassign donors to transplants (donor→transplant and transplant→donor flows). Can view ALL patient dossiers with **full unrestricted access** (same view as doctors/nurses).
+- `ROLE_TRANSPLANT_COORDINATOR`: Can create/edit/view donors, assign/unassign donors to transplants (donor→transplant and transplant→donor flows). Can create a pre-affectation greffe from donor assignment with donor-linked defaults, then leave medical completion to a doctor. Can view ALL patient dossiers with **full unrestricted access** (same view as doctors/nurses).
 - `ROLE_TECH_ADMIN`: System/user management, can only create ROLE_USER profiles, NO access to patient medical data
 - `ROLE_SUPER_ADMIN`: Inherits ROLE_TECH_ADMIN, full user/role management, can assign any role
 
@@ -540,7 +540,7 @@ Per-patient access is enforced by `PatientAccessVoter` (attribute: `VIEW_PATIENT
 | Any practitioner (doctor, nurse) | Only assigned patients (via `patient_access` table with access levels) |
 | Any practitioner with active BTG | Temporary emergency access (3h, justified, audited) |
 | `ROLE_TECH_ADMIN` / `ROLE_SUPER_ADMIN` | **No patient data access** (system management only, but SUPER_ADMIN can manage access assignments) |
-| `ROLE_TRANSPLANT_COORDINATOR` | **All patients** with full unrestricted access. Can assign donors to transplants from both donor and patient pages. |
+| `ROLE_TRANSPLANT_COORDINATOR` | **All patients** with full unrestricted access. Can assign donors to transplants from both donor and patient pages, including draft greffes created during donor pre-affectation. |
 
 #### Access Levels (PatientAccess entity)
 

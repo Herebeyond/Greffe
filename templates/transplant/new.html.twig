@@ -16,6 +16,12 @@
     </div>
     {% endif %}
 
+    {% if isAssignmentDraft %}
+    <div class="alert alert-info">
+        Pré-affectation coordinateur : les données médicales sont définies automatiquement ou laissées vides jusqu'à la complétion par le médecin référent.
+    </div>
+    {% endif %}
+
     <div class="form-container transplant-form">
         {{ form_start(form, {'attr': {'id': 'transplant'}}) }}
 
@@ -189,10 +195,16 @@
         {{ form_end(form) }}
 
         {# Donor data sub-form #}
+        {% if isAssignmentDraft %}
+        <div class="alert alert-info">
+            Les données détaillées du donneur proviennent de la fiche donneur associée et ne sont pas modifiables lors de cette pré-affectation.
+        </div>
+        {% else %}
         {% include 'transplant/_donor_form.html.twig' %}
+        {% endif %}
 
         <div class="form-actions">
-            <button type="submit" form="transplant" class="btn btn-primary">Enregistrer</button>
+            <button type="submit" form="transplant" class="btn btn-primary">{{ isAssignmentDraft ? 'Créer la pré-affectation' : 'Enregistrer' }}</button>
             <a href="{{ path('app_transplant_index', {patientId: patient.id}) }}" class="btn btn-secondary">Annuler</a>
         </div>
     </div>

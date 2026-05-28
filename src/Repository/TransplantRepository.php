@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Patient;
 use App\Entity\Transplant;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -48,6 +49,18 @@ class TransplantRepository extends ServiceEntityRepository
         }
 
         return $qb->getQuery()->getResult();
+    }
+
+    public function getNextRankForPatient(Patient $patient): int
+    {
+        $maxRank = $this->createQueryBuilder('t')
+            ->select('MAX(t.rank)')
+            ->where('t.patient = :patient')
+            ->setParameter('patient', $patient)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return ((int) ($maxRank ?? 0)) + 1;
     }
 
     public function save(Transplant $entity): void

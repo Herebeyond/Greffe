@@ -7,7 +7,7 @@
     {% include 'patient/_medical_nav.html.twig' %}
 
     <div class="section-header">
-        <h2>Greffe n°{{ transplant.rank }} — {{ transplant.transplantDate|date('d/m/Y') }}</h2>
+        <h2>Greffe n°{{ transplant.rank }} — {{ transplant.transplantDate ? transplant.transplantDate|date('d/m/Y') : 'En attente de réalisation' }}</h2>
         <div class="page-header-actions">
             {% if is_granted('CAN_WRITE') %}
             <a href="{{ path('app_transplant_edit', {patientId: patient.id, id: transplant.id}) }}" class="btn btn-primary">Modifier</a>
@@ -23,7 +23,7 @@
             <div class="detail-grid">
                 <div class="detail-item">
                     <span class="detail-label">Date de greffe</span>
-                    <span class="detail-value">{{ transplant.transplantDate|date('d/m/Y') }}</span>
+                    <span class="detail-value">{{ transplant.transplantDate ? transplant.transplantDate|date('d/m/Y') : '—' }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Rang</span>
@@ -31,7 +31,7 @@
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Type de donneur</span>
-                    <span class="detail-value">{{ transplant.donorTypeLabel }}</span>
+                    <span class="detail-value">{{ transplant.donorTypeLabel ?: '—' }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Greffon fonctionnel</span>
@@ -74,23 +74,23 @@
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Côté de prélèvement</span>
-                    <span class="detail-value">{{ transplant.harvestSide|capitalize }}</span>
+                    <span class="detail-value">{{ transplant.harvestSide ? transplant.harvestSide|capitalize : '—' }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Côté de transplantation</span>
-                    <span class="detail-value">{{ transplant.transplantSide|capitalize }}</span>
+                    <span class="detail-value">{{ transplant.transplantSide ? transplant.transplantSide|capitalize : '—' }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Position péritonéale</span>
-                    <span class="detail-value">{{ transplant.peritonealPosition }}</span>
+                    <span class="detail-value">{{ transplant.peritonealPosition ?? '—' }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Ischémie totale</span>
-                    <span class="detail-value">{{ transplant.totalIschemiaFormatted }}</span>
+                    <span class="detail-value">{{ transplant.totalIschemiaFormatted ?: '—' }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Durée d'anastomose</span>
-                    <span class="detail-value">{{ transplant.anastomosisDuration }} min</span>
+                    <span class="detail-value">{{ transplant.anastomosisDuration ? transplant.anastomosisDuration ~ ' min' : '—' }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Sonde JJ</span>
@@ -142,7 +142,11 @@
                 <div class="detail-item">
                     <span class="detail-label">Risque</span>
                     <span class="detail-value">
-                        <span class="risk-badge {{ transplant.immunologicalRiskClass }}">{{ transplant.immunologicalRisk.label }}</span>
+                        {% if transplant.immunologicalRisk %}
+                            <span class="risk-badge {{ transplant.immunologicalRiskClass }}">{{ transplant.immunologicalRisk.label }}</span>
+                        {% else %}
+                            —
+                        {% endif %}
                     </span>
                 </div>
             </div>

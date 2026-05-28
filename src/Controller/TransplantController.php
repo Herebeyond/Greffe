@@ -121,20 +121,27 @@ class TransplantController extends AbstractController
             $candidateDonor = $this->donorRepository->find($preselectedDonorId);
             if ($candidateDonor !== null && !$candidateDonor->isFullyAssigned()) {
                 $preselectedDonor = $candidateDonor;
-                if ($transplant->getDonorType() === null) {
-                    $transplant->setDonorType($candidateDonor->getDonorType());
-                }
             }
         }
 
-        $form = $this->createForm(TransplantType::class, $transplant);
+        $isAssignmentDraft = $this->isGranted('ROLE_TRANSPLANT_COORDINATOR') && $preselectedDonor !== null;
+        if ($isAssignmentDraft) {
+            $this->applyAssignmentDraftDefaults($transplant, $patient, $preselectedDonor);
+        }
+
+        $form = $this->createForm(TransplantType::class, $transplant, [
+            'is_assignment_draft' => $isAssignmentDraft,
+            'validation_groups' => $isAssignmentDraft ? false : null,
+        ]);
         $form->handleRequest($request);
 
         // Determine donor type for the donor sub-form
-        $donorTypeCode = $request->request->all('transplant')['donorType'] ?? $transplant->getDonorType()?->getCode();
+        $donorTypeCode = $isAssignmentDraft
+            ? $transplant->getDonorType()?->getCode()
+            : ($request->request->all('transplant')['donorType'] ?? $transplant->getDonorType()?->getCode());
         $donorForm = null;
 
-        if ($donorTypeCode) {
+        if (!$isAssignmentDraft && $donorTypeCode) {
             $donorForm = $this->createForm(DonorDataType::class, $transplant->getDonorData(), [
                 'donor_type' => $donorTypeCode,
             ]);
@@ -142,6 +149,9 @@ class TransplantController extends AbstractController
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
+            if ($isAssignmentDraft) {
+                $this->applyAssignmentDraftDefaults($transplant, $patient, $preselectedDonor);
+            }
             if ($preselectedDonor !== null && $transplant->getDonor() === null) {
                 $transplant->setDonor($preselectedDonor);
             }
@@ -163,6 +173,7 @@ class TransplantController extends AbstractController
             'donorForm' => $donorForm,
             'donorType' => $donorTypeCode,
             'preselectedDonor' => $preselectedDonor,
+            'isAssignmentDraft' => $isAssignmentDraft,
             'activeTab' => 'greffes',
         ]);
     }
@@ -213,6 +224,36 @@ class TransplantController extends AbstractController
             'donorType' => $donorTypeCode,
             'activeTab' => 'greffes',
         ]);
+    }
+
+    private function applyAssignmentDraftDefaults(Transplant $transplant, Patient $patient, ?\App\Entity\Donor $preselectedDonor): void
+    {
+        $transplant->setPatient($patient);
+        $transplant->setRank($this->transplantRepository->getNextRankForPatient($patient));
+        $transplant->setDonor($preselectedDonor);
+        $transplant->setDonorType($preselectedDonor?->getDonorType());
+        $transplant->setTransplantDate(null);
+        $transplant->setIsGraftFunctional(false);
+        $transplant->setGraftEndDate(null);
+        $transplant->setGraftEndCause(null);
+        $transplant->setDeclampingDate(null);
+        $transplant->setDeclampingTime(null);
+        $transplant->setHarvestSide(null);
+        $transplant->setTransplantSide(null);
+        $transplant->setPeritonealPosition(null);
+        $transplant->setTotalIschemiaMinutes(null);
+        $transplant->setAnastomosisDuration(null);
+        $transplant->setJjProbe(false);
+        $transplant->setImmunologicalRisk(null);
+        $transplant->getImmunosuppressiveDrugs()->clear();
+        $transplant->setDialysis(false);
+        $transplant->setLastDialysisDate(null);
+        $transplant->setHasProtocol(false);
+        $transplant->setComment(null);
+        $transplant->setDonorData(null);
+
+        $primaryDoctor = $patient->getPrimaryAccess()?->getUser();
+        $transplant->setSurgeonName($primaryDoctor?->getFullName());
     }
 
     #[Route('/{id}/delete', name: 'app_transplant_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
