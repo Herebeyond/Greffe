@@ -57,16 +57,15 @@
 
         <div class="form-section">
             <h3 class="form-section-title">Rôles et permissions</h3>
-            {% if form.roles is defined %}
             <div class="form-group">
                 <div class="checkbox-group">
                     {{ form_widget(form.roles) }}
                 </div>
                 {{ form_errors(form.roles) }}
             </div>
-            {% else %}
+            {% if not is_super_admin %}
             <div class="alert alert-info">
-                Cet utilisateur sera créé avec le rôle de base (Utilisateur). Seul un Super Admin peut attribuer des rôles privilégiés.
+                Les rôles Admin technique et Super Admin sont réservés au Super Admin.
             </div>
             {% endif %}
         </div>

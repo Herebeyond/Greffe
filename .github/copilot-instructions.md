@@ -520,7 +520,7 @@ ROLE_TRANSPLANT_COORDINATOR → ROLE_USER
 ### Admin Privilege Restrictions
 
 - **ROLE_SUPER_ADMIN**: Can create any user with any role, edit/delete all users
-- **ROLE_TECH_ADMIN**: Can only create ROLE_USER profiles (no role checkboxes in form). Can edit/reset password/enable-disable non-admin accounts (USER, DOCTOR, NURSE, TRANSPLANT_COORDINATOR), but cannot edit/delete/disable admin accounts (SUPER_ADMIN, TECH_ADMIN)
+- **ROLE_TECH_ADMIN**: Can assign/manage non-admin roles (USER, DOCTOR, NURSE, TRANSPLANT_COORDINATOR) and edit/reset password/enable-disable non-admin accounts, but cannot assign admin roles or edit/delete/disable admin accounts (SUPER_ADMIN, TECH_ADMIN)
 - UserType form uses `is_super_admin` option to dynamically show/hide role selection
 
 > **⚠️ Legal note (Art. L1110-4 CSP):** Technical administrators must NOT have access

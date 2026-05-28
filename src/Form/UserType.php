@@ -48,22 +48,31 @@ class UserType extends AbstractType
             ]);
         }
 
-        // Only ROLE_SUPER_ADMIN can assign privileged roles
-        // ROLE_TECH_ADMIN can only create basic ROLE_USER profiles (no role checkboxes shown)
-        if ($options['is_super_admin']) {
-            $builder->add('roles', ChoiceType::class, [
-                'label' => 'Rôles',
-                'choices' => [
-                    'Super Admin (gestion complète)' => 'ROLE_SUPER_ADMIN',
-                    'Admin technique (gestion système)' => 'ROLE_TECH_ADMIN',
-                    'Docteur' => 'ROLE_DOCTOR',
-                    'Infirmière' => 'ROLE_NURSE',
-                    'Coordinateur de transplantation' => 'ROLE_TRANSPLANT_COORDINATOR',
-                ],
-                'multiple' => true,
-                'expanded' => true,
-            ]);
-        }
+        // ROLE_SUPER_ADMIN can assign all roles.
+        // ROLE_TECH_ADMIN can assign only non-admin roles.
+        $roleChoices = $options['is_super_admin']
+            ? [
+                'Super Admin (gestion complète)' => 'ROLE_SUPER_ADMIN',
+                'Admin technique (gestion système)' => 'ROLE_TECH_ADMIN',
+                'Docteur' => 'ROLE_DOCTOR',
+                'Infirmière' => 'ROLE_NURSE',
+                'Coordinateur de transplantation' => 'ROLE_TRANSPLANT_COORDINATOR',
+                'Utilisateur' => 'ROLE_USER',
+            ]
+            : [
+                'Docteur' => 'ROLE_DOCTOR',
+                'Infirmière' => 'ROLE_NURSE',
+                'Coordinateur de transplantation' => 'ROLE_TRANSPLANT_COORDINATOR',
+                'Utilisateur' => 'ROLE_USER',
+            ];
+
+        $builder->add('roles', ChoiceType::class, [
+            'label' => 'Rôles',
+            'choices' => $roleChoices,
+            'multiple' => true,
+            'expanded' => true,
+            'required' => false,
+        ]);
 
         // Only add password field for new users or if explicitly requested
         if ($options['require_password']) {

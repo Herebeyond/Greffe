@@ -54,10 +54,11 @@ class UserAdminController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // ROLE_TECH_ADMIN can only create ROLE_USER profiles (no privileged roles)
+            $submittedRoles = $form->has('roles') ? (array) $form->get('roles')->getData() : [];
             if (!$isSuperAdmin) {
-                $user->setRoles([]);
+                $submittedRoles = array_values(array_diff($submittedRoles, self::ADMIN_ROLES));
             }
+            $user->setRoles($submittedRoles);
 
             $plainPassword = $form->get('plainPassword')->getData();
             $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
@@ -102,7 +103,11 @@ class UserAdminController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // ROLE_TECH_ADMIN has no role field in the form, so existing roles are preserved.
+            $submittedRoles = $form->has('roles') ? (array) $form->get('roles')->getData() : [];
+            if (!$isSuperAdmin) {
+                $submittedRoles = array_values(array_diff($submittedRoles, self::ADMIN_ROLES));
+            }
+            $user->setRoles($submittedRoles);
 
             $plainPassword = $form->get('plainPassword')->getData();
             if ($plainPassword) {

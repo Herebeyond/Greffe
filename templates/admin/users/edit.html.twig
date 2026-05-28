@@ -64,6 +64,11 @@
                 </div>
                 {{ form_errors(form.roles) }}
             </div>
+            {% if not is_granted('ROLE_SUPER_ADMIN') %}
+            <div class="alert alert-info">
+                Les rôles Admin technique et Super Admin sont réservés au Super Admin.
+            </div>
+            {% endif %}
         </div>
         {% endif %}
 
