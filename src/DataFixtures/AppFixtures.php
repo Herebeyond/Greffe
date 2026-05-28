@@ -1558,7 +1558,7 @@ class AppFixtures extends Fixture
                 'cristalNumber' => 'CRI-2025-D003',
                 'comment' => 'Deuxième rein du même donneur (CRI-2025-D003). Rein gauche. Reprise de fonction rapide.',
             ],
-            // Patient 2024-010 - Rein-foie, deceased, no donor entity linked
+            // Patient 2024-010 - Rein-foie, deceased donor linked
             [
                 'patientFileNumber' => '2024-010',
                 'transplantDate' => '2024-07-19',
@@ -1583,6 +1583,7 @@ class AppFixtures extends Fixture
                 'dialysis' => true,
                 'lastDialysisDate' => '2024-07-18',
                 'hasProtocol' => true,
+                'cristalNumber' => 'CRI-2025-C002',
                 'comment' => 'Double greffe rein-foie pour polykystose hépato-rénale. Intervention longue (8h). Suites complexes mais favorables.',
             ],
             // Patient 2024-015 - Old transplant, graft non-functional
@@ -1608,6 +1609,7 @@ class AppFixtures extends Fixture
                 'dialysis' => true,
                 'lastDialysisDate' => '2018-05-19',
                 'hasProtocol' => false,
+                'cristalNumber' => 'CRI-2025-D002',
                 'comment' => 'Greffe ancienne (2018). Perte progressive du greffon sur 5 ans. Patient en hémodialyse depuis août 2023.',
             ],
         ];
