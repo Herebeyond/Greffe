@@ -14,6 +14,16 @@ use Symfony\Component\HttpKernel\KernelEvents;
 class AuditLogSubscriber implements EventSubscriberInterface
 {
     /**
+     * Routes with dedicated detailed logging elsewhere (to avoid duplicates).
+     */
+    private const CUSTOM_AUDIT_ROUTES = [
+        'app_admin_users_new',
+        'app_admin_users_edit',
+        'app_admin_users_delete',
+        'app_admin_users_toggle_active',
+    ];
+
+    /**
      * Maps route names to [action, entityType].
      * Routes not in this map are ignored.
      */
@@ -65,9 +75,6 @@ class AuditLogSubscriber implements EventSubscriberInterface
 
         // Admin - Users
         'app_admin_users' => [AuditLog::ACTION_VIEW, 'User'],
-        'app_admin_users_new' => [AuditLog::ACTION_CREATE, 'User'],
-        'app_admin_users_edit' => [AuditLog::ACTION_EDIT, 'User'],
-        'app_admin_users_delete' => [AuditLog::ACTION_DELETE, 'User'],
 
         // Profile
         'app_profile' => [AuditLog::ACTION_VIEW, 'Profile'],
@@ -110,12 +117,11 @@ class AuditLogSubscriber implements EventSubscriberInterface
         $request = $event->getRequest();
         $routeName = $request->attributes->get('_route');
 
-        if (!$routeName || !isset(self::ROUTE_MAP[$routeName])) {
+        if (!$routeName) {
             return;
         }
 
-        // Only log POST for create/edit/delete (not GET form displays)
-        if ($this->isFormDisplayOnly($routeName, $request)) {
+        if (in_array($routeName, self::CUSTOM_AUDIT_ROUTES, true)) {
             return;
         }
 
@@ -124,7 +130,20 @@ class AuditLogSubscriber implements EventSubscriberInterface
             return;
         }
 
-        [$action, $entityType] = self::ROUTE_MAP[$routeName];
+        $mappedRoute = isset(self::ROUTE_MAP[$routeName]);
+        $action = null;
+        $entityType = null;
+
+        if ($mappedRoute) {
+            [$action, $entityType] = self::ROUTE_MAP[$routeName];
+        } else {
+            $action = $this->resolveGenericAction($request);
+        }
+
+        // Only log POST for create/edit/delete (not GET form displays)
+        if ($mappedRoute && $this->isFormDisplayOnly($routeName, $request)) {
+            return;
+        }
 
         // Special case: patient index with POST = search, GET = page view (skip)
         if ($routeName === 'app_patient_index') {
@@ -152,6 +171,9 @@ class AuditLogSubscriber implements EventSubscriberInterface
         $entityId = $request->attributes->getInt('id') ?: $request->attributes->getInt('patientId') ?: null;
 
         $details = $this->buildDetails($routeName, $request);
+        if (!$mappedRoute) {
+            $details = trim('Action générique route=' . $routeName . ($details ? ' | ' . $details : ''));
+        }
 
         $log = new AuditLog();
         $log->setUser($user);
@@ -166,6 +188,16 @@ class AuditLogSubscriber implements EventSubscriberInterface
         $log->setDetails($details);
 
         $this->auditLogRepository->save($log);
+    }
+
+    private function resolveGenericAction(Request $request): string
+    {
+        return match ($request->getMethod()) {
+            'GET', 'HEAD' => AuditLog::ACTION_VIEW,
+            'POST', 'PUT', 'PATCH' => AuditLog::ACTION_EDIT,
+            'DELETE' => AuditLog::ACTION_DELETE,
+            default => AuditLog::ACTION_VIEW,
+        };
     }
 
     private function isFormDisplayOnly(string $routeName, Request $request): bool

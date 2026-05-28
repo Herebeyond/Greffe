@@ -238,6 +238,7 @@ The application implements a comprehensive audit trail system that logs all user
 - An `AuditLogSubscriber` listens to Symfony kernel controller events
 - Every significant action (view, create, edit, delete, search, password change) is logged to the `audit_log` table
 - Login/logout events are tracked separately via the existing `LoginActivity` entity
+- Admin user-management actions (`/admin/users/*`) are logged with explicit target details (which admin, which target account, and changed fields)
 
 ### Logged Information
 
