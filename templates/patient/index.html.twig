@@ -138,35 +138,39 @@
 
                 {% if totalPages > 1 %}
                 <nav class="pagination">
-                    {% if page > 1 %}
-                        <form method="post" action="{{ path('app_patient_index') }}" class="inline-form">
-                            <input type="hidden" name="_token" value="{{ csrf_token('patient_search') }}">
-                            <input type="hidden" name="lastName" value="{{ criteria.lastName }}">
-                            <input type="hidden" name="firstName" value="{{ criteria.firstName }}">
-                            <input type="hidden" name="fileNumber" value="{{ criteria.fileNumber }}">
-                            <input type="hidden" name="city" value="{{ criteria.city }}">
-                            <input type="hidden" name="transplantStatus" value="{{ criteria.transplantStatus }}">
-                            <input type="hidden" name="confirmed" value="1">
-                            <input type="hidden" name="page" value="{{ page - 1 }}">
-                            <button type="submit" class="pagination-link">&laquo; Précédent</button>
-                        </form>
-                    {% endif %}
-                    
-                    <span class="pagination-info">Page {{ page }} sur {{ totalPages }}</span>
-                    
-                    {% if page < totalPages %}
-                        <form method="post" action="{{ path('app_patient_index') }}" class="inline-form">
-                            <input type="hidden" name="_token" value="{{ csrf_token('patient_search') }}">
-                            <input type="hidden" name="lastName" value="{{ criteria.lastName }}">
-                            <input type="hidden" name="firstName" value="{{ criteria.firstName }}">
-                            <input type="hidden" name="fileNumber" value="{{ criteria.fileNumber }}">
-                            <input type="hidden" name="city" value="{{ criteria.city }}">
-                            <input type="hidden" name="transplantStatus" value="{{ criteria.transplantStatus }}">
-                            <input type="hidden" name="confirmed" value="1">
-                            <input type="hidden" name="page" value="{{ page + 1 }}">
-                            <button type="submit" class="pagination-link">Suivant &raquo;</button>
-                        </form>
-                    {% endif %}
+                    {% set startPage = max(1, page - 2) %}
+                    {% set endPage = min(totalPages, page + 2) %}
+                    <form method="post" action="{{ path('app_patient_index') }}" class="inline-form">
+                        <input type="hidden" name="_token" value="{{ csrf_token('patient_search') }}">
+                        <input type="hidden" name="lastName" value="{{ criteria.lastName }}">
+                        <input type="hidden" name="firstName" value="{{ criteria.firstName }}">
+                        <input type="hidden" name="fileNumber" value="{{ criteria.fileNumber }}">
+                        <input type="hidden" name="city" value="{{ criteria.city }}">
+                        <input type="hidden" name="transplantStatus" value="{{ criteria.transplantStatus }}">
+                        <input type="hidden" name="confirmed" value="1">
+
+                        <button type="submit" name="page" value="{{ page - 1 }}" class="pagination-link" {{ page <= 1 ? 'disabled' : '' }}>&laquo; Précédent</button>
+
+                        {% if startPage > 1 %}
+                            <button type="submit" name="page" value="1" class="pagination-link">1</button>
+                            {% if startPage > 2 %}
+                                <span class="pagination-ellipsis">...</span>
+                            {% endif %}
+                        {% endif %}
+
+                        {% for p in startPage..endPage %}
+                            <button type="submit" name="page" value="{{ p }}" class="pagination-link{{ p == page ? ' active' : '' }}">{{ p }}</button>
+                        {% endfor %}
+
+                        {% if endPage < totalPages %}
+                            {% if endPage < totalPages - 1 %}
+                                <span class="pagination-ellipsis">...</span>
+                            {% endif %}
+                            <button type="submit" name="page" value="{{ totalPages }}" class="pagination-link">{{ totalPages }}</button>
+                        {% endif %}
+
+                        <button type="submit" name="page" value="{{ page + 1 }}" class="pagination-link" {{ page >= totalPages ? 'disabled' : '' }}>Suivant &raquo;</button>
+                    </form>
                 </nav>
                 {% endif %}
         </div>

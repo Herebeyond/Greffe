@@ -108,25 +108,34 @@
             </div>
             {% if transplantTotalPages > 1 %}
             <nav class="pagination">
-                {% if transplantPage > 1 %}
-                    <form method="post" action="{{ path('app_donor_assign', {id: donor.id}) }}" class="inline-form">
-                        <input type="hidden" name="fileNumber" value="{{ fileNumber }}">
-                        <input type="hidden" name="transplantPage" value="{{ transplantPage - 1 }}">
-                        <input type="hidden" name="patientPage" value="{{ patientPage }}">
-                        <button type="submit" class="pagination-link">&laquo; Précédent</button>
-                    </form>
-                {% endif %}
+                {% set startPage = max(1, transplantPage - 2) %}
+                {% set endPage = min(transplantTotalPages, transplantPage + 2) %}
+                <form method="post" action="{{ path('app_donor_assign', {id: donor.id}) }}" class="inline-form">
+                    <input type="hidden" name="fileNumber" value="{{ fileNumber }}">
+                    <input type="hidden" name="patientPage" value="{{ patientPage }}">
 
-                <span class="pagination-info">Page {{ transplantPage }} sur {{ transplantTotalPages }}</span>
+                    <button type="submit" name="transplantPage" value="{{ transplantPage - 1 }}" class="pagination-link" {{ transplantPage <= 1 ? 'disabled' : '' }}>&laquo; Précédent</button>
 
-                {% if transplantPage < transplantTotalPages %}
-                    <form method="post" action="{{ path('app_donor_assign', {id: donor.id}) }}" class="inline-form">
-                        <input type="hidden" name="fileNumber" value="{{ fileNumber }}">
-                        <input type="hidden" name="transplantPage" value="{{ transplantPage + 1 }}">
-                        <input type="hidden" name="patientPage" value="{{ patientPage }}">
-                        <button type="submit" class="pagination-link">Suivant &raquo;</button>
-                    </form>
-                {% endif %}
+                    {% if startPage > 1 %}
+                        <button type="submit" name="transplantPage" value="1" class="pagination-link">1</button>
+                        {% if startPage > 2 %}
+                            <span class="pagination-ellipsis">...</span>
+                        {% endif %}
+                    {% endif %}
+
+                    {% for p in startPage..endPage %}
+                        <button type="submit" name="transplantPage" value="{{ p }}" class="pagination-link{{ p == transplantPage ? ' active' : '' }}">{{ p }}</button>
+                    {% endfor %}
+
+                    {% if endPage < transplantTotalPages %}
+                        {% if endPage < transplantTotalPages - 1 %}
+                            <span class="pagination-ellipsis">...</span>
+                        {% endif %}
+                        <button type="submit" name="transplantPage" value="{{ transplantTotalPages }}" class="pagination-link">{{ transplantTotalPages }}</button>
+                    {% endif %}
+
+                    <button type="submit" name="transplantPage" value="{{ transplantPage + 1 }}" class="pagination-link" {{ transplantPage >= transplantTotalPages ? 'disabled' : '' }}>Suivant &raquo;</button>
+                </form>
             </nav>
             {% endif %}
         {% endif %}
@@ -175,25 +184,34 @@
             </div>
             {% if patientTotalPages > 1 %}
             <nav class="pagination">
-                {% if patientPage > 1 %}
-                    <form method="post" action="{{ path('app_donor_assign', {id: donor.id}) }}" class="inline-form">
-                        <input type="hidden" name="fileNumber" value="{{ fileNumber }}">
-                        <input type="hidden" name="transplantPage" value="{{ transplantPage }}">
-                        <input type="hidden" name="patientPage" value="{{ patientPage - 1 }}">
-                        <button type="submit" class="pagination-link">&laquo; Précédent</button>
-                    </form>
-                {% endif %}
+                {% set startPage = max(1, patientPage - 2) %}
+                {% set endPage = min(patientTotalPages, patientPage + 2) %}
+                <form method="post" action="{{ path('app_donor_assign', {id: donor.id}) }}" class="inline-form">
+                    <input type="hidden" name="fileNumber" value="{{ fileNumber }}">
+                    <input type="hidden" name="transplantPage" value="{{ transplantPage }}">
 
-                <span class="pagination-info">Page {{ patientPage }} sur {{ patientTotalPages }}</span>
+                    <button type="submit" name="patientPage" value="{{ patientPage - 1 }}" class="pagination-link" {{ patientPage <= 1 ? 'disabled' : '' }}>&laquo; Précédent</button>
 
-                {% if patientPage < patientTotalPages %}
-                    <form method="post" action="{{ path('app_donor_assign', {id: donor.id}) }}" class="inline-form">
-                        <input type="hidden" name="fileNumber" value="{{ fileNumber }}">
-                        <input type="hidden" name="transplantPage" value="{{ transplantPage }}">
-                        <input type="hidden" name="patientPage" value="{{ patientPage + 1 }}">
-                        <button type="submit" class="pagination-link">Suivant &raquo;</button>
-                    </form>
-                {% endif %}
+                    {% if startPage > 1 %}
+                        <button type="submit" name="patientPage" value="1" class="pagination-link">1</button>
+                        {% if startPage > 2 %}
+                            <span class="pagination-ellipsis">...</span>
+                        {% endif %}
+                    {% endif %}
+
+                    {% for p in startPage..endPage %}
+                        <button type="submit" name="patientPage" value="{{ p }}" class="pagination-link{{ p == patientPage ? ' active' : '' }}">{{ p }}</button>
+                    {% endfor %}
+
+                    {% if endPage < patientTotalPages %}
+                        {% if endPage < patientTotalPages - 1 %}
+                            <span class="pagination-ellipsis">...</span>
+                        {% endif %}
+                        <button type="submit" name="patientPage" value="{{ patientTotalPages }}" class="pagination-link">{{ patientTotalPages }}</button>
+                    {% endif %}
+
+                    <button type="submit" name="patientPage" value="{{ patientPage + 1 }}" class="pagination-link" {{ patientPage >= patientTotalPages ? 'disabled' : '' }}>Suivant &raquo;</button>
+                </form>
             </nav>
             {% endif %}
         {% endif %}
