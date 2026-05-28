@@ -139,6 +139,8 @@
                     <span class="detail-value">
                         {% if transplant.isGraftFunctional %}
                             <span class="transplant-status status-active">Greffon fonctionnel</span>
+                        {% elseif transplant.assignedDraft %}
+                            <span class="transplant-status status-waiting">Greffe assignée - en attente de réalisation</span>
                         {% else %}
                             <span class="transplant-status status-failed">Greffon non fonctionnel</span>
                             {% if transplant.graftEndCause %}

@@ -193,9 +193,16 @@ class DonorController extends AbstractController
                 && $this->isCsrfTokenValid('assign' . $donor->getId(), $request->request->get('_token'))
             ) {
                 $patient = $transplant->getPatient();
-                $transplant->setDonor($donor);
-                $transplant->setUpdatedAt(new \DateTimeImmutable());
-                $this->transplantRepository->save($transplant);
+                if ($transplant->isFailedGraft() && $patient !== null) {
+                    // Keep failed historical graft untouched and create a new draft for re-transplant.
+                    $newTransplant = new Transplant();
+                    $this->applyAssignmentDraftDefaults($newTransplant, $patient, $donor);
+                    $this->transplantRepository->save($newTransplant);
+                } else {
+                    $transplant->setDonor($donor);
+                    $transplant->setUpdatedAt(new \DateTimeImmutable());
+                    $this->transplantRepository->save($transplant);
+                }
 
                 /** @var User $currentUser */
                 $currentUser = $this->getUser();
@@ -204,7 +211,11 @@ class DonorController extends AbstractController
                     $this->notificationService->notifyDonorLinked($primaryDoctor, $currentUser, $patient, $donor);
                 }
 
-                $this->addFlash('success', 'Donneur assigné à la greffe avec succès');
+                if ($transplant->isFailedGraft()) {
+                    $this->addFlash('success', 'Donneur assigné avec création d\'une nouvelle greffe de re-greffe');
+                } else {
+                    $this->addFlash('success', 'Donneur assigné à la greffe avec succès');
+                }
 
                 return $this->redirectToRoute('app_donor_show', ['id' => $donor->getId()]);
             }

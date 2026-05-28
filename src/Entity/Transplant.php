@@ -280,6 +280,20 @@ class Transplant
         return $this->isGraftFunctional;
     }
 
+    public function isFailedGraft(): bool
+    {
+        return !$this->isGraftFunctional
+            && ($this->graftEndDate !== null || $this->graftEndCause !== null);
+    }
+
+    public function isAssignedDraft(): bool
+    {
+        return !$this->isGraftFunctional
+            && $this->donor !== null
+            && $this->graftEndDate === null
+            && $this->graftEndCause === null;
+    }
+
     public function setIsGraftFunctional(bool $isGraftFunctional): static
     {
         $this->isGraftFunctional = $isGraftFunctional;

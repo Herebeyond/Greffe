@@ -195,6 +195,23 @@ main {
     vertical-align: middle;
 }
 
+.form-group:has(input[type="checkbox"]) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-group:has(input[type="checkbox"]) label {
+    display: inline;
+    margin-bottom: 0;
+    font-weight: 500;
+}
+
+.form-group:has(input[type="checkbox"]) .form-error-message,
+.form-group:has(input[type="checkbox"]) .form-help {
+    flex-basis: 100%;
+}
+
 /* Buttons */
 .btn {
     display: inline-block;
@@ -601,7 +618,7 @@ main {
     flex: 1;
 }
 
-.admin-form .form-group input {
+.admin-form .form-group input:not([type="checkbox"]):not([type="radio"]) {
     width: 100%;
 }
 

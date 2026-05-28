@@ -50,6 +50,8 @@
                         <td>
                             {% if transplant.isGraftFunctional %}
                                 <span class="graft-status graft-functional">Fonctionnel</span>
+                            {% elseif transplant.assignedDraft %}
+                                <span class="transplant-status status-waiting">Assigné - en attente de greffe</span>
                             {% else %}
                                 <span class="graft-status graft-non-functional">Non fonctionnel</span>
                             {% endif %}

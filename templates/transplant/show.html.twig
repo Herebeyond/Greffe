@@ -38,12 +38,14 @@
                     <span class="detail-value">
                         {% if transplant.isGraftFunctional %}
                             <span class="graft-status graft-functional">Oui</span>
+                        {% elseif transplant.assignedDraft %}
+                            <span class="transplant-status status-waiting">En attente de réalisation</span>
                         {% else %}
                             <span class="graft-status graft-non-functional">Non</span>
                         {% endif %}
                     </span>
                 </div>
-                {% if not transplant.isGraftFunctional %}
+                {% if transplant.failedGraft %}
                 <div class="detail-item">
                     <span class="detail-label">Date de fin du greffon</span>
                     <span class="detail-value">{{ transplant.graftEndDate ? transplant.graftEndDate|date('d/m/Y') : '—' }}</span>

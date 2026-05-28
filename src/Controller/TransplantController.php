@@ -74,16 +74,26 @@ class TransplantController extends AbstractController
             ) {
                 /** @var \App\Entity\User $currentUser */
                 $currentUser = $this->getUser();
-                $transplant->setDonor($donor);
-                $transplant->setUpdatedAt(new \DateTimeImmutable());
-                $this->transplantRepository->save($transplant);
+                if ($transplant->isFailedGraft()) {
+                    $newTransplant = new Transplant();
+                    $this->applyAssignmentDraftDefaults($newTransplant, $patient, $donor);
+                    $this->transplantRepository->save($newTransplant);
+                } else {
+                    $transplant->setDonor($donor);
+                    $transplant->setUpdatedAt(new \DateTimeImmutable());
+                    $this->transplantRepository->save($transplant);
+                }
 
                 $primaryDoctor = $patient->getPrimaryAccess()?->getUser();
                 if ($primaryDoctor !== null) {
                     $this->notificationService->notifyDonorLinked($primaryDoctor, $currentUser, $patient, $donor);
                 }
 
-                $this->addFlash('success', 'Donneur assigné à la greffe avec succès');
+                if ($transplant->isFailedGraft()) {
+                    $this->addFlash('success', 'Donneur assigné avec création d\'une nouvelle greffe de re-greffe');
+                } else {
+                    $this->addFlash('success', 'Donneur assigné à la greffe avec succès');
+                }
 
                 return $this->redirectToRoute('app_transplant_index', ['patientId' => $patient->getId()]);
             }
