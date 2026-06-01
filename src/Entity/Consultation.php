@@ -26,6 +26,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     ],
     normalizationContext: ['groups' => ['consultation:read']],
     denormalizationContext: ['groups' => ['consultation:write']],
+    order: ['date' => 'DESC', 'createdAt' => 'DESC'],
     paginationItemsPerPage: 20,
 )]
 #[ORM\Entity(repositoryClass: ConsultationRepository::class)]
